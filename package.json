@@ -41,6 +41,8 @@
   },
   "dependencies": {
     "@dashboard-leads-profills/env": "workspace:*",
+    "dexie": "^4.3.0",
+    "dexie-react-hooks": "^4.2.0",
     "dotenv": "catalog:",
     "zod": "catalog:"
   },
