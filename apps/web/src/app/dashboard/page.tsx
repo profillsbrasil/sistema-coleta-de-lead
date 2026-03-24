@@ -1,23 +1,24 @@
-import { auth } from "@dashboard-leads-profills/auth";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+
+import { createClient } from "@/lib/supabase/server";
 
 import Dashboard from "./dashboard";
 
 export default async function DashboardPage() {
-	const session = await auth.api.getSession({
-		headers: await headers(),
-	});
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
 
-	if (!session?.user) {
+	if (!user) {
 		redirect("/login");
 	}
 
 	return (
 		<div>
 			<h1>Dashboard</h1>
-			<p>Welcome {session.user.name}</p>
-			<Dashboard session={session} />
+			<p>Welcome {user.user_metadata?.full_name ?? user.email}</p>
+			<Dashboard />
 		</div>
 	);
 }
