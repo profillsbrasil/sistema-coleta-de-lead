@@ -7,11 +7,11 @@
 
 ### Authentication
 
-- [ ] **AUTH-01**: Migrar de Better-Auth para Supabase Auth
+- [x] **AUTH-01**: Migrar de Better-Auth para Supabase Auth
 - [ ] **AUTH-02**: User pode fazer login via Google OAuth
 - [ ] **AUTH-03**: User pode fazer login via Facebook OAuth
 - [ ] **AUTH-04**: User pode fazer login via LinkedIn OAuth
-- [ ] **AUTH-05**: Sessao persiste apos refresh do browser
+- [x] **AUTH-05**: Sessao persiste apos refresh do browser
 - [ ] **AUTH-06**: User tem role (admin ou vendedor) armazenado no perfil
 - [ ] **AUTH-07**: Rotas de admin sao protegidas — vendedor nao acessa
 
@@ -94,11 +94,11 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
 | AUTH-02 | Phase 1 | Pending |
 | AUTH-03 | Phase 1 | Pending |
 | AUTH-04 | Phase 1 | Pending |
-| AUTH-05 | Phase 1 | Pending |
+| AUTH-05 | Phase 1 | Complete |
 | AUTH-06 | Phase 1 | Pending |
 | AUTH-07 | Phase 1 | Pending |
 | OFFL-01 | Phase 2 | Pending |
