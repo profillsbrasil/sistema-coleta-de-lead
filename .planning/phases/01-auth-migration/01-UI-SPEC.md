@@ -48,15 +48,16 @@ Exceptions: none
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 14px | 500 (medium) | 1.4 |
+| Label | 14px | 400 (regular) | 1.4 |
 | Heading | 20px | 600 (semibold) | 1.2 |
 | Display | 28px | 600 (semibold) | 1.2 |
 
 Notes:
 - Heading (20px): usado no CardTitle do login card ("Dashboard Leads Profills")
-- Body (14px): usado na CardDescription e texto dos botoes de OAuth
-- Label (14px/500): usado no label dos botoes OAuth ("Entrar com Google")
+- Body (14px): usado na CardDescription e texto geral
+- Label (14px/400): usado no label dos botoes OAuth ("Entrar com Google"). Visualmente distinto do body pelo contexto (dentro de um Button component), nao pelo weight.
 - Display (28px): nao usado nesta fase, declarado para consistencia cross-phase
+- Weights: 2 pesos — 400 (regular) para body e labels, 600 (semibold) para headings e display
 
 Source: shadcn base-nova defaults; font-size 14px alinha com `text-sm` do Tailwind (padrao dos componentes existentes).
 
@@ -136,7 +137,7 @@ Constraints:
 - Card centralizado horizontal e verticalmente (`flex items-center justify-center min-h-svh`)
 - Card max-width: 400px (`max-w-[400px] w-full`)
 - Card padding: 16px (via shadcn Card default `px-4 py-4`)
-- Botoes: full-width (`w-full`), size `lg` (h-9), gap vertical de 12px entre botoes (`gap-3`)
+- Botoes: full-width (`w-full`), size `lg` (h-9), gap vertical de 16px entre botoes (`gap-4`)
 - Botao Google: variant `default` (accent/primary), icone Google a esquerda
 - Botao LinkedIn: variant `outline`, icone LinkedIn a esquerda
 - Botao Facebook: variant `outline`, icone Facebook a esquerda
