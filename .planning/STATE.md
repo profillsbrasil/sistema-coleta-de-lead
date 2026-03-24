@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-03-24T21:50:09.663Z"
-last_activity: 2026-03-24 — Roadmap criado; pronto para iniciar planejamento da Phase 1
+status: Ready to execute
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-03-24T22:34:08.228Z"
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 4
+  completed_plans: 1
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Phase 1 — Auth Migration
+**Current focus:** Phase 01 — auth-migration
 
 ## Current Position
 
-Phase: 1 of 6 (Auth Migration)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-24 — Roadmap criado; pronto para iniciar planejamento da Phase 1
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 01 (auth-migration) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -52,6 +46,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01 P01 | 5min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -65,6 +60,9 @@ Recent decisions affecting current work:
 - Offline: Dexie como storage primario no client; Supabase e source of truth; server-wins para conflitos
 - Segmento: campo livre de texto (sem lista de opcoes) — flexibilidade sem complexidade
 - Score: quente=3, morno=2, frio=1 para leaderboard ponderado
+- [Phase 01]: proxy.ts (Next.js 16) em vez de middleware.ts para session refresh
+- [Phase 01]: getClaims() em vez de getUser() no proxy (mais leve, sem network call)
+- [Phase 01]: NEXT_PUBLIC_SUPABASE_* no server block do T3 Env (vars publicas seguras)
 
 ### Pending Todos
 
@@ -77,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T21:50:09.661Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-auth-migration/01-CONTEXT.md
+Last session: 2026-03-24T22:34:08.226Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
