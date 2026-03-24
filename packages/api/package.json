@@ -1,31 +1,32 @@
 {
-	"name": "@dashboard-leads-profills/api",
-	"type": "module",
-	"exports": {
-		".": {
-			"default": "./src/index.ts"
-		},
-		"./*": {
-			"default": "./src/*.ts"
-		}
-	},
-	"scripts": {
-		"test": "vitest run"
-	},
-	"dependencies": {
-		"@dashboard-leads-profills/auth": "workspace:*",
-		"@dashboard-leads-profills/db": "workspace:*",
-		"@dashboard-leads-profills/env": "workspace:*",
-		"@trpc/client": "catalog:",
-		"@trpc/server": "catalog:",
-		"@types/pg": "catalog:",
-		"dotenv": "catalog:",
-		"drizzle-orm": "catalog:",
-		"next": "catalog:",
-		"zod": "catalog:"
-	},
-	"devDependencies": {
-		"@dashboard-leads-profills/config": "workspace:*",
-		"typescript": "^5"
-	}
+  "name": "@dashboard-leads-profills/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@dashboard-leads-profills/db": "workspace:*",
+    "@dashboard-leads-profills/env": "workspace:*",
+    "@supabase/ssr": "^0.9.0",
+    "@supabase/supabase-js": "^2.100.0",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "@types/pg": "catalog:",
+    "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
+    "next": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@dashboard-leads-profills/config": "workspace:*",
+    "typescript": "^5"
+  }
 }
