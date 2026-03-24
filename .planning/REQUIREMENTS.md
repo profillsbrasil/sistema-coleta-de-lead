@@ -12,8 +12,8 @@
 - [x] **AUTH-03**: User pode fazer login via Facebook OAuth
 - [x] **AUTH-04**: User pode fazer login via LinkedIn OAuth
 - [x] **AUTH-05**: Sessao persiste apos refresh do browser
-- [ ] **AUTH-06**: User tem role (admin ou vendedor) armazenado no perfil
-- [ ] **AUTH-07**: Rotas de admin sao protegidas — vendedor nao acessa
+- [x] **AUTH-06**: User tem role (admin ou vendedor) armazenado no perfil
+- [x] **AUTH-07**: Rotas de admin sao protegidas — vendedor nao acessa
 
 ### Offline Infrastructure
 
@@ -99,8 +99,8 @@
 | AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Complete |
 | AUTH-05 | Phase 1 | Complete |
-| AUTH-06 | Phase 1 | Pending |
-| AUTH-07 | Phase 1 | Pending |
+| AUTH-06 | Phase 1 | Complete |
+| AUTH-07 | Phase 1 | Complete |
 | OFFL-01 | Phase 2 | Pending |
 | OFFL-02 | Phase 2 | Pending |
 | OFFL-03 | Phase 2 | Pending |
