@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-03-24T22:37:39.165Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-24T22:38:45.752Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 01 (auth-migration) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: 3 of 4
 *Updated after each plan completion*
 | Phase 01 P01 | 5min | 2 tasks | 15 files |
 | Phase 01 P03 | 2min | 2 tasks | 5 files |
+| Phase 01 P02 | 2min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - [Phase 01]: getClaims() em vez de getUser() no proxy (mais leve, sem network call)
 - [Phase 01]: NEXT_PUBLIC_SUPABASE_* no server block do T3 Env (vars publicas seguras)
 - [Phase 01]: SVG icons inline no login-card (3 icones nao justificam pacote adicional)
+- [Phase 01]: getClaims() no tRPC context em vez de getUser() (valida JWT via JWKS sem network call)
+- [Phase 01]: Tres niveis de procedure: public < protected < admin (role check via JWT claims)
+- [Phase 01]: user_roles table com app_role enum (admin, vendedor) em public schema
 
 ### Pending Todos
 
@@ -77,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T22:37:39.163Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-03-24T22:38:45.750Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
