@@ -11,10 +11,9 @@
 - [ ] **AUTH-02**: User pode fazer login via Google OAuth
 - [ ] **AUTH-03**: User pode fazer login via Facebook OAuth
 - [ ] **AUTH-04**: User pode fazer login via LinkedIn OAuth
-- [ ] **AUTH-05**: User pode fazer login via email/password
-- [ ] **AUTH-06**: Sessao persiste apos refresh do browser
-- [ ] **AUTH-07**: User tem role (admin ou vendedor) armazenado no perfil
-- [ ] **AUTH-08**: Rotas de admin sao protegidas — vendedor nao acessa
+- [ ] **AUTH-05**: Sessao persiste apos refresh do browser
+- [ ] **AUTH-06**: User tem role (admin ou vendedor) armazenado no perfil
+- [ ] **AUTH-07**: Rotas de admin sao protegidas — vendedor nao acessa
 
 ### Offline Infrastructure
 
@@ -79,6 +78,7 @@
 
 | Feature | Reason |
 |---------|--------|
+| Login email/password | v1 usa apenas OAuth (Google, Facebook, LinkedIn) por simplicidade |
 | Multi-evento | v1 e para um evento so; muda modelo de dados fundamentalmente |
 | Custom field builder | Overkill para equipe de 10; segmento + notas cobrem 90% |
 | Push notifications | Service worker complexo, Safari incompleto, baixo ROI |
@@ -94,53 +94,52 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| AUTH-06 | — | Pending |
-| AUTH-07 | — | Pending |
-| AUTH-08 | — | Pending |
-| OFFL-01 | — | Pending |
-| OFFL-02 | — | Pending |
-| OFFL-03 | — | Pending |
-| OFFL-04 | — | Pending |
-| OFFL-05 | — | Pending |
-| OFFL-06 | — | Pending |
-| CAPT-01 | — | Pending |
-| CAPT-02 | — | Pending |
-| CAPT-03 | — | Pending |
-| CAPT-04 | — | Pending |
-| CAPT-05 | — | Pending |
-| CAPT-06 | — | Pending |
-| CAPT-07 | — | Pending |
-| CAPT-08 | — | Pending |
-| LEAD-01 | — | Pending |
-| LEAD-02 | — | Pending |
-| LEAD-03 | — | Pending |
-| LEAD-04 | — | Pending |
-| LEAD-05 | — | Pending |
-| DASH-01 | — | Pending |
-| DASH-02 | — | Pending |
-| DASH-03 | — | Pending |
-| DASH-04 | — | Pending |
-| DASH-05 | — | Pending |
-| DASH-06 | — | Pending |
-| DASH-07 | — | Pending |
-| ADMN-01 | — | Pending |
-| ADMN-02 | — | Pending |
-| ADMN-03 | — | Pending |
-| ADMN-04 | — | Pending |
-| ADMN-05 | — | Pending |
-| ADMN-06 | — | Pending |
-| ADMN-07 | — | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| AUTH-05 | Phase 1 | Pending |
+| AUTH-06 | Phase 1 | Pending |
+| AUTH-07 | Phase 1 | Pending |
+| OFFL-01 | Phase 2 | Pending |
+| OFFL-02 | Phase 2 | Pending |
+| OFFL-03 | Phase 2 | Pending |
+| OFFL-04 | Phase 2 | Pending |
+| OFFL-05 | Phase 2 | Pending |
+| OFFL-06 | Phase 2 | Pending |
+| CAPT-01 | Phase 3 | Pending |
+| CAPT-02 | Phase 3 | Pending |
+| CAPT-03 | Phase 3 | Pending |
+| CAPT-04 | Phase 3 | Pending |
+| CAPT-05 | Phase 3 | Pending |
+| CAPT-06 | Phase 3 | Pending |
+| CAPT-07 | Phase 3 | Pending |
+| CAPT-08 | Phase 3 | Pending |
+| LEAD-01 | Phase 4 | Pending |
+| LEAD-02 | Phase 4 | Pending |
+| LEAD-03 | Phase 4 | Pending |
+| LEAD-04 | Phase 4 | Pending |
+| LEAD-05 | Phase 4 | Pending |
+| DASH-01 | Phase 5 | Pending |
+| DASH-02 | Phase 5 | Pending |
+| DASH-03 | Phase 5 | Pending |
+| DASH-04 | Phase 5 | Pending |
+| DASH-05 | Phase 5 | Pending |
+| DASH-06 | Phase 5 | Pending |
+| DASH-07 | Phase 5 | Pending |
+| ADMN-01 | Phase 6 | Pending |
+| ADMN-02 | Phase 6 | Pending |
+| ADMN-03 | Phase 6 | Pending |
+| ADMN-04 | Phase 6 | Pending |
+| ADMN-05 | Phase 6 | Pending |
+| ADMN-06 | Phase 6 | Pending |
+| ADMN-07 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements: 41 total
-- Mapped to phases: 0
-- Unmapped: 41 (roadmap pending)
+- v1 requirements: 40 total
+- Mapped to phases: 40
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 after roadmap creation — all 41 requirements mapped to 6 phases*
