@@ -30,7 +30,14 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Sessao persiste apos fechar e reabrir o browser
   3. Usuario com role vendedor nao consegue acessar rotas de admin
   4. Usuario tem role (admin ou vendedor) visivel e funcional no sistema
-**Plans**: TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Supabase infrastructure (packages, env vars, client utilities, proxy.ts, callback route)
+- [ ] 01-02-PLAN.md — Backend migration (tRPC context, procedures, Drizzle schema user_roles)
+- [ ] 01-03-PLAN.md — Frontend migration (LoginCard OAuth buttons, user-menu, remove old forms)
+- [ ] 01-04-PLAN.md — Cleanup and human verification (remove Better-Auth remnants, verify OAuth flow)
+
 **UI hint**: yes
 
 ### Phase 2: Offline Infrastructure
@@ -98,11 +105,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Auth Migration | 0/? | Not started | - |
+| 1. Auth Migration | 0/4 | Planned | - |
 | 2. Offline Infrastructure | 0/? | Not started | - |
 | 3. Lead Capture | 0/? | Not started | - |
 | 4. Lead Management | 0/? | Not started | - |
