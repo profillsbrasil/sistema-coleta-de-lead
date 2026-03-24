@@ -1,0 +1,29 @@
+{
+  "name": "@dashboard-leads-profills/api",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@dashboard-leads-profills/auth": "workspace:*",
+    "@dashboard-leads-profills/db": "workspace:*",
+    "@dashboard-leads-profills/env": "workspace:*",
+    "@trpc/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "@types/pg": "catalog:",
+    "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
+    "next": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@dashboard-leads-profills/config": "workspace:*",
+    "typescript": "^5"
+  }
+}
