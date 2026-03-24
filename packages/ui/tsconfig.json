@@ -6,7 +6,8 @@
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
 		"paths": {
 			"@dashboard-leads-profills/ui/*": ["./src/*"]
-		}
+    },
+    "strictNullChecks": true
 	},
 	"include": ["src/**/*.ts", "src/**/*.tsx"],
 	"exclude": ["node_modules"]
