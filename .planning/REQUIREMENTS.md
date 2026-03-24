@@ -1,0 +1,146 @@
+# Requirements: Dashboard Leads Profills
+
+**Defined:** 2026-03-24
+**Core Value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
+
+## v1 Requirements
+
+### Authentication
+
+- [ ] **AUTH-01**: Migrar de Better-Auth para Supabase Auth
+- [ ] **AUTH-02**: User pode fazer login via Google OAuth
+- [ ] **AUTH-03**: User pode fazer login via Facebook OAuth
+- [ ] **AUTH-04**: User pode fazer login via LinkedIn OAuth
+- [ ] **AUTH-05**: User pode fazer login via email/password
+- [ ] **AUTH-06**: Sessao persiste apos refresh do browser
+- [ ] **AUTH-07**: User tem role (admin ou vendedor) armazenado no perfil
+- [ ] **AUTH-08**: Rotas de admin sao protegidas — vendedor nao acessa
+
+### Offline Infrastructure
+
+- [ ] **OFFL-01**: Schema de leads no Drizzle com soft-delete (deleted_at), timestamps (created_at, updated_at), UUID client (local_id) e server_id
+- [ ] **OFFL-02**: Dexie DB configurado com schema espelhado do servidor (leads, syncQueue)
+- [ ] **OFFL-03**: Sync engine via tRPC vanilla client (fora do React tree) — push local changes, pull server changes
+- [ ] **OFFL-04**: Conflict resolution server-wins baseado em updated_at do servidor
+- [ ] **OFFL-05**: Sync automatico quando conexao detectada (polling fallback para Safari)
+- [ ] **OFFL-06**: Dados locais preservados quando sync falha (ex: 401 por sessao expirada)
+
+### Lead Capture
+
+- [ ] **CAPT-01**: Vendedor pode criar lead via formulario rapido (nome, telefone/email, interesse obrigatorios)
+- [ ] **CAPT-02**: Campos opcionais: empresa, cargo, segmento (texto livre), notas (multi-line)
+- [ ] **CAPT-03**: Vendedor pode escanear QR Code do WhatsApp e auto-preencher telefone (parse wa.me URL)
+- [ ] **CAPT-04**: Vendedor pode tirar foto (cartao de visita, crachat) e anexar ao lead
+- [ ] **CAPT-05**: Foto comprimida antes de armazenar no Dexie (max 1280px, JPEG 0.7) para evitar QuotaExceededError
+- [ ] **CAPT-06**: Foto sincronizada para Supabase Storage quando online
+- [ ] **CAPT-07**: Vendedor pode atribuir tag de interesse ao criar lead (quente, morno, frio)
+- [ ] **CAPT-08**: Coleta funciona 100% offline — dados salvos no Dexie primeiro
+
+### Lead Management
+
+- [ ] **LEAD-01**: Vendedor pode listar seus proprios leads (ordenados por recencia)
+- [ ] **LEAD-02**: Vendedor pode editar qualquer campo de seus leads
+- [ ] **LEAD-03**: Vendedor pode excluir seus leads (soft-delete)
+- [ ] **LEAD-04**: Vendedor pode filtrar leads por tag de interesse
+- [ ] **LEAD-05**: CRUD de leads funciona offline via Dexie
+
+### Dashboard & Stats
+
+- [ ] **DASH-01**: Vendedor ve dashboard pessoal com total de leads coletados
+- [ ] **DASH-02**: Dashboard mostra breakdown por tag (quente, morno, frio)
+- [ ] **DASH-03**: Dashboard mostra leads coletados hoje
+- [ ] **DASH-04**: Leaderboard comparativo de todos vendedores (quantidade + score ponderado)
+- [ ] **DASH-05**: Score ponderado: quente = 3, morno = 2, frio = 1
+- [ ] **DASH-06**: Leaderboard funciona offline com dados da ultima sincronizacao
+- [ ] **DASH-07**: Dashboard e leaderboard acessiveis offline via cache no Dexie
+
+### Admin
+
+- [ ] **ADMN-01**: Admin pode ver lista de todos os leads de todos vendedores
+- [ ] **ADMN-02**: Admin pode filtrar leads por vendedor
+- [ ] **ADMN-03**: Admin pode editar qualquer lead (mesmo de outro vendedor)
+- [ ] **ADMN-04**: Admin pode excluir qualquer lead (soft-delete)
+- [ ] **ADMN-05**: Admin pode gerenciar usuarios (CRUD de vendedores)
+- [ ] **ADMN-06**: Admin tem tela de stats globais com filtros avancados
+- [ ] **ADMN-07**: Admin tem acesso a todas as telas de vendedor (com filtro por vendedor)
+
+## v2 Requirements
+
+### Enhancements
+
+- **ENH-01**: Exportacao de leads para CSV/Excel
+- **ENH-02**: Indicador visual de conectividade para o usuario
+- **ENH-03**: Autocomplete no campo segmento (baseado em entradas anteriores)
+- **ENH-04**: Alerta visual de lead duplicado (mesmo telefone)
+- **ENH-05**: PWA com prompt de instalacao na home screen (previne evicao iOS)
+- **ENH-06**: Supabase Realtime para leaderboard sub-5s (substituir polling)
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Multi-evento | v1 e para um evento so; muda modelo de dados fundamentalmente |
+| Custom field builder | Overkill para equipe de 10; segmento + notas cobrem 90% |
+| Push notifications | Service worker complexo, Safari incompleto, baixo ROI |
+| CRM integration | Zero ROI para 10 vendedores em evento unico; CSV em v2 |
+| Real-time collaborative list | Quebra modelo offline; leaderboard ja cobre visibilidade |
+| OCR de cartao de visita | Requer API paga, latencia offline, precisao ruim em PT-BR |
+| Magic link login | Supabase Auth com OAuth ja cobre; simplificar |
+| Chat entre vendedores | Fora do escopo do produto |
+| App mobile nativo | PWA web suficiente para o evento |
+| Deduplicacao/merge de leads | Alta complexidade, beneficio marginal; alerta visual em v2 |
+
+## Traceability
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| AUTH-01 | — | Pending |
+| AUTH-02 | — | Pending |
+| AUTH-03 | — | Pending |
+| AUTH-04 | — | Pending |
+| AUTH-05 | — | Pending |
+| AUTH-06 | — | Pending |
+| AUTH-07 | — | Pending |
+| AUTH-08 | — | Pending |
+| OFFL-01 | — | Pending |
+| OFFL-02 | — | Pending |
+| OFFL-03 | — | Pending |
+| OFFL-04 | — | Pending |
+| OFFL-05 | — | Pending |
+| OFFL-06 | — | Pending |
+| CAPT-01 | — | Pending |
+| CAPT-02 | — | Pending |
+| CAPT-03 | — | Pending |
+| CAPT-04 | — | Pending |
+| CAPT-05 | — | Pending |
+| CAPT-06 | — | Pending |
+| CAPT-07 | — | Pending |
+| CAPT-08 | — | Pending |
+| LEAD-01 | — | Pending |
+| LEAD-02 | — | Pending |
+| LEAD-03 | — | Pending |
+| LEAD-04 | — | Pending |
+| LEAD-05 | — | Pending |
+| DASH-01 | — | Pending |
+| DASH-02 | — | Pending |
+| DASH-03 | — | Pending |
+| DASH-04 | — | Pending |
+| DASH-05 | — | Pending |
+| DASH-06 | — | Pending |
+| DASH-07 | — | Pending |
+| ADMN-01 | — | Pending |
+| ADMN-02 | — | Pending |
+| ADMN-03 | — | Pending |
+| ADMN-04 | — | Pending |
+| ADMN-05 | — | Pending |
+| ADMN-06 | — | Pending |
+| ADMN-07 | — | Pending |
+
+**Coverage:**
+- v1 requirements: 41 total
+- Mapped to phases: 0
+- Unmapped: 41 (roadmap pending)
+
+---
+*Requirements defined: 2026-03-24*
+*Last updated: 2026-03-24 after initial definition*
