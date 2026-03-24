@@ -1,7 +1,8 @@
 ---
 phase: 1
 slug: auth-migration
-status: draft
+status: approved
+reviewed_at: 2026-03-24
 shadcn_initialized: true
 preset: base-nova
 created: 2026-03-24
