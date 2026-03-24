@@ -1,0 +1,10 @@
+{
+  "permission": {
+    "read": {
+      "/home/othavio/Work/sistema-coleta-de-lead/.opencode/get-shit-done/*": "allow"
+    },
+    "external_directory": {
+      "/home/othavio/Work/sistema-coleta-de-lead/.opencode/get-shit-done/*": "allow"
+    }
+  }
+}
