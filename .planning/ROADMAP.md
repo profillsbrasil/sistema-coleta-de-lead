@@ -36,7 +36,7 @@ Plans:
 - [x] 01-01-PLAN.md — Supabase infrastructure (packages, env vars, client utilities, proxy.ts, callback route)
 - [x] 01-02-PLAN.md — Backend migration (tRPC context, procedures, Drizzle schema user_roles)
 - [x] 01-03-PLAN.md — Frontend migration (LoginCard OAuth buttons, user-menu, remove old forms)
-- [ ] 01-04-PLAN.md — Cleanup and human verification (remove Better-Auth remnants, verify OAuth flow)
+- [x] 01-04-PLAN.md — Cleanup and human verification (remove Better-Auth remnants, verify OAuth flow)
 
 **UI hint**: yes
 
