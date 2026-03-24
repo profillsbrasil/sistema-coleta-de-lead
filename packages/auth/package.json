@@ -1,0 +1,24 @@
+{
+  "name": "@dashboard-leads-profills/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@dashboard-leads-profills/db": "workspace:*",
+    "@dashboard-leads-profills/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@dashboard-leads-profills/config": "workspace:*",
+    "typescript": "^5"
+  }
+}

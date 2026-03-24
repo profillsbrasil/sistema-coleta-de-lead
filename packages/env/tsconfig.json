@@ -1,0 +1,3 @@
+{
+  "extends": "@dashboard-leads-profills/config/tsconfig.base.json"
+}
