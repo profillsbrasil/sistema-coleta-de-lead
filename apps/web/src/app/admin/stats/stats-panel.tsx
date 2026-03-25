@@ -19,11 +19,11 @@ import StatsCharts from "./stats-charts";
 import StatsFilters from "./stats-filters";
 
 interface AppliedFilters {
-	userId?: string;
-	tag?: "quente" | "morno" | "frio";
+	endDate?: string;
 	segment?: string;
 	startDate?: string;
-	endDate?: string;
+	tag?: "quente" | "morno" | "frio";
+	userId?: string;
 }
 
 function StatCardsSkeleton() {
@@ -37,13 +37,67 @@ function StatCardsSkeleton() {
 	);
 }
 
+const SKELETON_ROWS = ["s1", "s2", "s3", "s4", "s5"] as const;
+
 function RankingTableSkeleton() {
 	return (
 		<div className="space-y-2">
-			{Array.from({ length: 5 }).map((_, i) => (
-				// biome-ignore lint/suspicious/noArrayIndexKey: skeleton rows have no meaningful key
-				<Skeleton key={i} className="h-10 w-full" />
+			{SKELETON_ROWS.map((k) => (
+				<Skeleton className="h-10 w-full" key={k} />
 			))}
+		</div>
+	);
+}
+
+function RankingContent({
+	isLoading,
+	isEmpty,
+	ranking,
+}: {
+	isLoading: boolean;
+	isEmpty: boolean;
+	ranking: Array<{
+		userId: string;
+		name: string;
+		totalLeads: number;
+		score: number;
+	}>;
+}) {
+	if (isLoading) {
+		return <RankingTableSkeleton />;
+	}
+	if (isEmpty) {
+		return (
+			<Empty>
+				<EmptyDescription>
+					Sem dados para o periodo. Nao ha leads registrados para os filtros
+					selecionados. Ajuste o periodo ou remova filtros.
+				</EmptyDescription>
+			</Empty>
+		);
+	}
+	return (
+		<div className="overflow-x-auto">
+			<table className="w-full text-sm">
+				<thead>
+					<tr className="border-b text-left text-muted-foreground">
+						<th className="pr-4 pb-2 font-medium">#</th>
+						<th className="pr-4 pb-2 font-medium">Nome</th>
+						<th className="pr-4 pb-2 font-medium">Leads</th>
+						<th className="pb-2 font-medium">Score</th>
+					</tr>
+				</thead>
+				<tbody>
+					{ranking.map((entry, index) => (
+						<tr className="border-b last:border-0" key={entry.userId}>
+							<td className="py-2 pr-4 text-muted-foreground">{index + 1}</td>
+							<td className="py-2 pr-4 font-medium">{entry.name ?? "—"}</td>
+							<td className="py-2 pr-4">{entry.totalLeads}</td>
+							<td className="py-2 font-semibold">{entry.score} pts</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
 		</div>
 	);
 }
@@ -86,10 +140,7 @@ export default function StatsPanel() {
 			) : (
 				<div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
 					<StatCard label="Total de Leads" value={stats?.total ?? 0} />
-					<StatCard
-						label="Score Total"
-						value={`${stats?.score ?? 0} pts`}
-					/>
+					<StatCard label="Score Total" value={`${stats?.score ?? 0} pts`} />
 					<StatCard label="Leads Hoje" value={stats?.today ?? 0} />
 					<StatCard
 						label="Vendedores Ativos"
@@ -115,48 +166,11 @@ export default function StatsPanel() {
 					<CardTitle>Ranking</CardTitle>
 				</CardHeader>
 				<CardContent>
-					{rankingQuery.isLoading ? (
-						<RankingTableSkeleton />
-					) : isEmpty ? (
-						<Empty>
-							<EmptyDescription>
-								Sem dados para o periodo. Nao ha leads registrados para os
-								filtros selecionados. Ajuste o periodo ou remova filtros.
-							</EmptyDescription>
-						</Empty>
-					) : (
-						<div className="overflow-x-auto">
-							<table className="w-full text-sm">
-								<thead>
-									<tr className="border-b text-left text-muted-foreground">
-										<th className="pb-2 pr-4 font-medium">#</th>
-										<th className="pb-2 pr-4 font-medium">Nome</th>
-										<th className="pb-2 pr-4 font-medium">Leads</th>
-										<th className="pb-2 font-medium">Score</th>
-									</tr>
-								</thead>
-								<tbody>
-									{ranking.map((entry, index) => (
-										<tr
-											key={entry.userId}
-											className="border-b last:border-0"
-										>
-											<td className="py-2 pr-4 text-muted-foreground">
-												{index + 1}
-											</td>
-											<td className="py-2 pr-4 font-medium">
-												{entry.name ?? "—"}
-											</td>
-											<td className="py-2 pr-4">{entry.totalLeads}</td>
-											<td className="py-2 font-semibold">
-												{entry.score} pts
-											</td>
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
-					)}
+					<RankingContent
+						isEmpty={isEmpty}
+						isLoading={rankingQuery.isLoading}
+						ranking={ranking}
+					/>
 				</CardContent>
 			</Card>
 		</div>

@@ -13,19 +13,12 @@ import {
 	ChartTooltipContent,
 } from "@dashboard-leads-profills/ui/components/chart";
 import { Skeleton } from "@dashboard-leads-profills/ui/components/skeleton";
-import {
-	Bar,
-	BarChart,
-	Line,
-	LineChart,
-	XAxis,
-	YAxis,
-} from "recharts";
+import { Bar, BarChart, Line, LineChart, XAxis, YAxis } from "recharts";
 
 interface StatsChartsProps {
+	isLoading?: boolean;
 	tagData: { quente: number; morno: number; frio: number };
 	timelineData: Array<{ date: string; count: number }>;
-	isLoading?: boolean;
 }
 
 const tagChartConfig: ChartConfig = {
