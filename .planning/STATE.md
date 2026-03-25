@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-03-25T01:52:09.102Z"
+status: Ready to execute
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-25T02:24:58.053Z"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 14
+  completed_plans: 12
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Phase 03 — lead-capture
+**Current focus:** Phase 04 — lead-management
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 04 (lead-management) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Plan: Not started
 | Phase 03 P02 | 6min | 2 tasks | 5 files |
 | Phase 03 P03 | 3min | 2 tasks | 3 files |
 | Phase 03-lead-capture P04 | 5min | 2 tasks | 6 files |
+| Phase 04 P01 | 2min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,9 @@ Recent decisions affecting current work:
 - [Phase 03]: FAB usa type cast para typedRoutes com novas rotas (regenera no proximo build)
 - [Phase 03]: biome-ignore para img element no photo preview (blob URL incompativel com next/image)
 - [Phase 03-lead-capture]: Upload entre pushChanges e pullChanges no sync cycle (leads precisam de serverId do push)
+- [Phase 04]: photo !== undefined guard prevents accidental photo loss on updateLead
+- [Phase 04]: Custom relativeTime instead of date-fns (4 time ranges, no extra dependency)
+- [Phase 04]: queryLeads uses Dexie .filter() for deletedAt (bounded dataset per user)
 
 ### Pending Todos
 
@@ -107,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T01:49:12.410Z
-Stopped at: Completed 03-04-PLAN.md
+Last session: 2026-03-25T02:24:58.051Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
