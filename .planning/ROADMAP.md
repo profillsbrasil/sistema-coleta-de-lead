@@ -107,9 +107,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Data layer: Dexie schema v2, personal stats TDD, leaderboard tRPC procedure
-- [ ] 05-02-PLAN.md — UI components: StatCard, LeaderboardEntry, StalenessIndicator, PersonalDashboard, LeaderboardTab
-- [ ] 05-03-PLAN.md — Page wiring: dashboard tabs, sync engine integration, human verification
+- [x] 05-01-PLAN.md — Data layer: Dexie schema v2, personal stats TDD, leaderboard tRPC procedure
+- [x] 05-02-PLAN.md — UI components: StatCard, LeaderboardEntry, StalenessIndicator, PersonalDashboard, LeaderboardTab
+- [x] 05-03-PLAN.md — Page wiring: dashboard tabs, sync engine integration, human verification
 
 **UI hint**: yes
 
