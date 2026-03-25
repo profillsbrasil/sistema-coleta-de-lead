@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-03-25T00:16:04.457Z"
+status: Ready to execute
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-25T01:05:01.471Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 11
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Phase 02 — offline-infrastructure
+**Current focus:** Phase 03 — lead-capture
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (lead-capture) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: Not started
 | Phase 02 P01 | 3min | 2 tasks | 9 files |
 | Phase 02 P02 | 2min | 2 tasks | 4 files |
 | Phase 02 P03 | 4min | 2 tasks | 3 files |
+| Phase 03 P01 | 3min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,9 @@ Recent decisions affecting current work:
 - [Phase 02]: tRPC vanilla client singleton separado do React Query para sync engine (fora do React tree)
 - [Phase 02]: Mutex via isSyncing boolean para prevenir sync cycles concorrentes
 - [Phase 02]: localStorage para persistir lastSyncTimestamp entre sessions
+- [Phase 03]: Zod 4 com .refine() para validacao condicional phone-or-email no leadFormSchema
+- [Phase 03]: calculateDimensions exportada separada de compressImage para testabilidade sem canvas mock
+- [Phase 03]: emptyToNull pattern: campos opcionais vazios viram null antes de persistir no Dexie
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T00:13:28.333Z
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-03-25T01:05:01.469Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None

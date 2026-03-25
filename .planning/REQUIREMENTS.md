@@ -26,14 +26,14 @@
 
 ### Lead Capture
 
-- [ ] **CAPT-01**: Vendedor pode criar lead via formulario rapido (nome, telefone/email, interesse obrigatorios)
+- [x] **CAPT-01**: Vendedor pode criar lead via formulario rapido (nome, telefone/email, interesse obrigatorios)
 - [ ] **CAPT-02**: Campos opcionais: empresa, cargo, segmento (texto livre), notas (multi-line)
 - [ ] **CAPT-03**: Vendedor pode escanear QR Code do WhatsApp e auto-preencher telefone (parse wa.me URL)
 - [ ] **CAPT-04**: Vendedor pode tirar foto (cartao de visita, crachat) e anexar ao lead
-- [ ] **CAPT-05**: Foto comprimida antes de armazenar no Dexie (max 1280px, JPEG 0.7) para evitar QuotaExceededError
+- [x] **CAPT-05**: Foto comprimida antes de armazenar no Dexie (max 1280px, JPEG 0.7) para evitar QuotaExceededError
 - [ ] **CAPT-06**: Foto sincronizada para Supabase Storage quando online
-- [ ] **CAPT-07**: Vendedor pode atribuir tag de interesse ao criar lead (quente, morno, frio)
-- [ ] **CAPT-08**: Coleta funciona 100% offline — dados salvos no Dexie primeiro
+- [x] **CAPT-07**: Vendedor pode atribuir tag de interesse ao criar lead (quente, morno, frio)
+- [x] **CAPT-08**: Coleta funciona 100% offline — dados salvos no Dexie primeiro
 
 ### Lead Management
 
@@ -107,14 +107,14 @@
 | OFFL-04 | Phase 2 | Complete |
 | OFFL-05 | Phase 2 | Complete |
 | OFFL-06 | Phase 2 | Complete |
-| CAPT-01 | Phase 3 | Pending |
+| CAPT-01 | Phase 3 | Complete |
 | CAPT-02 | Phase 3 | Pending |
 | CAPT-03 | Phase 3 | Pending |
 | CAPT-04 | Phase 3 | Pending |
-| CAPT-05 | Phase 3 | Pending |
+| CAPT-05 | Phase 3 | Complete |
 | CAPT-06 | Phase 3 | Pending |
-| CAPT-07 | Phase 3 | Pending |
-| CAPT-08 | Phase 3 | Pending |
+| CAPT-07 | Phase 3 | Complete |
+| CAPT-08 | Phase 3 | Complete |
 | LEAD-01 | Phase 4 | Pending |
 | LEAD-02 | Phase 4 | Pending |
 | LEAD-03 | Phase 4 | Pending |
