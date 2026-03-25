@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Auth Migration** - Migrar Better-Auth para Supabase Auth com OAuth e roles
 - [ ] **Phase 2: Offline Infrastructure** - Schema Drizzle, Dexie DB e Sync Engine
-- [ ] **Phase 3: Lead Capture** - Formulario rapido, QR scan e captura de foto
+- [x] **Phase 3: Lead Capture** - Formulario rapido, QR scan e captura de foto (completed 2026-03-25)
 - [ ] **Phase 4: Lead Management** - CRUD completo de leads com filtros, tudo offline
 - [ ] **Phase 5: Dashboard & Leaderboard** - Estatisticas pessoais e ranking da equipe
 - [ ] **Phase 6: Admin Panel** - Gestao global de leads e usuarios pelo admin
@@ -67,13 +67,13 @@ Plans:
   3. Vendedor tira foto de cartao de visita e ela e salva junto ao lead (comprimida, sem travar o app)
   4. Foto aparece no lead apos sync — visivel no detalhe do lead quando online
   5. Tag de interesse (quente, morno, frio) e atribuida na criacao do lead
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 03-01-PLAN.md — Utility modules with TDD (validation, wa-parser, compression, saveLead) + dependency install
 - [x] 03-02-PLAN.md — LeadForm UI, TagSelector, FAB, /leads/new page
 - [x] 03-03-PLAN.md — QRScanner overlay + PhotoCapture component wired into form
-- [ ] 03-04-PLAN.md — Photo upload sync to Supabase Storage + human verification
+- [x] 03-04-PLAN.md — Photo upload sync to Supabase Storage + human verification
 
 **UI hint**: yes
 
@@ -123,7 +123,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Auth Migration | 4/4 | Complete | - |
 | 2. Offline Infrastructure | 3/3 | Complete |  |
-| 3. Lead Capture | 0/4 | Planned | - |
+| 3. Lead Capture | 4/4 | Complete   | 2026-03-25 |
 | 4. Lead Management | 0/? | Not started | - |
 | 5. Dashboard & Leaderboard | 0/? | Not started | - |
 | 6. Admin Panel | 0/? | Not started | - |

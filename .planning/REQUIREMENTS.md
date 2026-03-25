@@ -31,7 +31,7 @@
 - [x] **CAPT-03**: Vendedor pode escanear QR Code do WhatsApp e auto-preencher telefone (parse wa.me URL)
 - [x] **CAPT-04**: Vendedor pode tirar foto (cartao de visita, crachat) e anexar ao lead
 - [x] **CAPT-05**: Foto comprimida antes de armazenar no Dexie (max 1280px, JPEG 0.7) para evitar QuotaExceededError
-- [ ] **CAPT-06**: Foto sincronizada para Supabase Storage quando online
+- [x] **CAPT-06**: Foto sincronizada para Supabase Storage quando online
 - [x] **CAPT-07**: Vendedor pode atribuir tag de interesse ao criar lead (quente, morno, frio)
 - [x] **CAPT-08**: Coleta funciona 100% offline — dados salvos no Dexie primeiro
 
@@ -112,7 +112,7 @@
 | CAPT-03 | Phase 3 | Complete |
 | CAPT-04 | Phase 3 | Complete |
 | CAPT-05 | Phase 3 | Complete |
-| CAPT-06 | Phase 3 | Pending |
+| CAPT-06 | Phase 3 | Complete |
 | CAPT-07 | Phase 3 | Complete |
 | CAPT-08 | Phase 3 | Complete |
 | LEAD-01 | Phase 4 | Pending |
