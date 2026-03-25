@@ -32,10 +32,28 @@ vi.mock("@trpc/client", () => ({
 import { toast } from "sonner";
 import { db } from "../db/index";
 
+// Mock localStorage since jsdom in this env doesn't provide standard Storage
+const localStorageMap = new Map<string, string>();
+const mockLocalStorage = {
+	getItem: (key: string) => localStorageMap.get(key) ?? null,
+	setItem: (key: string, value: string) => localStorageMap.set(key, value),
+	removeItem: (key: string) => localStorageMap.delete(key),
+	clear: () => localStorageMap.clear(),
+	get length() {
+		return localStorageMap.size;
+	},
+	key: (_index: number) => null,
+};
+Object.defineProperty(globalThis, "localStorage", {
+	value: mockLocalStorage,
+	writable: true,
+	configurable: true,
+});
+
 describe("sync engine", () => {
 	beforeEach(async () => {
 		vi.clearAllMocks();
-		localStorage.clear();
+		localStorageMap.clear();
 		await db.leads.clear();
 		await db.syncQueue.clear();
 
@@ -410,7 +428,7 @@ describe("sync engine", () => {
 			});
 
 			const authError = new Error("UNAUTHORIZED");
-			(authError as Record<string, unknown>).data = {
+			(authError as unknown as Record<string, unknown>).data = {
 				code: "UNAUTHORIZED",
 			};
 			mockPushChanges.mutate.mockRejectedValue(authError);
@@ -425,6 +443,14 @@ describe("sync engine", () => {
 		});
 
 		it("prevents concurrent sync cycles via mutex", async () => {
+			await db.syncQueue.add({
+				localId: "mutex-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Mutex Test" }),
+				retryCount: 0,
+			});
+
 			let resolveFirst: () => void;
 			const firstPromise = new Promise<void>((resolve) => {
 				resolveFirst = resolve;
@@ -432,7 +458,10 @@ describe("sync engine", () => {
 
 			mockPushChanges.mutate.mockImplementationOnce(async () => {
 				await firstPromise;
-				return { acknowledged: [], idMappings: [] };
+				return {
+					acknowledged: [{ localId: "mutex-uuid", queueId: "q1" }],
+					idMappings: [],
+				};
 			});
 
 			const { syncCycle } = await import("./engine");
@@ -444,8 +473,8 @@ describe("sync engine", () => {
 			await first;
 			await second;
 
-			// Only one call should have been made (second was blocked by mutex)
-			expect(mockPushChanges.mutate).toHaveBeenCalledTimes(0);
+			// Only one mutate call: first cycle runs, second is skipped by mutex
+			expect(mockPushChanges.mutate).toHaveBeenCalledTimes(1);
 		});
 	});
 });
