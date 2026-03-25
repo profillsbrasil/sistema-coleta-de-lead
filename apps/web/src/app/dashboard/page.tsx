@@ -16,10 +16,8 @@ export default async function DashboardPage() {
 	}
 
 	return (
-		<div>
-			<h1>Dashboard</h1>
-			<p>Welcome {user.user_metadata?.full_name ?? user.email}</p>
-			<Dashboard />
+		<div className="mx-auto w-full max-w-[480px] px-4 pt-8">
+			<Dashboard userId={user.id} />
 			<FAB />
 		</div>
 	);
