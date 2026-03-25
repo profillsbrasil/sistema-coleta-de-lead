@@ -71,7 +71,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Utility modules with TDD (validation, wa-parser, compression, saveLead) + dependency install
-- [ ] 03-02-PLAN.md — LeadForm UI, TagSelector, FAB, /leads/new page
+- [x] 03-02-PLAN.md — LeadForm UI, TagSelector, FAB, /leads/new page
 - [ ] 03-03-PLAN.md — QRScanner overlay + PhotoCapture component wired into form
 - [ ] 03-04-PLAN.md — Photo upload sync to Supabase Storage + human verification
 

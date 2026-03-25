@@ -27,7 +27,7 @@
 ### Lead Capture
 
 - [x] **CAPT-01**: Vendedor pode criar lead via formulario rapido (nome, telefone/email, interesse obrigatorios)
-- [ ] **CAPT-02**: Campos opcionais: empresa, cargo, segmento (texto livre), notas (multi-line)
+- [x] **CAPT-02**: Campos opcionais: empresa, cargo, segmento (texto livre), notas (multi-line)
 - [ ] **CAPT-03**: Vendedor pode escanear QR Code do WhatsApp e auto-preencher telefone (parse wa.me URL)
 - [ ] **CAPT-04**: Vendedor pode tirar foto (cartao de visita, crachat) e anexar ao lead
 - [x] **CAPT-05**: Foto comprimida antes de armazenar no Dexie (max 1280px, JPEG 0.7) para evitar QuotaExceededError
@@ -108,7 +108,7 @@
 | OFFL-05 | Phase 2 | Complete |
 | OFFL-06 | Phase 2 | Complete |
 | CAPT-01 | Phase 3 | Complete |
-| CAPT-02 | Phase 3 | Pending |
+| CAPT-02 | Phase 3 | Complete |
 | CAPT-03 | Phase 3 | Pending |
 | CAPT-04 | Phase 3 | Pending |
 | CAPT-05 | Phase 3 | Complete |
