@@ -50,11 +50,11 @@ Plans:
   3. Conflito de dados e resolvido com server-wins baseado em updated_at
   4. Sync falha graciosamente quando sessao expirou — dados locais nao sao perdidos
   5. Detector de conectividade funciona no Safari mobile (polling fallback)
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [x] 02-01-PLAN.md — Drizzle leads schema, Dexie DB + types, test infrastructure (fake-indexeddb)
-- [ ] 02-02-PLAN.md — tRPC sync router (pushChanges/pullChanges), connectivity detector
+- [x] 02-02-PLAN.md — tRPC sync router (pushChanges/pullChanges), connectivity detector
 - [ ] 02-03-PLAN.md — Sync engine singleton (push-then-pull, conflict resolution, retry, provider wiring)
 
 ### Phase 3: Lead Capture
@@ -115,7 +115,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Auth Migration | 4/4 | Complete | - |
-| 2. Offline Infrastructure | 0/3 | Planned | - |
+| 2. Offline Infrastructure | 2/3 | In Progress|  |
 | 3. Lead Capture | 0/? | Not started | - |
 | 4. Lead Management | 0/? | Not started | - |
 | 5. Dashboard & Leaderboard | 0/? | Not started | - |
