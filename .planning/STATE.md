@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-25T09:51:57.098Z"
+status: Ready to execute
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-25T10:49:13.303Z"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 14
+  total_plans: 17
   completed_plans: 14
 ---
 
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Phase 04 — lead-management
+**Current focus:** Phase 05 — dashboard-leaderboard
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
+Phase: 05 (dashboard-leaderboard) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Plan: Not started
 | Phase 04 P01 | 2min | 2 tasks | 8 files |
 | Phase 04 P02 | 4min | 2 tasks | 7 files |
 | Phase 04 P03 | 5min | 3 tasks | 5 files |
+| Phase 05 P01 | 3min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -106,6 +107,9 @@ Recent decisions affecting current work:
 - [Phase 04]: IntersectionObserver com rootMargin 200px para pre-fetch no infinite scroll
 - [Phase 04]: hasMore heuristic: leads.length === limit (sem count query separada)
 - [Phase 04]: AlertDialog wraps page content (fora do LeadForm) para separacao de concerns
+- [Phase 05]: Dexie version(2) incremental mantendo version(1) — leaderboardCache com userId como primary key
+- [Phase 05]: getPersonalStats usa Date comparison (nao string ISO) para leads de hoje — timezone-safe
+- [Phase 05]: leaderboardRouter usa raw SQL via drizzle sql tag com cross-schema JOIN auth.users para nomes
 
 ### Pending Todos
 
@@ -118,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T09:51:57.096Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-dashboard-leaderboard/05-CONTEXT.md
+Last session: 2026-03-25T10:49:13.301Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None

@@ -104,7 +104,13 @@ Plans:
   2. Vendedor ve leaderboard com ranking de todos vendedores por quantidade e score ponderado (quente=3, morno=2, frio=1)
   3. Dashboard e leaderboard funcionam offline com dados da ultima sincronizacao
   4. Leaderboard mostra quando os dados foram sincronizados pela ultima vez (indicador de staleness)
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Data layer: Dexie schema v2, personal stats TDD, leaderboard tRPC procedure
+- [ ] 05-02-PLAN.md — UI components: StatCard, LeaderboardEntry, StalenessIndicator, PersonalDashboard, LeaderboardTab
+- [ ] 05-03-PLAN.md — Page wiring: dashboard tabs, sync engine integration, human verification
+
 **UI hint**: yes
 
 ### Phase 6: Admin Panel
@@ -131,5 +137,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Offline Infrastructure | 3/3 | Complete |  |
 | 3. Lead Capture | 4/4 | Complete   | 2026-03-25 |
 | 4. Lead Management | 0/3 | Not started | - |
-| 5. Dashboard & Leaderboard | 0/? | Not started | - |
+| 5. Dashboard & Leaderboard | 0/3 | Not started | - |
 | 6. Admin Panel | 0/? | Not started | - |
