@@ -6,6 +6,7 @@ import { db } from "../db/index";
 import type { Lead } from "../db/types";
 import { createConnectivityDetector } from "./connectivity";
 import { getBackoffDelay, SYNC_CONFIG } from "./constants";
+import { uploadPendingPhotos } from "./photo-upload";
 
 const syncClient = createTRPCClient<AppRouter>({
 	links: [
@@ -161,6 +162,11 @@ export async function syncCycle(): Promise<void> {
 	isSyncing = true;
 	try {
 		await pushChanges();
+		try {
+			await uploadPendingPhotos();
+		} catch {
+			// Photo upload failure should not break sync cycle
+		}
 		await pullChanges();
 	} catch (error: unknown) {
 		if (isUnauthorizedError(error)) {
