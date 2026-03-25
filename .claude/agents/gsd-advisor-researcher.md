@@ -1,7 +1,7 @@
 ---
 name: gsd-advisor-researcher
 description: Researches a single gray area decision and returns a structured comparison table with rationale. Spawned by discuss-phase advisor mode.
-tools: Read, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*
+tools: Read, Bash, Grep, Glob, WebSearch
 color: cyan
 ---
 
@@ -15,6 +15,26 @@ Spawned by `discuss-phase` via `Task()`. You do NOT present output directly to t
 - Produce a structured 5-column comparison table with genuinely viable options
 - Write a rationale paragraph grounding the recommendation in the project context
 - Return structured markdown output for the main agent to synthesize
+
+**Web content access:** Use `agent-browser` via Bash to read web pages. Pattern:
+```bash
+agent-browser open <url> && agent-browser wait --load networkidle && agent-browser snapshot -i
+agent-browser get text body  # Extract full page text
+agent-browser close
+```
+For library API docs, use `ctx7` CLI via Bash:
+```bash
+npx ctx7@latest library <name> "<query>"  # Step 1: resolve library ID
+npx ctx7@latest docs <libraryId> "<query>"  # Step 2: query docs
+```
+Use agent-browser for everything else (blogs, tutorials, comparisons, GitHub READMEs).
+
+**Codebase search:** Use `mgrep` via Bash for semantic search in the codebase (more effective than literal Grep):
+```bash
+mgrep "describe what you're looking for"           # semantic search in current dir
+mgrep "how is authentication handled?" src/         # scoped to directory
+mgrep --web --answer "how to integrate X with Y"    # web search with summary
+```
 </role>
 
 <input>
@@ -82,13 +102,18 @@ Return EXACTLY this structure:
 
 | Priority | Tool | Use For | Trust Level |
 |----------|------|---------|-------------|
-| 1st | Context7 | Library APIs, features, configuration, versions | HIGH |
-| 2nd | WebFetch | Official docs/READMEs not in Context7, changelogs | HIGH-MEDIUM |
+| 1st | ctx7 CLI | Library APIs, features, configuration, versions | HIGH |
+| 2nd | agent-browser | Official docs/READMEs, changelogs, blog posts | HIGH-MEDIUM |
 | 3rd | WebSearch | Ecosystem discovery, community patterns, pitfalls | Needs verification |
 
-**Context7 flow:**
-1. `mcp__context7__resolve-library-id` with libraryName
-2. `mcp__context7__query-docs` with resolved ID + specific query
+**ctx7 flow (via Bash):**
+1. `npx ctx7@latest library <name> "<query>"` — resolve library ID
+2. `npx ctx7@latest docs <libraryId> "<query>"` — query docs
+
+**agent-browser flow (via Bash):**
+1. `agent-browser open <url> && agent-browser wait --load networkidle`
+2. `agent-browser get text body` — extract page content
+3. `agent-browser close`
 
 Keep research focused on the single gray area. Do not explore tangential topics.
 </tool_strategy>

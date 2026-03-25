@@ -10,8 +10,8 @@ allowed-tools:
   - Glob
   - Grep
   - Task
-  - WebFetch
-  - mcp__context7__*
+  - Bash(npx ctx7@latest:*)
+  - Bash(agent-browser:*)
 ---
 <objective>
 Create executable phase prompts (PLAN.md files) for a roadmap phase with integrated research and verification.

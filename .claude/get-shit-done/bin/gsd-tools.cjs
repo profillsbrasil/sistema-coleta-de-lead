@@ -152,6 +152,10 @@ const profilePipeline = require("./lib/profile-pipeline.cjs");
 const profileOutput = require("./lib/profile-output.cjs");
 const workstream = require("./lib/workstream.cjs");
 
+const FIELD_PATH_BRACKET_RE = /^(.+?)\[(-?\d+)]$/;
+const WORKSTREAM_NAME_SAFE_RE = /^[a-zA-Z0-9_-]+$/;
+const LEADING_DOUBLE_DASH_RE = /^--/;
+
 // ─── Arg parsing helpers ──────────────────────────────────────────────────────
 
 /**
@@ -262,7 +266,7 @@ async function main() {
 		ws = getActiveWorkstream(cwd);
 	}
 	// Validate workstream name to prevent path traversal attacks.
-	if (ws && !/^[a-zA-Z0-9_-]+$/.test(ws)) {
+	if (ws && !WORKSTREAM_NAME_SAFE_RE.test(ws)) {
 		error(
 			"Invalid workstream name: must be alphanumeric, hyphens, and underscores only"
 		);
@@ -366,7 +370,7 @@ function extractField(obj, fieldPath) {
 		if (current === null || current === undefined) {
 			return undefined;
 		}
-		const bracketMatch = part.match(/^(.+?)\[(-?\d+)]$/);
+		const bracketMatch = FIELD_PATH_BRACKET_RE.exec(part);
 		if (bracketMatch) {
 			const key = bracketMatch[1];
 			const index = Number.parseInt(bracketMatch[2], 10);
@@ -395,7 +399,7 @@ async function runCommand(command, args, cwd, raw) {
 			} else if (subcommand === "patch") {
 				const patches = {};
 				for (let i = 2; i < args.length; i += 2) {
-					const key = args[i].replace(/^--/, "");
+					const key = args[i].replace(LEADING_DOUBLE_DASH_RE, "");
 					const value = args[i + 1];
 					if (key && value !== undefined) {
 						patches[key] = value;
