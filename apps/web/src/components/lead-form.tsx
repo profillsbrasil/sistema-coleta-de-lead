@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import type { Lead } from "@/lib/db/types";
 import { saveLead } from "@/lib/lead/save-lead";
 import { updateLead } from "@/lib/lead/update-lead";
-import { leadFormSchema } from "@/lib/lead/validation";
+import { type LeadFormData, leadFormSchema } from "@/lib/lead/validation";
 import { createClient } from "@/lib/supabase/client";
 
 import PhotoCapture from "./photo-capture";
@@ -38,12 +38,26 @@ interface FormErrors {
 }
 
 interface LeadFormProps {
+	hidePhoto?: boolean;
+	hideQR?: boolean;
 	lead?: Lead;
 	onDelete?: () => void;
+	onSave?: (data: LeadFormData, photo: Blob | null) => Promise<void>;
+	onUpdate?: (
+		data: LeadFormData,
+		photo: Blob | null | undefined
+	) => Promise<void>;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form component with many fields requires co-located state and validation logic
-export default function LeadForm({ lead, onDelete }: LeadFormProps) {
+export default function LeadForm({
+	lead,
+	onDelete,
+	onSave,
+	onUpdate,
+	hidePhoto,
+	hideQR,
+}: LeadFormProps) {
 	const router = useRouter();
 	const isEditMode = !!lead;
 
@@ -80,13 +94,16 @@ export default function LeadForm({ lead, onDelete }: LeadFormProps) {
 	const [userId, setUserId] = useState<string | null>(null);
 
 	useEffect(() => {
+		if (onSave) {
+			return;
+		}
 		const supabase = createClient();
 		supabase.auth.getUser().then(({ data }) => {
 			if (data.user) {
 				setUserId(data.user.id);
 			}
 		});
-	}, []);
+	}, [onSave]);
 
 	function focusFirstError(fieldErrors: FormErrors) {
 		if (fieldErrors.name) {
@@ -98,11 +115,12 @@ export default function LeadForm({ lead, onDelete }: LeadFormProps) {
 		}
 	}
 
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form submit with optional callback paths requires branching logic
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		setErrors({});
 
-		if (!userId) {
+		if (!(onSave || userId)) {
 			toast.error("Algo deu errado. Tente novamente.");
 			return;
 		}
@@ -134,14 +152,22 @@ export default function LeadForm({ lead, onDelete }: LeadFormProps) {
 		setIsSubmitting(true);
 		try {
 			if (isEditMode && lead) {
-				await updateLead(
-					lead.localId,
-					result.data,
-					photoChanged ? photo : undefined
-				);
+				if (onUpdate) {
+					await onUpdate(result.data, photoChanged ? photo : undefined);
+				} else {
+					await updateLead(
+						lead.localId,
+						result.data,
+						photoChanged ? photo : undefined
+					);
+				}
 				toast.success("Lead atualizado!");
 			} else {
-				await saveLead(result.data, userId, photo);
+				if (onSave) {
+					await onSave(result.data, photo);
+				} else {
+					await saveLead(result.data, userId as string, photo);
+				}
 				toast.success("Lead salvo!");
 			}
 			router.back();
@@ -219,16 +245,18 @@ export default function LeadForm({ lead, onDelete }: LeadFormProps) {
 									type="tel"
 									value={phone}
 								/>
-								<Button
-									aria-label="Escanear QR Code do WhatsApp"
-									disabled={isSubmitting}
-									onClick={() => setShowQRScanner(true)}
-									size="icon"
-									type="button"
-									variant="outline"
-								>
-									<QrCode className="size-4" />
-								</Button>
+								{hideQR ? null : (
+									<Button
+										aria-label="Escanear QR Code do WhatsApp"
+										disabled={isSubmitting}
+										onClick={() => setShowQRScanner(true)}
+										size="icon"
+										type="button"
+										variant="outline"
+									>
+										<QrCode className="size-4" />
+									</Button>
+								)}
 							</div>
 							{errors.phone && (
 								<p
@@ -274,20 +302,22 @@ export default function LeadForm({ lead, onDelete }: LeadFormProps) {
 							/>
 						</div>
 
-						<div className="flex flex-col gap-2">
-							<Label>Foto do cartao</Label>
-							<PhotoCapture
-								onCapture={(blob) => {
-									setPhoto(blob);
-									setPhotoChanged(true);
-								}}
-								onRemove={() => {
-									setPhoto(null);
-									setPhotoChanged(true);
-								}}
-								photo={photo}
-							/>
-						</div>
+						{hidePhoto ? null : (
+							<div className="flex flex-col gap-2">
+								<Label>Foto do cartao</Label>
+								<PhotoCapture
+									onCapture={(blob) => {
+										setPhoto(blob);
+										setPhotoChanged(true);
+									}}
+									onRemove={() => {
+										setPhoto(null);
+										setPhotoChanged(true);
+									}}
+									photo={photo}
+								/>
+							</div>
+						)}
 
 						<Collapsible onOpenChange={setShowDetails} open={showDetails}>
 							<CollapsibleTrigger
@@ -379,14 +409,16 @@ export default function LeadForm({ lead, onDelete }: LeadFormProps) {
 				</CardContent>
 			</Card>
 
-			<QRScanner
-				onClose={() => setShowQRScanner(false)}
-				onScan={(scannedPhone) => {
-					setPhone(scannedPhone);
-					setShowQRScanner(false);
-				}}
-				open={showQRScanner}
-			/>
+			{hideQR ? null : (
+				<QRScanner
+					onClose={() => setShowQRScanner(false)}
+					onScan={(scannedPhone) => {
+						setPhone(scannedPhone);
+						setShowQRScanner(false);
+					}}
+					open={showQRScanner}
+				/>
+			)}
 		</div>
 	);
 }
