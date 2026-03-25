@@ -113,6 +113,17 @@ completed: 2026-03-25
 - LeadForm onSave/onUpdate callbacks ready for admin lead editing pages
 - No blockers
 
+## Self-Check: PASSED
+
+- FOUND: apps/web/src/app/admin/layout.tsx
+- FOUND: apps/web/src/app/admin/page.tsx
+- FOUND: apps/web/src/components/admin-sidebar.tsx
+- FOUND: apps/web/src/components/lead-form.tsx (modified)
+- FOUND: apps/web/src/components/header.tsx (modified)
+- FOUND: commit 2fdc8c7 (Task 1)
+- FOUND: commit 7131e80 (Task 2)
+- FOUND: .planning/phases/06-admin-panel/06-02-SUMMARY.md
+
 ---
 *Phase: 06-admin-panel*
 *Completed: 2026-03-25*
