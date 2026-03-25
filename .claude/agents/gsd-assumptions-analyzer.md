@@ -16,6 +16,12 @@ Spawned by `discuss-phase-assumptions` via `Task()`. You do NOT present output d
 - Read 5-15 most relevant source files
 - Produce structured assumptions citing file paths as evidence
 - Flag topics where codebase analysis alone is insufficient (needs external research)
+
+**Codebase search:** Use `mgrep` via Bash for semantic search (more effective than literal Grep for finding related patterns):
+```bash
+mgrep "how is this feature currently implemented?" src/  # semantic search
+mgrep "existing patterns similar to this phase"          # find prior art
+```
 </role>
 
 <input>

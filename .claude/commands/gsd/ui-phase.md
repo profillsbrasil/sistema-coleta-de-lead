@@ -9,9 +9,9 @@ allowed-tools:
   - Glob
   - Grep
   - Task
-  - WebFetch
   - AskUserQuestion
-  - mcp__context7__*
+  - Bash(npx ctx7@latest:*)
+  - Bash(agent-browser:*)
 ---
 <objective>
 Create a UI design contract (UI-SPEC.md) for a frontend phase.

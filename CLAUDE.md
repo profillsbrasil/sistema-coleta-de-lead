@@ -6,7 +6,7 @@
 - **Frontend**: Next.js 16.2 (React 19, React Compiler), TailwindCSS 4, shadcn/ui
 - **API**: tRPC 11 (RPC type-safe)
 - **ORM**: Drizzle ORM 0.45, PostgreSQL (Supabase)
-- **Auth**: Better-Auth 1.5 (email/password, session-based)
+- **Auth**: Supabase Auth via `@supabase/ssr` (email/password, cookie-based sessions)
 - **Linting**: Biome 2.2
 - **Testes**: Vitest 3.2
 - **TypeScript**: 5 strict
@@ -16,7 +16,7 @@
 ```
 apps/web               Next.js (porta 3001) — consome api, auth, ui, env
 packages/api           tRPC routers — consome auth, db, env
-packages/auth          Better-Auth config — consome db, env
+packages/auth          Supabase Auth clients (server + browser) — consome env
 packages/db            Drizzle ORM + schema — consome env
 packages/env           T3 Env validation (server + web exports)
 packages/ui            shadcn/ui components, hooks, styles
@@ -49,19 +49,28 @@ bun run db:studio      # drizzle studio (UI)
 - Commits: Conventional Commits em Portugues (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`)
 - Modules: `type: "module"` em todos os packages
 
+## UI Components
+
+- Antes de criar qualquer componente UI, verificar `packages/ui/src/components/` para componentes shadcn existentes
+- Usar compound patterns (CardHeader, CardContent, CardTitle, etc.) em vez de Card raw com padding manual
+- Usar `cn()` de `@dashboard-leads-profills/ui/lib/utils` para toda composicao de className -- nunca string concat
+- Usar Empty/EmptyDescription para estados vazios em vez de `<p>` raw
+- Consultar shadcn MCP skill para exemplos de uso quando disponivel
+- Recharts e importado direto (`Bar`, `BarChart`, etc.) mas wrappado com `ChartContainer`/`ChartTooltip` do shadcn
+
 ## Env Vars
 
 Arquivo: `apps/web/.env` (nao versionado)
 
-| Variavel | Validacao | Descricao |
-|----------|-----------|-----------|
-| `DATABASE_URL` | `z.string().min(1)` | Connection string PostgreSQL (Supabase) |
-| `BETTER_AUTH_SECRET` | `z.string().min(32)` | Secret para sessoes Better-Auth |
-| `BETTER_AUTH_URL` | `z.url()` | URL base da app |
-| `CORS_ORIGIN` | `z.url()` | Origem CORS permitida |
-| `NODE_ENV` | `z.enum(["development","production","test"])` | Ambiente (default: development) |
+| Variavel | Validacao | Escopo | Descricao |
+|----------|-----------|--------|-----------|
+| `DATABASE_URL` | `z.string().min(1)` | server | Connection string PostgreSQL (Supabase) |
+| `NEXT_PUBLIC_SUPABASE_URL` | `z.string().url()` | server + client | URL do projeto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `z.string().min(1)` | server + client | Anon key publica do Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | `z.string().min(1)` | server | Service role key (admin ops, nunca expor ao client) |
+| `NODE_ENV` | `z.enum(["development","production","test"])` | server | Ambiente (default: development) |
 
-Validacao em `packages/env/src/server.ts` via T3 Env + Zod. Roda no import time.
+Validacao server em `packages/env/src/server.ts`, client em `packages/env/src/web.ts`. T3 Env + Zod, roda no import time.
 
 ## Common Hurdles
 
@@ -70,6 +79,8 @@ Validacao em `packages/env/src/server.ts` via T3 Env + Zod. Roda no import time.
 - **tRPC context**: Acoplado a `NextRequest` (adapter fetch). Testes de routers precisam mockar o context.
 - **UI imports**: `packages/ui` usa exports path-based, nao barrel. Importar como `@dashboard-leads-profills/ui/components/button`.
 - **T3 Env no CI**: Build precisa de env vars validas (mesmo placeholder) para passar validacao Zod.
+- **Auth users**: Usuarios ficam em `auth.users` (schema Supabase, invisivel no Drizzle). Roles ficam em `public.user_roles`. Para tornar admin: `INSERT INTO user_roles (user_id, role) VALUES ('uuid', 'admin')` via SQL Editor do Supabase.
+- **Admin role check**: tRPC context extrai `user_role` de Supabase claims (`supabase.auth.getClaims()`). Roles precisam estar propagados como custom claims no Supabase para funcionar.
 
 ## Testes
 
@@ -110,7 +121,7 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 ### Constraints
 
 - **Offline-first:** Dexie como storage primario no client, Supabase como source of truth no server. Sync bidirecional com conflict resolution (server wins)
-- **Stack:** Usar stack existente (Next.js 16, tRPC, Drizzle, Supabase, Better-Auth, shadcn/ui). Dexie para offline
+- **Stack:** Usar stack existente (Next.js 16, tRPC, Drizzle, Supabase Auth, shadcn/ui). Dexie para offline
 - **Performance:** Coleta de lead deve ser < 3 toques ate salvar (formulario rapido)
 - **Compatibilidade:** Funcionar em Chrome e Safari mobile (cameras para QR e foto)
 - **Evento unico:** Sem necessidade de multi-tenancy ou separacao por evento
@@ -134,7 +145,7 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - TailwindCSS 4.1.18 - Utility-first CSS framework
 - tRPC 11.13.4 - Type-safe RPC framework
 - Drizzle ORM 0.45.1 - SQL ORM for PostgreSQL
-- Better-Auth 1.5.5 - Session-based authentication
+- Supabase Auth via `@supabase/ssr` 0.9 + `@supabase/supabase-js` 2.100 - Cookie-based authentication
 - TanStack React Query 5.90.12 - Server state management with React hooks
 - TanStack React Form 1.28.0 - Form state management
 - shadcn/ui - Accessible component library
@@ -176,9 +187,9 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Validation: T3 Env with Zod (schema-based)
 - Validation run time: Import-time (enforced on app start)
 - `DATABASE_URL` - PostgreSQL connection string (Supabase)
-- `BETTER_AUTH_SECRET` - Min 32 chars, session encryption key
-- `BETTER_AUTH_URL` - Base URL for auth provider (`z.url()` validated)
-- `CORS_ORIGIN` - Allowed CORS origin (`z.url()` validated)
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL (`z.string().url()`)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key (`z.string().min(1)`)
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key for admin ops (`z.string().min(1)`)
 - `NODE_ENV` - Optional, defaults to "development"
 - Location: `packages/env/src/server.ts` (server exports)
 - Location: `packages/env/src/web.ts` (client exports)
@@ -234,7 +245,7 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - No barrel files (index.ts re-exports) in hot paths; import directly from source
 ## Error Handling
 - tRPC: Use `TRPCError` with specific error codes and descriptive messages
-- Better-Auth: Errors handled via `onError` callback in form submissions
+- Supabase Auth: Errors handled via error response checks in form submissions
 - Database: No explicit error handling visible in CRUD operations; relies on ORM/framework
 - Input validation: Zod schemas with descriptive error messages
 - No silent failures; errors propagated to UI via toast notifications or form validation display
@@ -298,7 +309,7 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 ## Pattern Overview
 - Modular workspace structure (apps + packages)
 - tRPC for type-safe API communication (no REST)
-- Server-client separation with better-auth for session management
+- Server-client separation with Supabase Auth for session management
 - Database-first approach using Drizzle ORM with PostgreSQL
 - Environment validation at import time (T3 Env + Zod)
 - React 19 with Server Components where applicable
@@ -314,11 +325,11 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Contains: tRPC router setup, context creation, procedure definitions, input validation (Zod), data mutations
 - Depends on: `@dashboard-leads-profills/auth`, `@dashboard-leads-profills/db`, `@dashboard-leads-profills/env`
 - Used by: `apps/web` (via tRPC client)
-- Purpose: Better-auth configuration and session management
+- Purpose: Supabase Auth client factories (server + browser)
 - Location: `packages/auth/src`
-- Contains: Better-auth instance, Drizzle adapter configuration, email/password provider setup
-- Depends on: `@dashboard-leads-profills/db`, `@dashboard-leads-profills/env`
-- Used by: `packages/api` (for session context), `apps/web` (for auth routes)
+- Contains: `createServerClient` (cookie-based SSR), `createClient` (browser SPA)
+- Depends on: `@dashboard-leads-profills/env`
+- Used by: `apps/web` (for auth in server/client components)
 - Purpose: Drizzle ORM setup, schema definitions, database client
 - Location: `packages/db/src`
 - Contains: PostgreSQL schema tables, Drizzle client instance, schema exports
@@ -336,7 +347,7 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Used by: `apps/web`
 ## Data Flow
 - **Server State:** PostgreSQL (source of truth)
-- **Session State:** Better-auth session cookies + NextRequest headers
+- **Session State:** Supabase Auth cookies (via `@supabase/ssr`) + NextRequest headers
 - **Client Cache:** React Query (via `QueryClient` in `apps/web/src/utils/trpc.ts`)
 - **UI State:** React hooks (useState in components)
 ## Key Abstractions
@@ -369,15 +380,16 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - **API Errors:** tRPC throws `TRPCError` with code + message (e.g., "UNAUTHORIZED" in `protectedProcedure`)
 - **Validation Errors:** Zod validation in procedure `.input()` automatically rejects invalid data
 - **Client-side:** React Query catches errors, displays via Sonner toast in `apps/web/src/utils/trpc.ts`
-- **Auth Errors:** Better-auth returns explicit error responses on failed signup/signin
+- **Auth Errors:** Supabase Auth returns error responses on failed signup/signin
 ## Cross-Cutting Concerns
 - Input: Zod schemas in tRPC procedures (e.g., `z.object({ id: z.number() })`)
 - Environment: T3 Env at module import time
 - Database: Drizzle table constraints (unique, notNull, etc.)
-- Provider: Better-auth with email/password provider
-- Session: Cookie-based, validated on each request via `packages/api/src/context.ts`
-- Authorization: `protectedProcedure` middleware blocks unauthorized access to routes like `privateData`
-- Configured in Better-auth: `trustedOrigins: [env.CORS_ORIGIN]`
+- Provider: Supabase Auth (email/password)
+- Session: Cookie-based via `@supabase/ssr`, validated on each request via `packages/api/src/context.ts`
+- Authorization: `protectedProcedure` middleware blocks unauthenticated access; admin routes check `user_role` claim
+- Roles: Tabela `user_roles` (schema `public`) com `pgEnum("app_role", ["admin", "vendedor"])`; propagados para Supabase via custom claims
+- Users: Gerenciados pelo Supabase em `auth.users` (nao visivel no Drizzle); tabela `user_roles` e o unico schema local de auth
 - tRPC client sends credentials: `credentials: "include"` in fetch link
 <!-- GSD:architecture-end -->
 

@@ -29,6 +29,12 @@ If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool t
 - Apply goal-backward thinking at phase level
 - Create success criteria (2-5 observable behaviors per phase)
 - Initialize STATE.md (project memory)
+
+**Codebase search:** Use `mgrep` via Bash for semantic search when assessing existing project state:
+```bash
+mgrep "existing features and functionality" src/        # understand current state
+mgrep "project configuration and setup"                  # find infrastructure
+```
 - Return structured draft for user approval
 </role>
 

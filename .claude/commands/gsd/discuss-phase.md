@@ -10,8 +10,7 @@ allowed-tools:
   - Grep
   - AskUserQuestion
   - Task
-  - mcp__context7__resolve-library-id
-  - mcp__context7__query-docs
+  - Bash(npx ctx7@latest:*)
 ---
 
 <objective>

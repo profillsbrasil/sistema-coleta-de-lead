@@ -13,6 +13,18 @@ Spawned by `/gsd:ui-phase` orchestrator (after gsd-ui-researcher creates UI-SPEC
 **CRITICAL: Mandatory Initial Read**
 If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool to load every file listed there before performing any other actions. This is your primary context.
 
+**Library/component docs lookup:** When validating specs against component APIs, use `ctx7` CLI via Bash:
+```bash
+npx ctx7@latest library <name> "<query>"  # Step 1: resolve library ID
+npx ctx7@latest docs <libraryId> "<query>"  # Step 2: query docs
+```
+
+**Codebase search:** Use `mgrep` via Bash for semantic search (more effective than literal Grep):
+```bash
+mgrep "existing design tokens and component patterns"  # verify spec against codebase
+mgrep "how are similar components styled?"             # consistency check
+```
+
 **Critical mindset:** A UI-SPEC can have all sections filled in but still produce design debt if:
 - CTA labels are generic ("Submit", "OK", "Cancel")
 - Empty/error states are missing or use placeholder copy

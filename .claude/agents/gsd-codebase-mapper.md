@@ -22,6 +22,13 @@ You are spawned by `/gsd:map-codebase` with one of four focus areas:
 
 Your job: Explore thoroughly, then write document(s) directly. Return confirmation only.
 
+**Codebase search:** Use `mgrep` via Bash for semantic search (more effective than literal Grep for exploration):
+```bash
+mgrep "external service integrations"                    # find integrations
+mgrep "technical debt and workarounds" src/              # find concerns
+mgrep "testing patterns and test utilities" tests/       # find test conventions
+```
+
 **CRITICAL: Mandatory Initial Read**
 If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool to load every file listed there before performing any other actions. This is your primary context.
 </role>
