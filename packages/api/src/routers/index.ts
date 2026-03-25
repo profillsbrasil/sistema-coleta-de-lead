@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from "../index";
+import { leaderboardRouter } from "./leaderboard";
 import { syncRouter } from "./sync";
 import { todoRouter } from "./todo";
 
@@ -12,6 +13,7 @@ export const appRouter = router({
 			user: ctx.user,
 		};
 	}),
+	leaderboard: leaderboardRouter,
 	sync: syncRouter,
 	todo: todoRouter,
 });

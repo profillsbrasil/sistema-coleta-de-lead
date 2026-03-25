@@ -1,9 +1,10 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Lead, SyncQueueItem } from "./types";
+import type { Lead, LeaderboardEntry, SyncQueueItem } from "./types";
 
 const db = new Dexie("dashboard-leads") as Dexie & {
 	leads: EntityTable<Lead, "localId">;
 	syncQueue: EntityTable<SyncQueueItem, "id">;
+	leaderboardCache: EntityTable<LeaderboardEntry, "userId">;
 };
 
 db.version(1).stores({
@@ -12,5 +13,12 @@ db.version(1).stores({
 	syncQueue: "++id, localId, operation, timestamp",
 });
 
-export type { Lead, SyncQueueItem };
+db.version(2).stores({
+	leads:
+		"localId, serverId, userId, interestTag, syncStatus, createdAt, updatedAt",
+	syncQueue: "++id, localId, operation, timestamp",
+	leaderboardCache: "userId",
+});
+
+export type { Lead, LeaderboardEntry, SyncQueueItem };
 export { db };
