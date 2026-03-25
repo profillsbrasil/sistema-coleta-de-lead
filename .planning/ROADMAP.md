@@ -53,7 +53,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Drizzle leads schema, Dexie DB + types, test infrastructure (fake-indexeddb)
+- [x] 02-01-PLAN.md — Drizzle leads schema, Dexie DB + types, test infrastructure (fake-indexeddb)
 - [ ] 02-02-PLAN.md — tRPC sync router (pushChanges/pullChanges), connectivity detector
 - [ ] 02-03-PLAN.md — Sync engine singleton (push-then-pull, conflict resolution, retry, provider wiring)
 
