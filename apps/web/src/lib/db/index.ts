@@ -20,5 +20,12 @@ db.version(2).stores({
 	leaderboardCache: "userId",
 });
 
+db.version(3).stores({
+	leads:
+		"localId, serverId, userId, interestTag, syncStatus, createdAt, updatedAt",
+	syncQueue: "++id, localId, operation, timestamp",
+	leaderboardCache: "userId, rank",
+});
+
 export type { Lead, LeaderboardEntry, SyncQueueItem };
 export { db };

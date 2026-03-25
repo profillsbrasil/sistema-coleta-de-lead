@@ -1,6 +1,10 @@
 "use client";
 
-import { Card } from "@dashboard-leads-profills/ui/components/card";
+import {
+	Card,
+	CardContent,
+} from "@dashboard-leads-profills/ui/components/card";
+import { cn } from "@dashboard-leads-profills/ui/lib/utils";
 
 interface StatCardProps {
 	className?: string;
@@ -10,13 +14,13 @@ interface StatCardProps {
 
 export function StatCard({ label, value, className }: StatCardProps) {
 	return (
-		<Card className={`p-4 ${className ?? ""}`}>
-			<div className="flex flex-col gap-1">
+		<Card className={cn(className)}>
+			<CardContent className="flex flex-col gap-1">
 				<span className="text-muted-foreground text-sm">{label}</span>
 				<span className="font-semibold text-[28px] text-foreground leading-[1.2]">
 					{value}
 				</span>
-			</div>
+			</CardContent>
 		</Card>
 	);
 }

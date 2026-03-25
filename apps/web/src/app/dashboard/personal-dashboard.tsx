@@ -1,6 +1,11 @@
 "use client";
 
-import { Card } from "@dashboard-leads-profills/ui/components/card";
+import {
+	Card,
+	CardContent,
+	CardHeader,
+	CardTitle,
+} from "@dashboard-leads-profills/ui/components/card";
 import {
 	type ChartConfig,
 	ChartContainer,
@@ -73,16 +78,20 @@ export default function PersonalDashboard({ userId }: { userId: string }) {
 
 			<StatCard label="Seu Score" value={`${stats.score} pts`} />
 
-			<Card className="p-4">
-				<p className="mb-2 font-semibold text-sm">Leads por Tag</p>
-				<ChartContainer className="h-[120px] w-full" config={chartConfig}>
-					<BarChart data={chartData} layout="vertical">
-						<XAxis hide type="number" />
-						<YAxis dataKey="tag" type="category" width={60} />
-						<ChartTooltip content={<ChartTooltipContent />} />
-						<Bar dataKey="count" radius={4} />
-					</BarChart>
-				</ChartContainer>
+			<Card>
+				<CardHeader>
+					<CardTitle>Leads por Tag</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<ChartContainer className="h-[120px] w-full" config={chartConfig}>
+						<BarChart data={chartData} layout="vertical">
+							<XAxis hide type="number" />
+							<YAxis dataKey="tag" type="category" width={60} />
+							<ChartTooltip content={<ChartTooltipContent />} />
+							<Bar dataKey="count" radius={4} />
+						</BarChart>
+					</ChartContainer>
+				</CardContent>
 			</Card>
 		</div>
 	);

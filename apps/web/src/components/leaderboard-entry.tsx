@@ -1,6 +1,10 @@
 "use client";
 
-import { Card } from "@dashboard-leads-profills/ui/components/card";
+import {
+	Card,
+	CardContent,
+} from "@dashboard-leads-profills/ui/components/card";
+import { cn } from "@dashboard-leads-profills/ui/lib/utils";
 
 interface LeaderboardEntryProps {
 	isCurrentUser: boolean;
@@ -19,10 +23,14 @@ export function LeaderboardEntry({
 }: LeaderboardEntryProps) {
 	return (
 		<Card
-			className={`p-4 ${isCurrentUser ? "border-2 border-primary bg-primary/5 dark:bg-primary/10" : "border border-border"}`}
+			className={cn(
+				isCurrentUser
+					? "border-2 border-primary bg-primary/5 dark:bg-primary/10"
+					: "border border-border"
+			)}
 			{...(isCurrentUser ? { "aria-current": "true" as const } : {})}
 		>
-			<div className="flex items-start gap-3">
+			<CardContent className="flex items-start gap-3">
 				<span className="min-w-6 text-muted-foreground text-xs">#{rank}</span>
 				<div className="flex-1">
 					<p className="font-semibold text-sm">
@@ -36,7 +44,7 @@ export function LeaderboardEntry({
 						<span className="font-semibold text-sm">{score} pts</span>
 					</div>
 				</div>
-			</div>
+			</CardContent>
 		</Card>
 	);
 }
