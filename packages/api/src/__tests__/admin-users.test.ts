@@ -1,4 +1,34 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@dashboard-leads-profills/env/server", () => ({
+	env: {
+		DATABASE_URL: "postgresql://test:test@localhost:5432/test",
+		NEXT_PUBLIC_SUPABASE_URL: "https://test.supabase.co",
+		NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
+		SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
+		NODE_ENV: "test",
+	},
+}));
+
+vi.mock("@dashboard-leads-profills/db", () => ({
+	db: {},
+}));
+
+vi.mock("@dashboard-leads-profills/db/schema/auth", () => ({
+	userRoles: {},
+	appRoleEnum: {},
+}));
+
+vi.mock("@supabase/supabase-js", () => ({
+	createClient: vi.fn(() => ({
+		auth: {
+			admin: {
+				listUsers: vi.fn(),
+				updateUserById: vi.fn(),
+			},
+		},
+	})),
+}));
 
 describe("adminUsersRouter", () => {
 	it("deve exportar adminUsersRouter", async () => {
