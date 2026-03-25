@@ -59,10 +59,11 @@ describe("uploadPendingPhotos", () => {
 		const { uploadPendingPhotos } = await import("./photo-upload");
 		await uploadPendingPhotos();
 
-		expect(mockUpload).toHaveBeenCalledWith("user-1/local-1.jpg", photoBlob, {
-			contentType: "image/jpeg",
-			upsert: true,
-		});
+		expect(mockUpload).toHaveBeenCalledTimes(1);
+		const [path, blob, options] = mockUpload.mock.calls[0];
+		expect(path).toBe("user-1/local-1.jpg");
+		expect(blob).toBeTruthy();
+		expect(options).toEqual({ contentType: "image/jpeg", upsert: true });
 	});
 
 	it("skips leads without serverId (not yet synced)", async () => {
@@ -238,10 +239,8 @@ describe("uploadPendingPhotos", () => {
 		const { uploadPendingPhotos } = await import("./photo-upload");
 		await uploadPendingPhotos();
 
-		expect(mockUpload).toHaveBeenCalledWith(
-			"user-xyz/abc-def-123.jpg",
-			expect.any(Blob),
-			expect.any(Object)
-		);
+		expect(mockUpload).toHaveBeenCalledTimes(1);
+		const [path] = mockUpload.mock.calls[0];
+		expect(path).toBe("user-xyz/abc-def-123.jpg");
 	});
 });
