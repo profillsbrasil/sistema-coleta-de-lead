@@ -38,10 +38,10 @@
 ### Lead Management
 
 - [ ] **LEAD-01**: Vendedor pode listar seus proprios leads (ordenados por recencia)
-- [ ] **LEAD-02**: Vendedor pode editar qualquer campo de seus leads
-- [ ] **LEAD-03**: Vendedor pode excluir seus leads (soft-delete)
+- [x] **LEAD-02**: Vendedor pode editar qualquer campo de seus leads
+- [x] **LEAD-03**: Vendedor pode excluir seus leads (soft-delete)
 - [ ] **LEAD-04**: Vendedor pode filtrar leads por tag de interesse
-- [ ] **LEAD-05**: CRUD de leads funciona offline via Dexie
+- [x] **LEAD-05**: CRUD de leads funciona offline via Dexie
 
 ### Dashboard & Stats
 
@@ -116,10 +116,10 @@
 | CAPT-07 | Phase 3 | Complete |
 | CAPT-08 | Phase 3 | Complete |
 | LEAD-01 | Phase 4 | Pending |
-| LEAD-02 | Phase 4 | Pending |
-| LEAD-03 | Phase 4 | Pending |
+| LEAD-02 | Phase 4 | Complete |
+| LEAD-03 | Phase 4 | Complete |
 | LEAD-04 | Phase 4 | Pending |
-| LEAD-05 | Phase 4 | Pending |
+| LEAD-05 | Phase 4 | Complete |
 | DASH-01 | Phase 5 | Pending |
 | DASH-02 | Phase 5 | Pending |
 | DASH-03 | Phase 5 | Pending |

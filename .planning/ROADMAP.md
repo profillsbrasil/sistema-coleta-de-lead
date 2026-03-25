@@ -89,7 +89,7 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Data layer TDD (updateLead, deleteLead, queries, relativeTime)
+- [x] 04-01-PLAN.md — Data layer TDD (updateLead, deleteLead, queries, relativeTime)
 - [ ] 04-02-PLAN.md — UI components (LeadCard, TagFilter, AlertDialog, LeadForm edit mode)
 - [ ] 04-03-PLAN.md — Page wiring (/leads list + /leads/[id] detail/edit) + human verification
 
