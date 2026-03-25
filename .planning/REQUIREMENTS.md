@@ -17,8 +17,8 @@
 
 ### Offline Infrastructure
 
-- [ ] **OFFL-01**: Schema de leads no Drizzle com soft-delete (deleted_at), timestamps (created_at, updated_at), UUID client (local_id) e server_id
-- [ ] **OFFL-02**: Dexie DB configurado com schema espelhado do servidor (leads, syncQueue)
+- [x] **OFFL-01**: Schema de leads no Drizzle com soft-delete (deleted_at), timestamps (created_at, updated_at), UUID client (local_id) e server_id
+- [x] **OFFL-02**: Dexie DB configurado com schema espelhado do servidor (leads, syncQueue)
 - [ ] **OFFL-03**: Sync engine via tRPC vanilla client (fora do React tree) — push local changes, pull server changes
 - [ ] **OFFL-04**: Conflict resolution server-wins baseado em updated_at do servidor
 - [ ] **OFFL-05**: Sync automatico quando conexao detectada (polling fallback para Safari)
@@ -101,8 +101,8 @@
 | AUTH-05 | Phase 1 | Complete |
 | AUTH-06 | Phase 1 | Complete |
 | AUTH-07 | Phase 1 | Complete |
-| OFFL-01 | Phase 2 | Pending |
-| OFFL-02 | Phase 2 | Pending |
+| OFFL-01 | Phase 2 | Complete |
+| OFFL-02 | Phase 2 | Complete |
 | OFFL-03 | Phase 2 | Pending |
 | OFFL-04 | Phase 2 | Pending |
 | OFFL-05 | Phase 2 | Pending |
