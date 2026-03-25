@@ -15,9 +15,14 @@ export default async function DashboardPage() {
 		redirect("/login");
 	}
 
+	const userRole =
+		(user.app_metadata as Record<string, unknown>)?.user_role ??
+		(user.user_metadata as Record<string, unknown>)?.user_role;
+	const isAdmin = userRole === "admin";
+
 	return (
 		<div className="mx-auto w-full max-w-[480px] px-4 pt-8">
-			<Dashboard userId={user.id} />
+			<Dashboard isAdmin={isAdmin} userId={user.id} />
 			<FAB />
 		</div>
 	);
