@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from "../index";
+import { syncRouter } from "./sync";
 import { todoRouter } from "./todo";
 
 export const appRouter = router({
@@ -11,6 +12,7 @@ export const appRouter = router({
 			user: ctx.user,
 		};
 	}),
+	sync: syncRouter,
 	todo: todoRouter,
 });
 export type AppRouter = typeof appRouter;
