@@ -19,7 +19,9 @@ import { ArrowLeft, ChevronDown, Loader2, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import type { Lead } from "@/lib/db/types";
 import { saveLead } from "@/lib/lead/save-lead";
+import { updateLead } from "@/lib/lead/update-lead";
 import { leadFormSchema } from "@/lib/lead/validation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -35,22 +37,41 @@ interface FormErrors {
 	phone?: string;
 }
 
-export default function LeadForm() {
-	const router = useRouter();
+interface LeadFormProps {
+	lead?: Lead;
+	onDelete?: () => void;
+}
 
-	const [name, setName] = useState("");
-	const [phone, setPhone] = useState("");
-	const [email, setEmail] = useState("");
-	const [interestTag, setInterestTag] = useState<InterestTag>("morno");
-	const [company, setCompany] = useState("");
-	const [position, setPosition] = useState("");
-	const [segment, setSegment] = useState("");
-	const [notes, setNotes] = useState("");
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form component with many fields requires co-located state and validation logic
+export default function LeadForm({ lead, onDelete }: LeadFormProps) {
+	const router = useRouter();
+	const isEditMode = !!lead;
+
+	const [name, setName] = useState(lead?.name ?? "");
+	const [phone, setPhone] = useState(lead?.phone ?? "");
+	const [email, setEmail] = useState(lead?.email ?? "");
+	const [interestTag, setInterestTag] = useState<InterestTag>(
+		lead?.interestTag ?? "morno"
+	);
+	const [company, setCompany] = useState(lead?.company ?? "");
+	const [position, setPosition] = useState(lead?.position ?? "");
+	const [segment, setSegment] = useState(lead?.segment ?? "");
+	const [notes, setNotes] = useState(lead?.notes ?? "");
 	const [errors, setErrors] = useState<FormErrors>({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [showDetails, setShowDetails] = useState(false);
+
+	const hasDetails = !!(
+		lead?.company ||
+		lead?.position ||
+		lead?.segment ||
+		lead?.notes
+	);
+	const [showDetails, setShowDetails] = useState(
+		isEditMode ? hasDetails : false
+	);
 	const [showQRScanner, setShowQRScanner] = useState(false);
-	const [photo, setPhoto] = useState<Blob | null>(null);
+	const [photo, setPhoto] = useState<Blob | null>(lead?.photo ?? null);
+	const [photoChanged, setPhotoChanged] = useState(false);
 
 	const nameRef = useRef<HTMLInputElement>(null);
 	const phoneRef = useRef<HTMLInputElement>(null);
@@ -112,8 +133,17 @@ export default function LeadForm() {
 
 		setIsSubmitting(true);
 		try {
-			await saveLead(result.data, userId, photo);
-			toast.success("Lead salvo!");
+			if (isEditMode && lead) {
+				await updateLead(
+					lead.localId,
+					result.data,
+					photoChanged ? photo : undefined
+				);
+				toast.success("Lead atualizado!");
+			} else {
+				await saveLead(result.data, userId, photo);
+				toast.success("Lead salvo!");
+			}
 			router.back();
 		} catch {
 			toast.error("Algo deu errado. Tente novamente.");
@@ -134,7 +164,9 @@ export default function LeadForm() {
 				>
 					<ArrowLeft className="size-5" />
 				</Button>
-				<h1 className="font-semibold text-xl">Novo Lead</h1>
+				<h1 className="font-semibold text-xl">
+					{isEditMode ? "Editar Lead" : "Novo Lead"}
+				</h1>
 			</header>
 
 			<Card className="mx-auto mb-8 w-full max-w-[480px]">
@@ -245,8 +277,14 @@ export default function LeadForm() {
 						<div className="flex flex-col gap-2">
 							<Label>Foto do cartao</Label>
 							<PhotoCapture
-								onCapture={setPhoto}
-								onRemove={() => setPhoto(null)}
+								onCapture={(blob) => {
+									setPhoto(blob);
+									setPhotoChanged(true);
+								}}
+								onRemove={() => {
+									setPhoto(null);
+									setPhotoChanged(true);
+								}}
 								photo={photo}
 							/>
 						</div>
@@ -322,8 +360,21 @@ export default function LeadForm() {
 							type="submit"
 						>
 							{isSubmitting ? <Loader2 className="animate-spin" /> : null}
-							Salvar Lead
+							{isEditMode ? "Salvar alteracoes" : "Salvar Lead"}
 						</Button>
+
+						{isEditMode && onDelete ? (
+							<Button
+								className="w-full text-destructive"
+								disabled={isSubmitting}
+								onClick={onDelete}
+								size="lg"
+								type="button"
+								variant="outline"
+							>
+								Excluir Lead
+							</Button>
+						) : null}
 					</form>
 				</CardContent>
 			</Card>
