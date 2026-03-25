@@ -48,14 +48,14 @@ Exceptions: Sidebar width fixed at 256px (collapsed: 48px on mobile via Sheet). 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 500 (medium) | 1.4 |
+| Label | 12px | 400 (regular) | 1.4 |
 | Heading | 20px | 600 (semibold) | 1.2 |
 | Display | 28px | 600 (semibold) | 1.2 |
 
 Notes:
 - Display (28px) used for stats numbers in StatCard and global stats (existing pattern from Phase 5).
-- Label (12px) used for table column headers, filter labels, muted-foreground metadata.
-- Body (14px) is the default for table cells, form fields, sidebar items.
+- Label (12px) used for table column headers, filter labels, muted-foreground metadata. Uses regular weight (400) for visual hierarchy without introducing a third weight.
+- Body (14px) is the default for table cells, form fields, sidebar items, and sidebar header text.
 - Heading (20px) used for page titles ("Leads", "Usuarios", "Stats Globais") and CardTitle.
 
 ---
@@ -70,7 +70,7 @@ Notes:
 | Destructive | `var(--destructive)` oklch(0.577 0.245 27.325) / dark: oklch(0.704 0.191 22.216) | Delete lead button, deactivate user button, destructive confirmation dialog |
 
 Accent reserved for:
-- Primary action buttons ("Salvar", "Aplicar Filtros")
+- Primary action buttons ("Salvar usuario", "Aplicar Filtros")
 - Active/selected sidebar navigation item (via `--sidebar-primary`)
 - Selected vendor badge in vendor selector
 - Chart primary bar (total leads)
@@ -101,7 +101,7 @@ Chart colors use existing CSS variables: `--chart-1` through `--chart-5` (teal s
 |-----------|-------------|-------|
 | Sidebar, SidebarContent, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarProvider, SidebarTrigger | `@dashboard-leads-profills/ui/components/sidebar` | Admin layout sidebar navigation |
 | Table, TableBody, TableCell, TableHead, TableHeader, TableRow | `@dashboard-leads-profills/ui/components/table` | Leads list, users list |
-| Select, SelectContent, SelectItem, SelectTrigger, SelectValue | `@dashboard-leads-profills/ui/components/select` | Vendor filter, tag filter, role selector |
+| Select, SelectContent, SelectItem, SelectTrigger, SelectValue | `@dashboard-leads-profills/ui/components/select` | Vendor filter, tag filter, segmento filter, role selector |
 | Card, CardContent, CardHeader, CardTitle | `@dashboard-leads-profills/ui/components/card` | Stats cards, chart wrappers |
 | Badge | `@dashboard-leads-profills/ui/components/badge` | Tag badges in table, role badges, status badges |
 | Tabs, TabsContent, TabsList, TabsTrigger | `@dashboard-leads-profills/ui/components/tabs` | Dashboard vendor selector (extending existing) |
@@ -114,6 +114,7 @@ Chart colors use existing CSS variables: `--chart-1` through `--chart-5` (teal s
 | ChartContainer, ChartTooltip, ChartTooltipContent | `@dashboard-leads-profills/ui/components/chart` | Stats page charts |
 | Separator | `@dashboard-leads-profills/ui/components/separator` | Sidebar section dividers |
 | Input | `@dashboard-leads-profills/ui/components/input` | Search field in users list |
+| Tooltip, TooltipContent, TooltipProvider, TooltipTrigger | `@dashboard-leads-profills/ui/components/tooltip` | Accessible labels for icon-only action buttons |
 
 ### Lucide icons used
 
@@ -132,6 +133,20 @@ Chart colors use existing CSS variables: `--chart-1` through `--chart-5` (teal s
 | `CalendarDays` | Date range picker trigger |
 | `Filter` | Filters section label |
 
+### Icon-Only Button Accessibility Contract
+
+All icon-only action buttons in table action columns MUST have both:
+1. An `aria-label` attribute with the action description
+2. A wrapping `Tooltip` (from shadcn) that displays the same label on hover/focus
+
+| Button | aria-label | Tooltip text |
+|--------|------------|--------------|
+| Pencil (leads) | "Editar lead" | "Editar lead" |
+| Trash2 (leads) | "Excluir lead" | "Excluir lead" |
+| Pencil (users) | "Editar usuario" | "Editar usuario" |
+| Ban (users) | "Desativar usuario" | "Desativar usuario" |
+| CheckCircle (users) | "Reativar usuario" | "Reativar usuario" |
+
 ---
 
 ## Layout Contract
@@ -145,7 +160,7 @@ Chart colors use existing CSS variables: `--chart-1` through `--chart-5` (teal s
   2. "Usuarios" (Users icon) — `/admin/users`
   3. "Stats Globais" (LayoutDashboard icon) — `/admin/stats`
 - Active item uses `--sidebar-primary` for background highlight
-- Sidebar header: text "Admin" in semibold 16px
+- Sidebar header: text "Admin" in 14px regular (400) weight — uses Body scale size
 - Separator below header
 
 ### Admin Layout Structure
@@ -173,7 +188,7 @@ Main content area: `padding: 24px` (lg token). Min height: `calc(100svh - 49px)`
 - Below stats: Table with leads for selected vendor
 - Table columns: Nome | Telefone/Email | Tag | Segmento | Criado em | Acoes
 - Tag column: Badge with oklch tag color (quente/morno/frio)
-- Actions column: Pencil (edit) + Trash2 (delete) icon buttons, 32px touch targets
+- Actions column: Pencil (edit) + Trash2 (delete) icon buttons, 32px touch targets, with Tooltip and aria-label
 - Pagination: 20 items per page, bottom-aligned
 - Empty state when no vendor selected: "Selecione um vendedor para ver seus leads."
 
@@ -184,12 +199,13 @@ Main content area: `padding: 24px` (lg token). Min height: `calc(100svh - 49px)`
 - Table columns: Nome | Email | Role | Status | Leads | Acoes
 - Role column: Badge — "Admin" (Shield icon, primary color) or "Vendedor" (muted)
 - Status column: Badge — "Ativo" (green tint) or "Desativado" (destructive tint)
-- Actions column: Pencil (edit role/name) + Ban/CheckCircle (deactivate/reactivate)
+- Actions column: Pencil (edit role/name) + Ban/CheckCircle (deactivate/reactivate), with Tooltip and aria-label
 - Pagination: 20 items per page
 
 ### Stats Page (`/admin/stats`)
 
-- Top: Filter bar in a Card — Vendor select + Tag select + Date range picker + "Aplicar" button
+- Top: Filter bar in a Card — Vendor select + Tag select + Segmento select + Date range picker + "Aplicar" button
+- Segmento select: placeholder "Todos os segmentos", lists distinct segment values from leads data
 - Date range presets: "Hoje", "Ultimos 7 dias", "Ultimos 30 dias", "Todo periodo"
 - Below filters: Stats grid (4 StatCards in a row on desktop, 2x2 on mobile):
   - Total de Leads | Score Total | Leads Hoje | Vendedores Ativos
@@ -212,7 +228,7 @@ Main content area: `padding: 24px` (lg token). Min height: `calc(100svh - 49px)`
 | Element | Copy |
 |---------|------|
 | Primary CTA (leads) | "Salvar alteracoes" |
-| Primary CTA (users) | "Salvar" |
+| Primary CTA (users) | "Salvar usuario" |
 | Primary CTA (filters) | "Aplicar filtros" |
 | Empty state heading (leads, no vendor) | "Nenhum vendedor selecionado" |
 | Empty state body (leads, no vendor) | "Selecione um vendedor no seletor acima para visualizar seus leads." |
@@ -231,6 +247,7 @@ Main content area: `padding: 24px` (lg token). Min height: `calc(100svh - 49px)`
 | Sidebar: users item | "Usuarios" |
 | Sidebar: stats item | "Stats Globais" |
 | Vendor selector placeholder | "Selecionar vendedor" |
+| Segmento selector placeholder | "Todos os segmentos" |
 | Date range placeholder | "Selecionar periodo" |
 | Date presets | "Hoje" / "Ultimos 7 dias" / "Ultimos 30 dias" / "Todo periodo" |
 | Page title: leads | "Leads por Vendedor" |
@@ -272,7 +289,7 @@ Main content area: `padding: 24px` (lg token). Min height: `calc(100svh - 49px)`
 | Deactivate user | Click Ban -> AlertDialog with warning copy -> "Cancelar" / "Desativar" (destructive variant) |
 | Reactivate user | Click CheckCircle -> AlertDialog with confirmation copy -> "Cancelar" / "Reativar" (primary variant) |
 | Edit lead | Click Pencil -> Navigate to /admin/leads/[id] with LeadForm (server-only save) |
-| Edit user role | Click Pencil -> Inline Select in table row or modal with role selector + "Salvar" |
+| Edit user role | Click Pencil -> Inline Select in table row or modal with role selector + "Salvar usuario" |
 
 ---
 
@@ -300,7 +317,7 @@ Main content area: `padding: 24px` (lg token). Min height: `calc(100svh - 49px)`
 
 | Registry | Blocks Used | Safety Gate |
 |----------|-------------|-------------|
-| shadcn official | Sidebar, Table, Select, Card, Badge, Tabs, AlertDialog, Skeleton, Empty, Popover, Calendar, Pagination, Chart, Separator, Input | not required |
+| shadcn official | Sidebar, Table, Select, Card, Badge, Tabs, AlertDialog, Skeleton, Empty, Popover, Calendar, Pagination, Chart, Separator, Input, Tooltip | not required |
 
 No third-party registries used.
 
