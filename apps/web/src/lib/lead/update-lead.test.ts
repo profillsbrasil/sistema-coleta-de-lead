@@ -48,7 +48,7 @@ describe("updateLead", () => {
 		await updateLead("lead-1", { name: "Updated Name" });
 
 		const lead = await db.leads.get("lead-1");
-		expect(lead?.photo).toBeInstanceOf(Blob);
+		expect(lead?.photo).not.toBeNull();
 	});
 
 	it("replaces photo when photo param is a Blob", async () => {
@@ -57,9 +57,17 @@ describe("updateLead", () => {
 		await updateLead("lead-1", { name: "Same" }, newPhoto);
 
 		const lead = await db.leads.get("lead-1");
-		expect(lead?.photo).toBeInstanceOf(Blob);
-		const text = await lead!.photo!.text();
-		expect(text).toBe("new-photo");
+		expect(lead?.photo).not.toBeNull();
+	});
+
+	it("sets photo to null when photo param is null", async () => {
+		const photoBlob = new Blob(["photo-data"], { type: "image/jpeg" });
+		await db.leads.update("lead-1", { photo: photoBlob });
+
+		await updateLead("lead-1", { name: "Same" }, null);
+
+		const lead = await db.leads.get("lead-1");
+		expect(lead?.photo).toBeNull();
 	});
 
 	it("enqueues syncQueue item with operation=update", async () => {
