@@ -1,11 +1,11 @@
 "use client";
 
 import { Button } from "@dashboard-leads-profills/ui/components/button";
+import { Calendar } from "@dashboard-leads-profills/ui/components/calendar";
 import {
 	Card,
 	CardContent,
 } from "@dashboard-leads-profills/ui/components/card";
-import { Calendar } from "@dashboard-leads-profills/ui/components/calendar";
 import {
 	Popover,
 	PopoverContent,
@@ -28,8 +28,7 @@ interface DateRange {
 }
 
 interface StatsFiltersProps {
-	vendors: Array<{ userId: string; name: string }>;
-	segments: string[];
+	isLoading?: boolean;
 	onApply: (filters: {
 		userId?: string;
 		tag?: "quente" | "morno" | "frio";
@@ -37,7 +36,8 @@ interface StatsFiltersProps {
 		startDate?: string;
 		endDate?: string;
 	}) => void;
-	isLoading?: boolean;
+	segments: string[];
+	vendors: Array<{ userId: string; name: string }>;
 }
 
 function formatDateRange(range: DateRange | undefined): string {
