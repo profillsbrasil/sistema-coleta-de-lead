@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 6 UI-SPEC approved
-last_updated: "2026-03-25T12:47:17.662Z"
+status: Ready to execute
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-03-25T13:30:52.462Z"
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 17
-  completed_plans: 17
+  total_plans: 22
+  completed_plans: 19
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Phase 05 — dashboard-leaderboard
+**Current focus:** Phase 06 — admin-panel
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
+Phase: 06 (admin-panel) — EXECUTING
+Plan: 3 of 5
 
 ## Performance Metrics
 
@@ -63,6 +63,8 @@ Plan: Not started
 | Phase 05 P01 | 3min | 2 tasks | 6 files |
 | Phase 05 P02 | 4min | 2 tasks | 5 files |
 | Phase 05 P03 | 3min | 2 tasks | 3 files |
+| Phase 06 P01 | 7 | 4 tasks | 10 files |
+| Phase 06-admin-panel P02 | 4 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -115,6 +117,11 @@ Recent decisions affecting current work:
 - [Phase 05]: oklch arbitrary values via nested selectors para cores de tag no StatCard
 - [Phase 05]: tRPC fetch -> Dexie cache -> useLiveQuery fallback para leaderboard offline
 - [Phase 05]: fetchLeaderboard roda apos pullChanges com try/catch proprio — falha nunca quebra sync de leads
+- [Phase 06]: vi.mock() para env e db em testes de routers admin (T3 Env valida no import time)
+- [Phase 06]: delete+insert em user_roles para updateRole (unique constraint em userId+role, nao apenas userId)
+- [Phase 06]: db.execute() com raw SQL + as unknown as T para JOINs cross-schema com auth.users
+- [Phase 06-admin-panel]: AdminLayout le user_role de app_metadata para role check — evita query extra ao DB
+- [Phase 06-admin-panel]: LeadForm mantem backward compat com saveLead/updateLead — onSave/onUpdate sao puramente aditivos
 
 ### Pending Todos
 
@@ -127,6 +134,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T12:47:17.660Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-admin-panel/06-UI-SPEC.md
+Last session: 2026-03-25T13:30:52.460Z
+Stopped at: Completed 06-02-PLAN.md
+Resume file: None
