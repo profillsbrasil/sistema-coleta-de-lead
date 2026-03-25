@@ -86,7 +86,13 @@ Plans:
   2. Vendedor edita qualquer campo de um lead e a alteracao persiste (online e offline)
   3. Vendedor exclui um lead e ele some da lista (soft-delete, sincroniza quando online)
   4. Vendedor filtra sua lista de leads por tag de interesse (quente, morno, frio)
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Data layer TDD (updateLead, deleteLead, queries, relativeTime)
+- [ ] 04-02-PLAN.md — UI components (LeadCard, TagFilter, AlertDialog, LeadForm edit mode)
+- [ ] 04-03-PLAN.md — Page wiring (/leads list + /leads/[id] detail/edit) + human verification
+
 **UI hint**: yes
 
 ### Phase 5: Dashboard & Leaderboard
@@ -124,6 +130,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Auth Migration | 4/4 | Complete | - |
 | 2. Offline Infrastructure | 3/3 | Complete |  |
 | 3. Lead Capture | 4/4 | Complete   | 2026-03-25 |
-| 4. Lead Management | 0/? | Not started | - |
+| 4. Lead Management | 0/3 | Not started | - |
 | 5. Dashboard & Leaderboard | 0/? | Not started | - |
 | 6. Admin Panel | 0/? | Not started | - |
