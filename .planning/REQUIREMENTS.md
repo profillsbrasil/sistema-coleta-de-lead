@@ -20,9 +20,9 @@
 - [x] **OFFL-01**: Schema de leads no Drizzle com soft-delete (deleted_at), timestamps (created_at, updated_at), UUID client (local_id) e server_id
 - [x] **OFFL-02**: Dexie DB configurado com schema espelhado do servidor (leads, syncQueue)
 - [x] **OFFL-03**: Sync engine via tRPC vanilla client (fora do React tree) — push local changes, pull server changes
-- [ ] **OFFL-04**: Conflict resolution server-wins baseado em updated_at do servidor
+- [x] **OFFL-04**: Conflict resolution server-wins baseado em updated_at do servidor
 - [x] **OFFL-05**: Sync automatico quando conexao detectada (polling fallback para Safari)
-- [ ] **OFFL-06**: Dados locais preservados quando sync falha (ex: 401 por sessao expirada)
+- [x] **OFFL-06**: Dados locais preservados quando sync falha (ex: 401 por sessao expirada)
 
 ### Lead Capture
 
@@ -104,9 +104,9 @@
 | OFFL-01 | Phase 2 | Complete |
 | OFFL-02 | Phase 2 | Complete |
 | OFFL-03 | Phase 2 | Complete |
-| OFFL-04 | Phase 2 | Pending |
+| OFFL-04 | Phase 2 | Complete |
 | OFFL-05 | Phase 2 | Complete |
-| OFFL-06 | Phase 2 | Pending |
+| OFFL-06 | Phase 2 | Complete |
 | CAPT-01 | Phase 3 | Pending |
 | CAPT-02 | Phase 3 | Pending |
 | CAPT-03 | Phase 3 | Pending |

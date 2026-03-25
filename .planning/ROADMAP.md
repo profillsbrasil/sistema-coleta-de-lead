@@ -55,7 +55,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Drizzle leads schema, Dexie DB + types, test infrastructure (fake-indexeddb)
 - [x] 02-02-PLAN.md — tRPC sync router (pushChanges/pullChanges), connectivity detector
-- [ ] 02-03-PLAN.md — Sync engine singleton (push-then-pull, conflict resolution, retry, provider wiring)
+- [x] 02-03-PLAN.md — Sync engine singleton (push-then-pull, conflict resolution, retry, provider wiring)
 
 ### Phase 3: Lead Capture
 **Goal**: Vendedor consegue criar um lead em menos de 3 toques, com suporte a QR code do WhatsApp e foto do cartao de visita, tudo funcionando offline
