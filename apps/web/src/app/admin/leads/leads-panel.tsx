@@ -79,7 +79,7 @@ function formatDate(dateStr: string | Date): string {
 }
 
 export default function LeadsPanel() {
-	const [selectedVendor, setSelectedVendor] = useState<string | null>(null);
+	const [selectedVendor, setSelectedVendor] = useState<string>("");
 	const [page, setPage] = useState(1);
 	const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
 
@@ -145,7 +145,7 @@ export default function LeadsPanel() {
 
 			<Select
 				onValueChange={handleVendorChange}
-				value={selectedVendor ?? undefined}
+				value={selectedVendor}
 			>
 				<SelectTrigger className="w-full max-w-sm">
 					<SelectValue placeholder="Selecionar vendedor" />

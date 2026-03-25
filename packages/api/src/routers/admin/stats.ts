@@ -108,7 +108,7 @@ export const adminStatsRouter = router({
 				`
 			);
 
-			return rows as unknown as Array<{ date: string; count: number }>;
+			return rows.rows as Array<{ date: string; count: number }>;
 		}),
 
 	getRanking: adminProcedure
@@ -120,23 +120,23 @@ export const adminStatsRouter = router({
 			const rows = await db.execute(
 				sql`
 					SELECT
-						l.user_id AS "userId",
+						leads.user_id AS "userId",
 						u.raw_user_meta_data->>'name' AS "name",
-						COUNT(l.id)::int AS "totalLeads",
+						COUNT(leads.id)::int AS "totalLeads",
 						COALESCE(SUM(CASE
-							WHEN l.interest_tag = 'quente' THEN 3
-							WHEN l.interest_tag = 'morno' THEN 2
+							WHEN leads.interest_tag = 'quente' THEN 3
+							WHEN leads.interest_tag = 'morno' THEN 2
 							ELSE 1
 						END), 0)::int AS "score"
-					FROM leads l
-					JOIN auth.users u ON u.id = l.user_id::uuid
+					FROM leads
+					JOIN auth.users u ON u.id = leads.user_id::uuid
 					WHERE ${whereClause}
-					GROUP BY l.user_id, u.raw_user_meta_data->>'name'
+					GROUP BY leads.user_id, u.raw_user_meta_data->>'name'
 					ORDER BY "score" DESC
 				`
 			);
 
-			return rows as unknown as Array<{
+			return rows.rows as Array<{
 				userId: string;
 				name: string;
 				totalLeads: number;
@@ -154,8 +154,6 @@ export const adminStatsRouter = router({
 			`
 		);
 
-		return (rows as unknown as Array<{ segment: string }>).map(
-			(r) => r.segment
-		);
+		return (rows.rows as Array<{ segment: string }>).map((r) => r.segment);
 	}),
 });

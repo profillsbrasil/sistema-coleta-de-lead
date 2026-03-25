@@ -146,14 +146,16 @@ export default function StatsFilters({
 					</Select>
 
 					<Popover onOpenChange={setCalendarOpen} open={calendarOpen}>
-						<PopoverTrigger>
-							<Button
-								className="w-full justify-start font-normal"
-								variant="outline"
-							>
-								<CalendarDaysIcon className="mr-2 size-4" />
-								<span className="truncate">{formatDateRange(dateRange)}</span>
-							</Button>
+						<PopoverTrigger
+							render={
+								<Button
+									className="w-full justify-start font-normal"
+									variant="outline"
+								/>
+							}
+						>
+							<CalendarDaysIcon className="mr-2 size-4" />
+							<span className="truncate">{formatDateRange(dateRange)}</span>
 						</PopoverTrigger>
 						<PopoverContent align="start" className="w-auto p-3">
 							<div className="mb-3 flex flex-wrap gap-2">

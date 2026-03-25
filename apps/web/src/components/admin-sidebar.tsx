@@ -36,11 +36,12 @@ export default function AdminSidebar() {
 							const isActive = pathname.startsWith(href);
 							return (
 								<SidebarMenuItem key={href}>
-									<SidebarMenuButton asChild isActive={isActive}>
-										<Link href={href as unknown as "/"}>
-											<Icon className="size-4" />
-											{label}
-										</Link>
+									<SidebarMenuButton
+										render={<Link href={href as unknown as "/"} />}
+										isActive={isActive}
+									>
+										<Icon className="size-4" />
+										{label}
 									</SidebarMenuButton>
 								</SidebarMenuItem>
 							);
