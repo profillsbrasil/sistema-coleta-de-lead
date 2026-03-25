@@ -46,7 +46,7 @@ export default function TagSelector({
 					<button
 						aria-checked={isSelected}
 						className={cn(
-							"inline-flex min-h-[44px] flex-1 select-none items-center justify-center rounded-lg border border-transparent px-2.5 font-medium text-sm outline-none transition-all focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
+							"inline-flex h-8 flex-1 select-none items-center justify-center rounded-md border border-transparent px-2 font-medium text-xs outline-none transition-all focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
 							isSelected
 								? config.selectedClass
 								: "border-border bg-background hover:bg-muted hover:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50"

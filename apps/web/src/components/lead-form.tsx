@@ -123,7 +123,7 @@ export default function LeadForm() {
 	}
 
 	return (
-		<div className="flex min-h-screen flex-col px-4 py-8">
+		<div className="flex flex-col px-4 py-8">
 			<header className="mx-auto flex w-full max-w-[480px] items-center gap-4 pb-6">
 				<Button
 					aria-label="Voltar"
@@ -137,7 +137,7 @@ export default function LeadForm() {
 				<h1 className="font-semibold text-xl">Novo Lead</h1>
 			</header>
 
-			<Card className="mx-auto w-full max-w-[480px]">
+			<Card className="mx-auto mb-8 w-full max-w-[480px]">
 				<CardHeader>
 					<CardTitle className="sr-only">Formulario de lead</CardTitle>
 				</CardHeader>
