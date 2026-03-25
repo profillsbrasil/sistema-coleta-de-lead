@@ -34,7 +34,7 @@ Declared values (must be multiples of 4):
 | Token | Value | Usage |
 |-------|-------|-------|
 | xs | 4px | Icon gaps dentro dos botoes de tag, gap icone-label no campo QR |
-| sm | 8px | Gap entre tag toggles, padding interno de chips |
+| sm | 8px | Gap entre tag toggles, padding interno de chips, gap entre campo e mensagem de erro |
 | md | 16px | Padding interno do form card, gap vertical entre campos |
 | lg | 24px | Padding do card header, margem entre secoes (form visivel vs colapsada) |
 | xl | 32px | Margem vertical do card na viewport |
@@ -51,18 +51,17 @@ Exceptions:
 
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
-| Body | 14px | 400 (regular) | 1.5 |
-| Label | 14px | 500 (medium) | 1.4 |
+| Body / Label | 14px | 400 (regular) | 1.5 |
 | Heading | 20px | 600 (semibold) | 1.2 |
 | Display | 28px | 600 (semibold) | 1.2 |
 
 Notes:
-- Label nesta fase usa weight 500 (medium) para diferenciar labels de campos de texto body. Tailwind class: `font-medium`.
+- Label usa weight 400 (regular), mesmo que Body. A distincao visual vem do elemento semantico `<Label>` posicionado acima do input, nao do weight.
 - Heading (20px): titulo da pagina "Novo Lead".
 - Body (14px): texto dos campos, placeholder, mensagens de validacao.
 - Display (28px): nao usado nesta fase.
 
-Source: Phase 1 tokens mantidos. Label weight ajustado de 400 para 500 nesta fase (form-heavy).
+Source: Phase 1 tokens mantidos. 2 weights: 400 (regular) e 600 (semibold).
 
 ---
 
@@ -223,7 +222,7 @@ Constraints:
 | State | Visual |
 |-------|--------|
 | Default | Form com campos vazios, tag "Morno" pre-selecionada, secao colapsada fechada |
-| Validacao inline | Campo com erro: border `var(--destructive)`, mensagem vermelha 12px abaixo do campo |
+| Validacao inline | Campo com erro: border `var(--destructive)`, mensagem vermelha font-size 12px, gap-2 (8px) abaixo do campo |
 | Saving | Botao "Salvar Lead" mostra spinner (Loader), disabled. Demais campos readonly. |
 | Success | Toast "Lead salvo!" via Sonner. Redirect para pagina anterior ou dashboard. |
 | QR scanning | Overlay full-screen com camera ativa |
