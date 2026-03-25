@@ -114,6 +114,6 @@ export const adminLeadsRouter = router({
 			`
 		);
 
-		return rows as unknown as Array<{ userId: string; name: string }>;
+		return rows.rows as Array<{ userId: string; name: string }>;
 	}),
 });

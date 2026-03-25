@@ -17,7 +17,7 @@ export const interestTagEnum = pgEnum("interest_tag", [
 export const leads = pgTable(
 	"leads",
 	{
-		id: bigserial("id", { mode: "bigint" }).primaryKey(),
+		id: bigserial("id", { mode: "number" }).primaryKey(),
 		localId: uuid("local_id").notNull().unique(),
 		userId: uuid("user_id").notNull(),
 		name: text("name").notNull(),
