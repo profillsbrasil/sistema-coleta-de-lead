@@ -154,6 +154,26 @@ async function pullChanges(): Promise<void> {
 	}
 }
 
+async function fetchLeaderboard(): Promise<void> {
+	try {
+		const result = await syncClient.leaderboard.getRanking.query();
+		await db.leaderboardCache.clear();
+		const entries = result.ranking.map((r, i) => ({
+			userId: r.userId,
+			name: r.name,
+			totalLeads: r.totalLeads,
+			score: r.score,
+			rank: i + 1,
+			lastSyncAt: result.serverTimestamp,
+		}));
+		if (entries.length > 0) {
+			await db.leaderboardCache.bulkPut(entries);
+		}
+	} catch {
+		// Leaderboard fetch failure must NOT affect lead sync (per Pitfall 3)
+	}
+}
+
 export async function syncCycle(): Promise<void> {
 	if (isSyncing) {
 		return;
@@ -168,6 +188,7 @@ export async function syncCycle(): Promise<void> {
 			// Photo upload failure should not break sync cycle
 		}
 		await pullChanges();
+		await fetchLeaderboard();
 	} catch (error: unknown) {
 		if (isUnauthorizedError(error)) {
 			// 401: stop sync, preserve local data (OFFL-06)
