@@ -15,7 +15,7 @@ import {
 import { Input } from "@dashboard-leads-profills/ui/components/input";
 import { Label } from "@dashboard-leads-profills/ui/components/label";
 import { Textarea } from "@dashboard-leads-profills/ui/components/textarea";
-import { ArrowLeft, ChevronDown, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, Loader2, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -23,6 +23,8 @@ import { saveLead } from "@/lib/lead/save-lead";
 import { leadFormSchema } from "@/lib/lead/validation";
 import { createClient } from "@/lib/supabase/client";
 
+import PhotoCapture from "./photo-capture";
+import QRScanner from "./qr-scanner";
 import TagSelector from "./tag-selector";
 
 type InterestTag = "quente" | "morno" | "frio";
@@ -47,6 +49,8 @@ export default function LeadForm() {
 	const [errors, setErrors] = useState<FormErrors>({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showDetails, setShowDetails] = useState(false);
+	const [showQRScanner, setShowQRScanner] = useState(false);
+	const [photo, setPhoto] = useState<Blob | null>(null);
 
 	const nameRef = useRef<HTMLInputElement>(null);
 	const phoneRef = useRef<HTMLInputElement>(null);
@@ -108,7 +112,7 @@ export default function LeadForm() {
 
 		setIsSubmitting(true);
 		try {
-			await saveLead(result.data, userId, null);
+			await saveLead(result.data, userId, photo);
 			toast.success("Lead salvo!");
 			router.back();
 		} catch {
@@ -183,6 +187,16 @@ export default function LeadForm() {
 									type="tel"
 									value={phone}
 								/>
+								<Button
+									aria-label="Escanear QR Code do WhatsApp"
+									disabled={isSubmitting}
+									onClick={() => setShowQRScanner(true)}
+									size="icon"
+									type="button"
+									variant="outline"
+								>
+									<QrCode className="size-4" />
+								</Button>
 							</div>
 							{errors.phone && (
 								<p
@@ -225,6 +239,15 @@ export default function LeadForm() {
 								disabled={isSubmitting}
 								onChange={setInterestTag}
 								value={interestTag}
+							/>
+						</div>
+
+						<div className="flex flex-col gap-2">
+							<Label>Foto do cartao</Label>
+							<PhotoCapture
+								onCapture={setPhoto}
+								onRemove={() => setPhoto(null)}
+								photo={photo}
 							/>
 						</div>
 
@@ -304,6 +327,15 @@ export default function LeadForm() {
 					</form>
 				</CardContent>
 			</Card>
+
+			<QRScanner
+				onClose={() => setShowQRScanner(false)}
+				onScan={(scannedPhone) => {
+					setPhone(scannedPhone);
+					setShowQRScanner(false);
+				}}
+				open={showQRScanner}
+			/>
 		</div>
 	);
 }
