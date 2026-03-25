@@ -9,6 +9,9 @@ function handler(req: NextRequest) {
 		req,
 		router: appRouter,
 		createContext: () => createContext(req),
+		onError: ({ error, path }) => {
+			console.error(`tRPC error on ${path}:`, error.message, error.cause);
+		},
 	});
 }
 

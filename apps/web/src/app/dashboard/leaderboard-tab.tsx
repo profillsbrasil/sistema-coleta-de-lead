@@ -1,5 +1,9 @@
 "use client";
 
+import {
+	Empty,
+	EmptyDescription,
+} from "@dashboard-leads-profills/ui/components/empty";
 import { Skeleton } from "@dashboard-leads-profills/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -76,9 +80,11 @@ export default function LeaderboardTab({ userId }: { userId: string }) {
 
 	if (displayEntries.length === 0) {
 		return (
-			<p className="py-8 text-center text-muted-foreground text-sm">
-				Conecte-se a internet para ver o ranking da equipe.
-			</p>
+			<Empty className="py-8">
+				<EmptyDescription>
+					Conecte-se a internet para ver o ranking da equipe.
+				</EmptyDescription>
+			</Empty>
 		);
 	}
 

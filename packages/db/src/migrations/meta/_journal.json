@@ -8,6 +8,13 @@
       "when": 1774392536820,
       "tag": "0000_smart_blockbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774453506479,
+      "tag": "0001_zippy_argent",
+      "breakpoints": true
     }
   ]
 }
