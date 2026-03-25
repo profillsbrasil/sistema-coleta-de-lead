@@ -25,3 +25,12 @@ export interface SyncQueueItem {
 	retryCount: number;
 	timestamp: string;
 }
+
+export interface LeaderboardEntry {
+	lastSyncAt: string;
+	name: string;
+	rank: number;
+	score: number;
+	totalLeads: number;
+	userId: string;
+}

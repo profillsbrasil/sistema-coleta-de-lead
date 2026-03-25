@@ -45,13 +45,13 @@
 
 ### Dashboard & Stats
 
-- [ ] **DASH-01**: Vendedor ve dashboard pessoal com total de leads coletados
-- [ ] **DASH-02**: Dashboard mostra breakdown por tag (quente, morno, frio)
-- [ ] **DASH-03**: Dashboard mostra leads coletados hoje
-- [ ] **DASH-04**: Leaderboard comparativo de todos vendedores (quantidade + score ponderado)
-- [ ] **DASH-05**: Score ponderado: quente = 3, morno = 2, frio = 1
-- [ ] **DASH-06**: Leaderboard funciona offline com dados da ultima sincronizacao
-- [ ] **DASH-07**: Dashboard e leaderboard acessiveis offline via cache no Dexie
+- [x] **DASH-01**: Vendedor ve dashboard pessoal com total de leads coletados
+- [x] **DASH-02**: Dashboard mostra breakdown por tag (quente, morno, frio)
+- [x] **DASH-03**: Dashboard mostra leads coletados hoje
+- [x] **DASH-04**: Leaderboard comparativo de todos vendedores (quantidade + score ponderado)
+- [x] **DASH-05**: Score ponderado: quente = 3, morno = 2, frio = 1
+- [x] **DASH-06**: Leaderboard funciona offline com dados da ultima sincronizacao
+- [x] **DASH-07**: Dashboard e leaderboard acessiveis offline via cache no Dexie
 
 ### Admin
 
@@ -120,13 +120,13 @@
 | LEAD-03 | Phase 4 | Complete |
 | LEAD-04 | Phase 4 | Complete |
 | LEAD-05 | Phase 4 | Complete |
-| DASH-01 | Phase 5 | Pending |
-| DASH-02 | Phase 5 | Pending |
-| DASH-03 | Phase 5 | Pending |
-| DASH-04 | Phase 5 | Pending |
-| DASH-05 | Phase 5 | Pending |
-| DASH-06 | Phase 5 | Pending |
-| DASH-07 | Phase 5 | Pending |
+| DASH-01 | Phase 5 | Complete |
+| DASH-02 | Phase 5 | Complete |
+| DASH-03 | Phase 5 | Complete |
+| DASH-04 | Phase 5 | Complete |
+| DASH-05 | Phase 5 | Complete |
+| DASH-06 | Phase 5 | Complete |
+| DASH-07 | Phase 5 | Complete |
 | ADMN-01 | Phase 6 | Pending |
 | ADMN-02 | Phase 6 | Pending |
 | ADMN-03 | Phase 6 | Pending |
