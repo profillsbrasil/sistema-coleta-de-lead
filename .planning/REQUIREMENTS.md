@@ -55,13 +55,13 @@
 
 ### Admin
 
-- [ ] **ADMN-01**: Admin pode ver lista de todos os leads de todos vendedores
-- [ ] **ADMN-02**: Admin pode filtrar leads por vendedor
-- [ ] **ADMN-03**: Admin pode editar qualquer lead (mesmo de outro vendedor)
-- [ ] **ADMN-04**: Admin pode excluir qualquer lead (soft-delete)
-- [ ] **ADMN-05**: Admin pode gerenciar usuarios (CRUD de vendedores)
-- [ ] **ADMN-06**: Admin tem tela de stats globais com filtros avancados
-- [ ] **ADMN-07**: Admin tem acesso a todas as telas de vendedor (com filtro por vendedor)
+- [x] **ADMN-01**: Admin pode ver lista de todos os leads de todos vendedores
+- [x] **ADMN-02**: Admin pode filtrar leads por vendedor
+- [x] **ADMN-03**: Admin pode editar qualquer lead (mesmo de outro vendedor)
+- [x] **ADMN-04**: Admin pode excluir qualquer lead (soft-delete)
+- [x] **ADMN-05**: Admin pode gerenciar usuarios (CRUD de vendedores)
+- [x] **ADMN-06**: Admin tem tela de stats globais com filtros avancados
+- [x] **ADMN-07**: Admin tem acesso a todas as telas de vendedor (com filtro por vendedor)
 
 ## v2 Requirements
 
@@ -127,13 +127,13 @@
 | DASH-05 | Phase 5 | Complete |
 | DASH-06 | Phase 5 | Complete |
 | DASH-07 | Phase 5 | Complete |
-| ADMN-01 | Phase 6 | Pending |
-| ADMN-02 | Phase 6 | Pending |
-| ADMN-03 | Phase 6 | Pending |
-| ADMN-04 | Phase 6 | Pending |
-| ADMN-05 | Phase 6 | Pending |
-| ADMN-06 | Phase 6 | Pending |
-| ADMN-07 | Phase 6 | Pending |
+| ADMN-01 | Phase 6 | Complete |
+| ADMN-02 | Phase 6 | Complete |
+| ADMN-03 | Phase 6 | Complete |
+| ADMN-04 | Phase 6 | Complete |
+| ADMN-05 | Phase 6 | Complete |
+| ADMN-06 | Phase 6 | Complete |
+| ADMN-07 | Phase 6 | Complete |
 
 **Coverage:**
 - v1 requirements: 40 total

@@ -123,11 +123,11 @@ Plans:
   3. Admin edita ou exclui qualquer lead (inclusive de outros vendedores)
   4. Admin gerencia usuarios — cria, edita e desativa contas de vendedores
   5. Admin ve tela de stats globais da equipe com filtros avancados
-**Plans:** 5 plans
+**Plans:** 2/5 plans executed
 
 Plans:
-- [ ] 06-01-PLAN.md — Admin tRPC backend (env setup, admin client, leads/users/stats routers)
-- [ ] 06-02-PLAN.md — Admin layout shell (sidebar, auth guard, LeadForm refactoring, header link)
+- [x] 06-01-PLAN.md — Admin tRPC backend (env setup, admin client, leads/users/stats routers)
+- [x] 06-02-PLAN.md — Admin layout shell (sidebar, auth guard, LeadForm refactoring, header link)
 - [ ] 06-03-PLAN.md — Admin leads management (vendor selector, paginated table, edit/delete)
 - [ ] 06-04-PLAN.md — Admin users management (search, role editing, deactivate/reactivate)
 - [ ] 06-05-PLAN.md — Admin stats page (filters, charts, ranking) + dashboard vendor selector
@@ -146,4 +146,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Lead Capture | 4/4 | Complete   | 2026-03-25 |
 | 4. Lead Management | 3/3 | Complete | - |
 | 5. Dashboard & Leaderboard | 3/3 | Complete | - |
-| 6. Admin Panel | 0/5 | Not started | - |
+| 6. Admin Panel | 2/5 | In Progress|  |
