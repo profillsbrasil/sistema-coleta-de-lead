@@ -1,4 +1,5 @@
 import { protectedProcedure, publicProcedure, router } from "../index";
+import { adminRouter } from "./admin/index";
 import { syncRouter } from "./sync";
 import { todoRouter } from "./todo";
 
@@ -12,6 +13,7 @@ export const appRouter = router({
 			user: ctx.user,
 		};
 	}),
+	admin: adminRouter,
 	sync: syncRouter,
 	todo: todoRouter,
 });
