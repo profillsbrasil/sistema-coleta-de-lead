@@ -1,10 +1,32 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
 
-import { trpc } from "@/utils/trpc";
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "@dashboard-leads-profills/ui/components/tabs";
 
-export default function Dashboard() {
-	const privateData = useQuery(trpc.privateData.queryOptions());
+import LeaderboardTab from "./leaderboard-tab";
+import PersonalDashboard from "./personal-dashboard";
 
-	return <p>API: {privateData.data?.message}</p>;
+interface DashboardProps {
+	userId: string;
+}
+
+export default function Dashboard({ userId }: DashboardProps) {
+	return (
+		<Tabs defaultValue="dashboard">
+			<TabsList>
+				<TabsTrigger value="dashboard">Meu Dashboard</TabsTrigger>
+				<TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+			</TabsList>
+			<TabsContent className="mt-4" value="dashboard">
+				<PersonalDashboard userId={userId} />
+			</TabsContent>
+			<TabsContent className="mt-4" value="leaderboard">
+				<LeaderboardTab userId={userId} />
+			</TabsContent>
+		</Tabs>
+	);
 }
