@@ -8,6 +8,21 @@ Sistema offline-first de coleta de leads para vendedores em congressos e confere
 
 Vendedores conseguem coletar leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
 
+## Current Milestone: v1.1 UI Refactor & Mobile UX
+
+**Goal:** Refatorar toda a UI para sidebar navigation (shadcn Sidebar) com drawer mobile, garantir 100% de responsividade em todas as rotas/paginas, e elevar a qualidade visual.
+
+**Target features:**
+- Sidebar navigation com shadcn/ui Sidebar (collapsible, icones, grupos)
+- Drawer/Sheet no mobile (hamburger, conteudo 100% da tela)
+- Sidebar unica para vendedor e admin (secao "Admin" expandivel por role)
+- Remocao do topbar atual — sidebar assume toda a navegacao
+- 100% responsividade em todas as rotas e paginas
+- Tabelas/listas responsivas (card layout no mobile)
+- Formularios otimizados para mobile (touch-friendly)
+- Touch targets adequados (min 44x44px)
+- Polish visual com Impeccable skills (arrange, adapt, polish, typeset)
+
 ## Current State
 
 **v1.0 MVP — SHIPPED 2026-03-26**
@@ -50,7 +65,19 @@ Tech debt ativo:
 - ✓ Admin: stats globais com filtros avancados — v1.0
 - ✓ Admin: vendor dashboard via tRPC (ve stats reais de outro vendedor) — v1.0
 
-### Active — v1.1+
+### Active — v1.1
+
+- [ ] Sidebar navigation com shadcn/ui Sidebar (collapsible, icones, grupos)
+- [ ] Drawer/Sheet no mobile (hamburger, conteudo 100% da tela)
+- [ ] Sidebar unica vendedor+admin (secao "Admin" expandivel por role)
+- [ ] Remocao do topbar — sidebar assume navegacao
+- [ ] 100% responsividade em todas as rotas e paginas
+- [ ] Tabelas/listas responsivas (card layout no mobile)
+- [ ] Formularios otimizados para mobile (touch-friendly)
+- [ ] Touch targets adequados (min 44x44px)
+- [ ] Polish visual (arrange, adapt, polish, typeset)
+
+### Backlog — v1.2+
 
 - [ ] Exportacao de leads para CSV/Excel (ENH-01)
 - [ ] Indicador visual de conectividade (ENH-02)
@@ -113,4 +140,4 @@ Tech debt ativo:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after v1.0 milestone*
+*Last updated: 2026-03-26 after v1.1 milestone start*
