@@ -52,11 +52,13 @@ Source: Tailwind 4 default scale. No custom spacing tokens in project.
 | Role | Size | Weight | Line Height | Usage in Phase 8 |
 |------|------|--------|-------------|-------------------|
 | Body | 14px (text-sm) | 400 (font-normal) | 1.43 (Tailwind default) | SidebarMenuButton labels, SidebarGroupLabel |
-| Label | 12px (text-xs) | 500 (font-medium) | 1.33 (Tailwind default) | SidebarGroupLabel "Vendedor", "Admin" |
+| Label | 12px (text-xs) | 400 (font-normal) | 1.33 (Tailwind default) | SidebarGroupLabel "Vendedor", "Admin" |
 | Heading | 16px (text-base) | 600 (font-semibold) | 1.5 (Tailwind default) | SidebarHeader brand text |
 | Display | 20px (text-xl) | 600 (font-semibold) | 1.4 | Not used in this phase |
 
-Note: shadcn Sidebar components apply their own text sizing internally. Nav item labels use the component's built-in sizing (text-sm equivalent). Do NOT override font sizes on SidebarMenuButton or SidebarGroupLabel -- use their defaults.
+Declared weights: **400 (font-normal)** for Body and Label, **600 (font-semibold)** for Heading and Display. Labels differentiate from Body via smaller size (12px vs 14px), not weight.
+
+Note: shadcn Sidebar components apply their own internal font weights (e.g., SidebarGroupLabel uses font-medium internally). The 2 weights above are the only weights the executor should intentionally apply. Component internals may vary and should not be overridden.
 
 Source: shadcn Sidebar component internals + Tailwind 4 type scale.
 
@@ -81,6 +83,12 @@ Accent reserved for:
 - Nothing else in this phase
 
 Source: `packages/ui/src/styles/globals.css` -- `:root` and `.dark` blocks.
+
+---
+
+## Focal Point
+
+Focal point: Brand text "Leads Profills" in SidebarHeader anchors the sidebar visually. The content area renders child pages which define their own focal points per phase.
 
 ---
 
