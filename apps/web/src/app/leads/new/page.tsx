@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-
-import { createClient } from "@/lib/supabase/server";
 import LeadForm from "@/components/lead-form";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function NewLeadPage() {
 	const supabase = await createClient();

@@ -15,7 +15,7 @@ import {
 } from "@dashboard-leads-profills/ui/components/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { type PersonalStats } from "@/lib/lead/stats";
+import type { PersonalStats } from "@/lib/lead/stats";
 import { trpc } from "@/utils/trpc";
 import LeaderboardTab from "./leaderboard-tab";
 import PersonalDashboard from "./personal-dashboard";
@@ -86,7 +86,10 @@ export default function Dashboard({ userId, isAdmin }: DashboardProps) {
 				) : null}
 			</div>
 			<TabsContent className="mt-4" value="dashboard">
-				<PersonalDashboard userId={effectiveUserId} overrideStats={adminVendorStats} />
+				<PersonalDashboard
+					overrideStats={adminVendorStats}
+					userId={effectiveUserId}
+				/>
 			</TabsContent>
 			<TabsContent className="mt-4" value="leaderboard">
 				<LeaderboardTab userId={userId} />
