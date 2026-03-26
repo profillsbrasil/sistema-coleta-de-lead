@@ -47,7 +47,7 @@
 **UI hint**: yes
 
 Plans:
-- [ ] 08-01: Criar route groups (public) e (app) — mover paginas publicas para (public), criar layouts
+- [x] 08-01: Criar route groups (public) e (app) — mover paginas publicas para (public), criar layouts
 - [ ] 08-02: Criar (app)/layout.tsx com auth guard + SidebarProvider + AppSidebar shell + SidebarInset
 - [ ] 08-03: Remover Header do root layout, deletar header.tsx + admin-sidebar.tsx + admin/layout.tsx, limpar root layout
 

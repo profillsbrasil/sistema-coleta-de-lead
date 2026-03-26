@@ -11,7 +11,7 @@
 ### Layout — Sidebar Navigation
 
 - [ ] **LAYOUT-01**: App possui sidebar de navegacao (shadcn Sidebar) substituindo o topbar `Header` em todas as rotas autenticadas
-- [ ] **LAYOUT-02**: Route groups `(public)` e `(app)` separam paginas sem sidebar (login, home) de paginas com sidebar — zero condicional no root layout
+- [x] **LAYOUT-02**: Route groups `(public)` e `(app)` separam paginas sem sidebar (login, home) de paginas com sidebar — zero condicional no root layout
 - [ ] **LAYOUT-03**: `SidebarProvider` unico em `(app)/layout.tsx` — nenhum `SidebarProvider` aninhado (admin layout nao tem provider proprio)
 - [ ] **LAYOUT-04**: `AppSidebar` unificado com dois grupos: "Vendedor" (sempre visivel) e "Admin" (collapsible, visivel apenas para role admin)
 - [ ] **LAYOUT-05**: `Header` topbar removido — sem referencia a `header.tsx` no codebase apos migracao
@@ -23,7 +23,7 @@
 
 - [ ] **MOBILE-01**: No mobile (< 768px), sidebar renderiza como Sheet drawer a partir da esquerda com botao hamburguer
 - [ ] **MOBILE-02**: Drawer fecha automaticamente apos navegacao (click em link) no mobile — sem fechar manualmente
-- [ ] **MOBILE-03**: Sidebar nao aparece nas paginas de login e home — layout publico sem sidebar
+- [x] **MOBILE-03**: Sidebar nao aparece nas paginas de login e home — layout publico sem sidebar
 - [ ] **MOBILE-04**: Sheet mobile nao exibe gap na parte inferior no iOS Safari (usa `100svh` ou `inset: 0`, nao `100dvh`)
 - [ ] **MOBILE-05**: Sidebar em desktop e collapsible para modo icon-only (Ctrl+B) com estado persistido via cookie
 
@@ -90,7 +90,7 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | LAYOUT-01 | Phase 8 | Pending |
-| LAYOUT-02 | Phase 8 | Pending |
+| LAYOUT-02 | Phase 8 | Complete |
 | LAYOUT-03 | Phase 8 | Pending |
 | LAYOUT-04 | Phase 9 | Pending |
 | LAYOUT-05 | Phase 8 | Pending |
@@ -99,7 +99,7 @@
 | LAYOUT-08 | Phase 9 | Pending |
 | MOBILE-01 | Phase 9 | Pending |
 | MOBILE-02 | Phase 9 | Pending |
-| MOBILE-03 | Phase 8 | Pending |
+| MOBILE-03 | Phase 8 | Complete |
 | MOBILE-04 | Phase 9 | Pending |
 | MOBILE-05 | Phase 9 | Pending |
 | RESP-01 | Phase 10 | Pending |
