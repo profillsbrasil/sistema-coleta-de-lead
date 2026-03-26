@@ -88,5 +88,17 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
+## Current State
+
+**Phase 7 complete (2026-03-26)** — Todos os 7 phases do milestone v1.0 executados.
+
+Gaps críticos do audit v1.0 fechados:
+- AUTH-05: `src/middleware.ts` ativo — session refresh e auth redirect rodam em cada request
+- ADMN-07: Admin vendor stats via tRPC — admin ve dados reais ao selecionar vendedor no dashboard
+- isAdmin agora usa `getClaims()` em `dashboard/page.tsx` (consistente com admin layout)
+- `/leads/new` tem auth guard server-side (consistente com demais rotas protegidas)
+
+**Pronto para:** `/gsd:complete-milestone` para fechar o milestone v1.0
+
 ---
-*Last updated: 2026-03-24 after initialization*
+*Last updated: 2026-03-26 after Phase 7 completion*
