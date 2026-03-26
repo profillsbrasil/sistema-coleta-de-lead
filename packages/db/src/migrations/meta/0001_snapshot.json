@@ -35,10 +35,7 @@
         "user_roles_user_id_role_unique": {
           "name": "user_roles_user_id_role_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "role"
-          ]
+          "columns": ["user_id", "role"]
         }
       },
       "policies": {},
@@ -196,9 +193,7 @@
         "leads_local_id_unique": {
           "name": "leads_local_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "local_id"
-          ]
+          "columns": ["local_id"]
         }
       },
       "policies": {},
@@ -242,19 +237,12 @@
     "public.app_role": {
       "name": "app_role",
       "schema": "public",
-      "values": [
-        "admin",
-        "vendedor"
-      ]
+      "values": ["admin", "vendedor"]
     },
     "public.interest_tag": {
       "name": "interest_tag",
       "schema": "public",
-      "values": [
-        "quente",
-        "morno",
-        "frio"
-      ]
+      "values": ["quente", "morno", "frio"]
     }
   },
   "schemas": {},

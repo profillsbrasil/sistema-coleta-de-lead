@@ -143,10 +143,7 @@ export default function LeadsPanel() {
 		<div className="flex flex-col gap-6">
 			<h1 className="font-semibold text-xl">Leads por Vendedor</h1>
 
-			<Select
-				onValueChange={handleVendorChange}
-				value={selectedVendor}
-			>
+			<Select onValueChange={handleVendorChange} value={selectedVendor}>
 				<SelectTrigger className="w-full max-w-sm">
 					<SelectValue placeholder="Selecionar vendedor" />
 				</SelectTrigger>

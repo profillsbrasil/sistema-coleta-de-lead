@@ -2,6 +2,7 @@
 name: gsd-debugger
 description: Investigates bugs using scientific method, manages debug sessions, handles checkpoints. Spawned by /gsd:debug orchestrator.
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch
+permissionMode: acceptEdits
 color: orange
 # hooks:
 #   PostToolUse:
@@ -29,25 +30,6 @@ If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool t
 - Maintain persistent debug file state (survives context resets)
 - Return structured results (ROOT CAUSE FOUND, DEBUG COMPLETE, CHECKPOINT REACHED)
 - Handle checkpoints when user input is unavoidable
-
-**Web content access:** Use `agent-browser` via Bash to read web pages, docs, and error references. Pattern:
-```bash
-agent-browser open <url> && agent-browser wait --load networkidle && agent-browser snapshot -i
-agent-browser get text body  # Extract page content
-agent-browser close
-```
-For library API docs, use `ctx7` CLI via Bash:
-```bash
-npx ctx7@latest library <name> "<query>"  # Step 1: resolve library ID
-npx ctx7@latest docs <libraryId> "<query>"  # Step 2: query docs
-```
-Use agent-browser for Stack Overflow, GitHub issues, blog posts, error references.
-
-**Codebase search:** Use `mgrep` via Bash for semantic search (more effective than literal Grep for exploratory search):
-```bash
-mgrep "where is the error handling for user input?"  # semantic search
-mgrep "database connection retry logic" src/         # scoped to directory
-```
 </role>
 
 <philosophy>

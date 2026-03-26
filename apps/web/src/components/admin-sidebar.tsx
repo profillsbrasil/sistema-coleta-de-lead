@@ -37,8 +37,8 @@ export default function AdminSidebar() {
 							return (
 								<SidebarMenuItem key={href}>
 									<SidebarMenuButton
-										render={<Link href={href as unknown as "/"} />}
 										isActive={isActive}
+										render={<Link href={href as unknown as "/"} />}
 									>
 										<Icon className="size-4" />
 										{label}
