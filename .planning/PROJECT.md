@@ -2,85 +2,109 @@
 
 ## What This Is
 
-Sistema de coleta de leads para vendedores utilizarem durante congressos e conferencias. Permite coleta rapida de contatos (formulario, scan QR WhatsApp, foto), gerenciamento dos proprios leads, e um dashboard com leaderboard comparativo e estatisticas individuais. Funciona offline-first via Dexie com sync para Supabase quando houver conexao.
+Sistema offline-first de coleta de leads para vendedores em congressos e conferencias. Permite captura rapida de contatos via formulario, scan de QR Code do WhatsApp e foto de cartao de visita. Inclui gerenciamento de leads, dashboard pessoal com score ponderado, leaderboard comparativo, e painel admin completo. Funciona 100% offline via Dexie com sync automatico para Supabase quando a conexao retorna.
 
 ## Core Value
 
 Vendedores conseguem coletar leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
 
+## Current State
+
+**v1.0 MVP — SHIPPED 2026-03-26**
+
+7 phases concluidos, 23 plans executados, 49 tasks:
+- Auth: Supabase Auth com Google/Facebook/LinkedIn OAuth, roles admin/vendedor
+- Offline: Dexie + sync engine push-then-pull, server-wins, 74 testes passando
+- Captura: Form (<3 toques), QR scanner, foto comprimida + Supabase Storage
+- Gestao: CRUD completo offline, filtro por tag, edit/delete
+- Dashboard: stats pessoais, leaderboard com cache offline, score ponderado
+- Admin: leads/usuarios/stats, vendor dashboard via tRPC
+
+Tech debt ativo:
+- LinkedIn/Facebook OAuth requer configuracao no Supabase Dashboard (manual)
+- Leaderboard mostra "Vendedor" para nao-current users (JOIN a auth.users pendente)
+- Nyquist validation pendente para todas as fases
+
 ## Requirements
 
-### Validated
+### Validated — v1.0
 
-- ✓ Monorepo Turborepo com Next.js 16, tRPC, Drizzle, Better-Auth, shadcn/ui — existing
-- ✓ Autenticacao email/password com Better-Auth — existing
-- ✓ Schema de auth no banco (user, session, account, verification) — existing
-- ✓ Componentes de sign-in/sign-up — existing
-- ✓ Package de UI com shadcn/ui components — existing
-- ✓ Env validation com T3 Env — existing
+- ✓ Auth via Supabase Auth com Google/LinkedIn/Facebook OAuth — v1.0
+- ✓ Roles admin/vendedor via custom claims (getClaims) — v1.0
+- ✓ Rotas admin protegidas por server-side role guard — v1.0
+- ✓ Sessao persiste via Next.js middleware (updateSession) — v1.0
+- ✓ Schema Drizzle leads com soft-delete, timestamps, local_id/server_id — v1.0
+- ✓ Dexie DB espelhando schema servidor (leads + syncQueue) — v1.0
+- ✓ Sync engine via tRPC vanilla client (push-then-pull, server-wins) — v1.0
+- ✓ Coleta funciona 100% offline — dados salvos no Dexie primeiro — v1.0
+- ✓ Formulario rapido (<3 toques): nome, telefone/email, interesse obrigatorios — v1.0
+- ✓ Campos opcionais: empresa, cargo, segmento, notas — v1.0
+- ✓ QR scanner WhatsApp (parse wa.me URL) — v1.0
+- ✓ Foto comprimida (max 1280px, JPEG 0.7) + sync para Supabase Storage — v1.0
+- ✓ Tags de interesse: quente, morno, frio — v1.0
+- ✓ CRUD de leads offline via Dexie — v1.0
+- ✓ Dashboard pessoal: total, hoje, breakdown por tag, score — v1.0
+- ✓ Leaderboard com score ponderado (quente=3, morno=2, frio=1) + cache offline — v1.0
+- ✓ Admin: lista todos leads de todos vendedores, edita/exclui qualquer lead — v1.0
+- ✓ Admin: CRUD de usuarios (roles, deactivate/reactivate) — v1.0
+- ✓ Admin: stats globais com filtros avancados — v1.0
+- ✓ Admin: vendor dashboard via tRPC (ve stats reais de outro vendedor) — v1.0
 
-### Active
+### Active — v1.1+
 
-- [ ] Coleta rapida de leads via formulario (nome e contato obrigatorios, resto flexivel)
-- [ ] Scan de QR Code do WhatsApp para auto-preencher telefone
-- [ ] Anexo de foto ao lead (cartao de visita, crachat)
-- [ ] Tags de interesse (quente, morno, frio) para qualificacao
-- [ ] Campo "segmento" livre (digitado pelo vendedor)
-- [ ] CRUD dos proprios leads (criar, listar, editar, deletar)
-- [ ] Dashboard com estatisticas individuais do vendedor
-- [ ] Leaderboard comparativo (quantidade + qualidade de leads)
-- [ ] Offline-first com Dexie (tudo funciona sem internet)
-- [ ] Sync automatico Dexie → Supabase quando conexao disponivel
-- [ ] Leaderboard offline com dados da ultima sincronizacao
+- [ ] Exportacao de leads para CSV/Excel (ENH-01)
+- [ ] Indicador visual de conectividade (ENH-02)
+- [ ] Autocomplete no campo segmento (ENH-03)
+- [ ] Alerta visual de lead duplicado (mesmo telefone) (ENH-04)
+- [ ] PWA com prompt de instalacao na home screen (ENH-05)
+- [ ] Supabase Realtime para leaderboard sub-5s (ENH-06)
+- [ ] Leaderboard mostra nome real de todos os vendedores (JOIN a auth.users)
 
 ### Out of Scope
 
-- Multi-evento (suporte a varios eventos separados) — v1 e para um evento so
-- Campos customizaveis por admin — v1 tem campos fixos, flexibilidade via "segmento" e "notas"
-- Notificacoes push — sem necessidade para v1
-- Exportacao CSV/Excel — pode ser v2
-- OAuth/magic link — email/password via Better-Auth ja suficiente
-- App mobile nativo — PWA web e suficiente para o evento
+- Multi-evento — v1 para um evento so; muda modelo de dados
+- Campos customizaveis por admin — segmento + notas cobrem 90%
+- Notificacoes push — Service Worker complexo, Safari incompleto, baixo ROI
+- App mobile nativo — PWA web suficiente para o evento
 - Chat entre vendedores — fora do escopo do produto
+- OCR de cartao de visita — API paga, precisao ruim PT-BR
+- Login email/password — OAuth ja suficiente para v1
 
 ## Context
 
 - **Cenario de uso:** Congressos e conferencias com internet instavel
 - **Usuarios:** Equipe de ate 10 vendedores da empresa
-- **Device:** Celulares e tablets dos vendedores (browser)
-- **Stack existente:** Monorepo Turborepo com Next.js 16 (React 19), tRPC 11, Drizzle ORM, Supabase (Postgres), Better-Auth 1.5, shadcn/ui
-- **Offline:** Dexie.js ja instalado (dependencia no package.json) mas nao configurado. Precisa definir estrategia de sync com Supabase + Drizzle + tRPC
-- **Auth existente:** Better-Auth com sign-in/sign-up funcional, schema de auth no banco
-- **Coleta de QR:** QR do WhatsApp codifica `https://wa.me/55XXXXXXXXXXX` — extrair numero do link
+- **Device:** Celulares e tablets (browser Chrome/Safari mobile)
+- **Stack:** Next.js 16.2 (React 19, React Compiler), tRPC 11, Drizzle ORM, Supabase Auth + Postgres, Dexie 4, shadcn/ui, TailwindCSS 4
+- **Codebase:** ~13.9k LOC TypeScript/TSX, 161 arquivos fonte, 74 testes automatizados
+- **Auth:** Supabase Auth com getClaims() para role detection, Next.js middleware para session refresh
 
 ## Constraints
 
-- **Offline-first:** Dexie como storage primario no client, Supabase como source of truth no server. Sync bidirecional com conflict resolution (server wins)
-- **Stack:** Usar stack existente (Next.js 16, tRPC, Drizzle, Supabase, Better-Auth, shadcn/ui). Dexie para offline
-- **Performance:** Coleta de lead deve ser < 3 toques ate salvar (formulario rapido)
-- **Compatibilidade:** Funcionar em Chrome e Safari mobile (cameras para QR e foto)
-- **Evento unico:** Sem necessidade de multi-tenancy ou separacao por evento
+- **Offline-first:** Dexie como storage primario no client, Supabase como source of truth no server
+- **Stack:** Usar stack existente — nao introduzir novas dependencias sem necessidade clara
+- **Performance:** Coleta de lead deve ser <3 toques ate salvar
+- **Compatibilidade:** Chrome e Safari mobile (cameras para QR e foto)
+- **Evento unico:** Sem necessidade de multi-tenancy
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Dexie como offline storage | Internet instavel em eventos; dados nao podem ser perdidos | — Pending |
-| Server wins na resolucao de conflitos | Simplicidade; dados do servidor sao source of truth | — Pending |
-| Segmento como campo livre | Flexibilidade sem complexidade de campos customizaveis | — Pending |
-| Nome + contato como unicos obrigatorios | Coleta rapida e a prioridade; dados extras sao bonus | — Pending |
-| Tags quente/morno/frio para score | Simples e intuitivo para vendedores em campo | — Pending |
+| Migrar de Better-Auth para Supabase Auth | Simplificar stack; Supabase Auth ja gerencia usuarios e roles via custom claims | ✓ Bom — eliminamos um pacote inteiro |
+| Dexie como offline storage | Internet instavel em eventos; dados nao podem ser perdidos | ✓ Bom — funciona bem com React via useLiveQuery |
+| Server wins na resolucao de conflitos | Simplicidade; dados do servidor sao source of truth | ✓ Bom — sem complexidade de merge |
+| tRPC vanilla client para sync engine | Sync roda fora do React tree; sem dependencia de hooks | ✓ Bom — funciona com polling de conectividade |
+| getClaims() para role detection | Consistencia entre tRPC context, admin layout e dashboard | ✓ Bom — unica fonte de verdade para roles |
+| overrideStats prop em PersonalDashboard | Admin ve stats de outro vendedor sem reescrever componente | ✓ Bom — minimal invasao no componente existente |
+| Tags quente/morno/frio para score | Simples e intuitivo para vendedores em campo | ✓ Bom — score ponderado funciona bem no leaderboard |
 
 ## Evolution
 
-This document evolves at phase transitions and milestone boundaries.
-
 **After each phase transition** (via `/gsd:transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
+1. Requirements validated? → Move to Validated with phase reference
+2. New requirements emerged? → Add to Active
+3. Decisions to log? → Add to Key Decisions
 
 **After each milestone** (via `/gsd:complete-milestone`):
 1. Full review of all sections
@@ -88,17 +112,5 @@ This document evolves at phase transitions and milestone boundaries.
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
-## Current State
-
-**Phase 7 complete (2026-03-26)** — Todos os 7 phases do milestone v1.0 executados.
-
-Gaps críticos do audit v1.0 fechados:
-- AUTH-05: `src/middleware.ts` ativo — session refresh e auth redirect rodam em cada request
-- ADMN-07: Admin vendor stats via tRPC — admin ve dados reais ao selecionar vendedor no dashboard
-- isAdmin agora usa `getClaims()` em `dashboard/page.tsx` (consistente com admin layout)
-- `/leads/new` tem auth guard server-side (consistente com demais rotas protegidas)
-
-**Pronto para:** `/gsd:complete-milestone` para fechar o milestone v1.0
-
 ---
-*Last updated: 2026-03-26 after Phase 7 completion*
+*Last updated: 2026-03-26 after v1.0 milestone*
