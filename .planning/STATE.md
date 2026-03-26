@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 06-05-PLAN.md (Phase 06 COMPLETE)
-last_updated: "2026-03-25T15:30:00.000Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 07-01-PLAN.md
+last_updated: "2026-03-26T15:38:10.121Z"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 22
-  completed_plans: 22
+  total_phases: 7
+  completed_phases: 7
+  total_plans: 23
+  completed_plans: 23
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Phase 06 — admin-panel
+**Current focus:** Phase 07 — auth-admin-fixes
 
 ## Current Position
 
-Phase: 06 (admin-panel) — EXECUTING
-Plan: 5 of 5
+Phase: 07 (auth-admin-fixes) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Plan: 5 of 5
 | Phase 06-admin-panel P02 | 4 | 2 tasks | 5 files |
 | Phase 06 P04 | 5min | 1 tasks | 2 files |
 | Phase 06 P03 | 6min | 2 tasks | 4 files |
+| Phase 07 P01 | 3 | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,9 @@ Recent decisions affecting current work:
 - [Phase 06]: Extracted 7 sub-components in users-panel to satisfy biome cognitive complexity limit (25 > 20)
 - [Phase 06]: TooltipTrigger render prop em vez de asChild (Base UI nao suporta asChild)
 - [Phase 06]: mapServerLeadToLocal usa Record<string, unknown> para evitar type mismatch Drizzle-tRPC
+- [Phase 07]: middleware.ts em src/ em vez de proxy.ts na raiz: Next.js ignora arquivos fora de src/ para middleware
+- [Phase 07]: getClaims() para isAdmin em dashboard/page.tsx: consistente com admin/layout.tsx, usa JWT sem network call
+- [Phase 07]: overrideStats prop no PersonalDashboard: hooks precisam ser incondicionais, overrideStats faz bypass apenas no render
 
 ### Pending Todos
 
@@ -139,6 +143,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T14:49:47.137Z
-Stopped at: Completed 06-03-PLAN.md
+Last session: 2026-03-26T15:38:10.117Z
+Stopped at: Completed 07-01-PLAN.md
 Resume file: None
