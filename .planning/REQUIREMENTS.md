@@ -11,7 +11,7 @@
 - [x] **AUTH-02**: User pode fazer login via Google OAuth
 - [x] **AUTH-03**: User pode fazer login via Facebook OAuth
 - [x] **AUTH-04**: User pode fazer login via LinkedIn OAuth
-- [x] **AUTH-05**: Sessao persiste apos refresh do browser
+- [ ] **AUTH-05**: Sessao persiste apos refresh do browser
 - [x] **AUTH-06**: User tem role (admin ou vendedor) armazenado no perfil
 - [x] **AUTH-07**: Rotas de admin sao protegidas — vendedor nao acessa
 
@@ -61,7 +61,7 @@
 - [x] **ADMN-04**: Admin pode excluir qualquer lead (soft-delete)
 - [x] **ADMN-05**: Admin pode gerenciar usuarios (CRUD de vendedores)
 - [x] **ADMN-06**: Admin tem tela de stats globais com filtros avancados
-- [x] **ADMN-07**: Admin tem acesso a todas as telas de vendedor (com filtro por vendedor)
+- [ ] **ADMN-07**: Admin tem acesso a todas as telas de vendedor (com filtro por vendedor)
 
 ## v2 Requirements
 
@@ -98,7 +98,7 @@
 | AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Complete |
-| AUTH-05 | Phase 1 | Complete |
+| AUTH-05 | Phase 7 | Pending |
 | AUTH-06 | Phase 1 | Complete |
 | AUTH-07 | Phase 1 | Complete |
 | OFFL-01 | Phase 2 | Complete |
@@ -133,12 +133,13 @@
 | ADMN-04 | Phase 6 | Complete |
 | ADMN-05 | Phase 6 | Complete |
 | ADMN-06 | Phase 6 | Complete |
-| ADMN-07 | Phase 6 | Complete |
+| ADMN-07 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 40 total
 - Mapped to phases: 40
 - Unmapped: 0
+- Pending (gap closure): 2 (AUTH-05, ADMN-07 → Phase 7)
 
 ---
 *Requirements defined: 2026-03-24*
