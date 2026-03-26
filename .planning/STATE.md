@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: UI Refactor & Mobile UX
 status: executing
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-26T23:26:42.205Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-26T23:39:18.209Z"
 last_activity: 2026-03-26
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 08 (layout-foundation) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-03-26
 
@@ -49,6 +49,7 @@ Progress: [░░░░░░░░░░] 0% (v1.1) — v1.0 complete
 ## Accumulated Context
 
 | Phase 08 P01 | 4min | 1 tasks | 26 files |
+| Phase 08 P02 | 8min | 2 tasks | 3 files |
 
 ### Decisions
 
@@ -63,6 +64,9 @@ Decisoes relevantes para v1.1:
 - Tables: DropdownMenu de acoes no mobile em vez de botoes inline — evita tap conflicts (pitfall #7)
 - [Phase 08]: Public layout como pass-through fragment (login ja tem centering proprio)
 - [Phase 08]: Home page como async server component redirect (sem rendering condicional)
+- [Phase 08]: collapsible='offcanvas' em vez de 'none' para manter Sheet mobile funcional
+- [Phase 08]: SidebarProvider unico em (app)/layout.tsx com defaultOpen — sidebar sempre expandida no desktop
+- [Phase 08]: Admin layout simplificado para role guard only — defense-in-depth com auth check redundante
 
 ### Pending Todos
 
@@ -76,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T23:26:42.203Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-26T23:39:18.207Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None

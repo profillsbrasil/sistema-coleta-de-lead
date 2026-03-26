@@ -10,13 +10,13 @@
 
 ### Layout — Sidebar Navigation
 
-- [ ] **LAYOUT-01**: App possui sidebar de navegacao (shadcn Sidebar) substituindo o topbar `Header` em todas as rotas autenticadas
+- [x] **LAYOUT-01**: App possui sidebar de navegacao (shadcn Sidebar) substituindo o topbar `Header` em todas as rotas autenticadas
 - [x] **LAYOUT-02**: Route groups `(public)` e `(app)` separam paginas sem sidebar (login, home) de paginas com sidebar — zero condicional no root layout
-- [ ] **LAYOUT-03**: `SidebarProvider` unico em `(app)/layout.tsx` — nenhum `SidebarProvider` aninhado (admin layout nao tem provider proprio)
+- [x] **LAYOUT-03**: `SidebarProvider` unico em `(app)/layout.tsx` — nenhum `SidebarProvider` aninhado (admin layout nao tem provider proprio)
 - [ ] **LAYOUT-04**: `AppSidebar` unificado com dois grupos: "Vendedor" (sempre visivel) e "Admin" (collapsible, visivel apenas para role admin)
 - [ ] **LAYOUT-05**: `Header` topbar removido — sem referencia a `header.tsx` no codebase apos migracao
 - [ ] **LAYOUT-06**: `AdminSidebar` e `admin/layout.tsx` removidos — admin layout simplificado para guard de role apenas
-- [ ] **LAYOUT-07**: Auth guard centralizado em `(app)/layout.tsx` como Server Component — paginas individuais nao duplicam `getUser()` + `redirect()`
+- [x] **LAYOUT-07**: Auth guard centralizado em `(app)/layout.tsx` como Server Component — paginas individuais nao duplicam `getUser()` + `redirect()`
 - [ ] **LAYOUT-08**: `UserMenu` e `ModeToggle` migrados para `SidebarFooter` — removidos do topbar
 
 ### Mobile — Drawer & Navigation
@@ -89,13 +89,13 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LAYOUT-01 | Phase 8 | Pending |
+| LAYOUT-01 | Phase 8 | Complete |
 | LAYOUT-02 | Phase 8 | Complete |
-| LAYOUT-03 | Phase 8 | Pending |
+| LAYOUT-03 | Phase 8 | Complete |
 | LAYOUT-04 | Phase 9 | Pending |
 | LAYOUT-05 | Phase 8 | Pending |
 | LAYOUT-06 | Phase 8 | Pending |
-| LAYOUT-07 | Phase 8 | Pending |
+| LAYOUT-07 | Phase 8 | Complete |
 | LAYOUT-08 | Phase 9 | Pending |
 | MOBILE-01 | Phase 9 | Pending |
 | MOBILE-02 | Phase 9 | Pending |
