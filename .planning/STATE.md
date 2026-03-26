@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: UI Refactor & Mobile UX
-status: Defining requirements
+status: Ready to plan
 stopped_at: null
-last_updated: "2026-03-26T16:00:00.000Z"
+last_updated: "2026-03-26T16:30:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
-  total_plans: 0
+  total_plans: 12
   completed_plans: 0
 ---
 
@@ -19,20 +19,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Milestone v1.1 — UI Refactor & Mobile UX
+**Current focus:** Phase 8 — Layout Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-26 — Milestone v1.1 started
+Phase: 8 of 11 (Layout Foundation)
+Plan: 0 of 3 in current phase
+Status: Ready to plan
+Last activity: 2026-03-26 — Roadmap v1.1 definido (Phases 8-11, 12 plans)
+
+Progress: [░░░░░░░░░░] 0% (v1.1) — v1.0 complete
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
+- Total plans completed: 0 (v1.1)
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -46,16 +48,15 @@ Last activity: 2026-03-26 — Milestone v1.1 started
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Decisions sao logged em PROJECT.md Key Decisions table.
+Decisoes relevantes para v1.1:
 
-- Auth: Supabase Auth com Google/LinkedIn/Facebook OAuth
-- Roles: admin + vendedor via custom claims (getClaims)
-- Offline: Dexie como storage primario, Supabase source of truth, server-wins
-- Score: quente=3, morno=2, frio=1 para leaderboard ponderado
-- UI: shadcn/ui Sidebar component para navegacao principal
-- Mobile: Drawer/Sheet pattern no mobile (hamburger, conteudo 100%)
-- Admin nav: Sidebar unica com secao "Admin" expandivel por role
+- UI: shadcn Sidebar substitui Header — zero novas dependencias (componentes ja instalados)
+- Arch: Route groups (public)/(app) — separacao limpa, zero rendering condicional no root layout
+- Pattern: SidebarProvider unico em (app)/layout.tsx — evita nested providers (pitfall #1)
+- Mobile: useEffect + usePathname + setOpenMobile(false) para fechar drawer apos navegacao (pitfall #3)
+- iOS: 100svh em vez de 100dvh no Sheet — evita gap Safari iOS 26 (pitfall #5)
+- Tables: DropdownMenu de acoes no mobile em vez de botoes inline — evita tap conflicts (pitfall #7)
 
 ### Pending Todos
 
@@ -63,10 +64,12 @@ None yet.
 
 ### Blockers/Concerns
 
-None yet.
+- Phase 8 e atomica: route groups + remocao do Header devem acontecer na mesma fase para evitar CLS
+- iOS Safari: testar drawer em device fisico (simulador e insuficiente para viewport bugs)
+- /todos page: definir se vai para (public) ou (app) durante Phase 8
 
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Milestone v1.1 started
+Stopped at: Roadmap v1.1 criado — pronto para /gsd:plan-phase 8
 Resume file: None

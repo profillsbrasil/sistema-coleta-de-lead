@@ -1,426 +1,457 @@
 # Architecture Research
 
-**Domain:** Offline-first lead capture with sync — Next.js + tRPC + Drizzle + Supabase + Dexie
-**Researched:** 2026-03-24
-**Confidence:** HIGH (stack is defined; patterns are well-established for this scale)
+**Domain:** Sidebar navigation + mobile responsiveness integration with Next.js App Router
+**Researched:** 2026-03-26
+**Confidence:** HIGH
 
-## Standard Architecture
+## Current Architecture Assessment
+
+### Layout Hierarchy (Before)
+
+```
+RootLayout (apps/web/src/app/layout.tsx)
+├── <html> + <body>
+├── Providers (ThemeProvider, QueryClient, SyncInitializer, Toaster)
+├── grid min-h-svh grid-rows-[auto_1fr]
+│   ├── Header (topbar — client component, role-checks client-side)
+│   └── {children}
+│       ├── / (Home — public, health check)
+│       ├── /login (public)
+│       ├── /todos (public)
+│       ├── /dashboard (auth-guarded per-page via server component)
+│       ├── /leads (auth-guarded per-page via server component)
+│       ├── /leads/new (auth-guarded per-page)
+│       ├── /leads/[id] (auth-guarded per-page)
+│       └── /admin/* (AdminLayout — nested layout with its own SidebarProvider)
+│           ├── AdminSidebar (shadcn Sidebar component)
+│           └── admin pages (leads, users, stats)
+```
+
+### Key Observations
+
+1. **Header is in RootLayout** — renders on ALL pages including login and home, wastes space on mobile
+2. **Admin already uses shadcn Sidebar** — `SidebarProvider` + `Sidebar` + `Sheet` mobile drawer already working
+3. **Auth guards are per-page** — each page does its own `supabase.auth.getUser()` + `redirect("/login")`
+4. **No route group separation** — public pages (/, /login, /todos) and authenticated pages share the same layout
+5. **Header checks role client-side** — `useEffect` + `getUser()` to show/hide "Admin" link (flash potential)
+
+## Recommended Architecture
+
+### Layout Hierarchy (After)
+
+```
+RootLayout (apps/web/src/app/layout.tsx)
+├── <html> + <body>
+├── Providers (ThemeProvider, QueryClient, SyncInitializer, Toaster)
+└── {children}
+    │
+    ├── (public)/               # Route group — NO sidebar
+    │   ├── layout.tsx          # Minimal layout (no nav, centered)
+    │   ├── page.tsx            # Home
+    │   └── login/page.tsx      # Login
+    │
+    └── (app)/                  # Route group — WITH sidebar
+        ├── layout.tsx          # AppLayout: auth guard + SidebarProvider + AppSidebar + SidebarInset
+        ├── dashboard/page.tsx
+        ├── leads/page.tsx
+        ├── leads/new/page.tsx
+        ├── leads/[id]/page.tsx
+        └── admin/
+            ├── leads/page.tsx
+            ├── users/page.tsx
+            └── stats/page.tsx
+```
+
+### Why This Structure
+
+**Route groups `(public)` and `(app)` solve the core problem:** the sidebar should only appear on authenticated pages. Without route groups, the sidebar either renders on login (bad) or requires conditional rendering in the root layout (worse — client-side flash, layout shifts).
+
+**Admin pages lose their dedicated layout.** The current `admin/layout.tsx` with its own `SidebarProvider` + `AdminSidebar` is replaced by the unified `(app)/layout.tsx` that holds a single `AppSidebar` with role-conditional admin section. This eliminates the double-sidebar problem (topbar + admin sidebar).
+
+**Auth guard centralizes in `(app)/layout.tsx`.** Instead of each page doing its own `getUser()` + `redirect()`, the group layout handles auth once. Individual admin pages still need role checks, but user authentication is guaranteed by the parent layout.
+
+## Component Architecture
 
 ### System Overview
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│  BROWSER (Client Layer)                                              │
-│                                                                      │
-│  ┌──────────────────┐   ┌───────────────────┐  ┌──────────────────┐ │
-│  │  React UI        │   │  Dexie DB         │  │  Sync Engine     │ │
-│  │  (Next.js App    │   │  (IndexedDB)       │  │  (background     │ │
-│  │   Router)        │   │                   │  │   loop)          │ │
-│  │                  │   │  leads table       │  │                  │ │
-│  │  useLiveQuery()  │◄──│  + syncQueue table │  │  online/offline  │ │
-│  │  (reactive)      │   │  + leaderboard     │  │  detection       │ │
-│  │                  │   │    snapshot        │  │  + tRPC calls    │ │
-│  └──────────────────┘   └───────────────────┘  └────────┬─────────┘ │
-│           │                      ▲                       │           │
-│           │ write (optimistic)   │ read                  │ sync      │
-│           └──────────────────────┘                       │           │
-└──────────────────────────────────────────────────────────┼───────────┘
-                                                           │
-                                              HTTP POST /api/trpc
-                                                           │
-┌──────────────────────────────────────────────────────────▼───────────┐
-│  SERVER (packages/api + apps/web)                                    │
-│                                                                      │
-│  ┌──────────────────────────────────────────────────────────────┐    │
-│  │  tRPC Router (packages/api)                                  │    │
-│  │  - leads.sync (batch upsert, returns server state)           │    │
-│  │  - leads.list (own leads, paginated)                         │    │
-│  │  - leads.leaderboard (aggregated cross-user stats)           │    │
-│  └─────────────────────────────┬────────────────────────────────┘    │
-│                                │                                     │
-│  ┌─────────────────────────────▼────────────────────────────────┐    │
-│  │  Drizzle ORM (packages/db)                                   │    │
-│  │  - leads table (source of truth)                             │    │
-│  │  - user FK from Better-Auth                                  │    │
-│  └─────────────────────────────┬────────────────────────────────┘    │
-└────────────────────────────────┼─────────────────────────────────────┘
-                                 │
-                    PostgreSQL (Supabase)
+┌─────────────────────────────────────────────────────────────┐
+│                     RootLayout                               │
+│  (html, body, Providers — NO navigation)                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────────┐    ┌───────────────────────────────┐  │
+│  │  (public)/layout  │    │  (app)/layout                 │  │
+│  │  - No sidebar     │    │  - Auth guard (server)        │  │
+│  │  - Centered       │    │  - SidebarProvider            │  │
+│  │  - Login, Home    │    │  - AppSidebar + SidebarInset  │  │
+│  └──────────────────┘    └──────────┬────────────────────┘  │
+│                                      │                       │
+│                          ┌───────────┴───────────┐          │
+│                          │     AppSidebar         │          │
+│                          │  ┌─────────────────┐   │          │
+│                          │  │ SidebarHeader   │   │          │
+│                          │  │ (logo, trigger) │   │          │
+│                          │  ├─────────────────┤   │          │
+│                          │  │ SidebarContent  │   │          │
+│                          │  │ ┌─────────────┐ │   │          │
+│                          │  │ │ Vendedor    │ │   │          │
+│                          │  │ │ nav group   │ │   │          │
+│                          │  │ └─────────────┘ │   │          │
+│                          │  │ ┌─────────────┐ │   │          │
+│                          │  │ │ Admin group │ │   │          │
+│                          │  │ │ (if admin)  │ │   │          │
+│                          │  │ └─────────────┘ │   │          │
+│                          │  ├─────────────────┤   │          │
+│                          │  │ SidebarFooter   │   │          │
+│                          │  │ (user, theme)   │   │          │
+│                          │  └─────────────────┘   │          │
+│                          └────────────────────────┘          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Responsibility | Location |
-|-----------|----------------|----------|
-| Dexie DB | Local source of truth while offline; cache while online | `apps/web/src/lib/db/` |
-| Sync Engine | Watches online status, flushes syncQueue to tRPC, updates local state with server response | `apps/web/src/lib/sync/` |
-| syncQueue table | Ordered log of mutations (CREATE/UPDATE/DELETE) waiting to reach server | Inside Dexie DB |
-| leaderboard snapshot | Cached read from server stored in Dexie; shown when offline | Inside Dexie DB |
-| tRPC `leads.sync` | Batch upsert with server-wins conflict resolution; returns authoritative records | `packages/api/src/routers/leads.ts` |
-| tRPC `leads.leaderboard` | Aggregates all users' lead counts/quality when online | `packages/api/src/routers/leads.ts` |
-| Drizzle `leads` table | Permanent record with `userId`, timestamps, business fields | `packages/db/src/schema/leads.ts` |
-
-## Recommended Project Structure
-
-```
-apps/web/src/
-├── lib/
-│   ├── db/
-│   │   ├── index.ts          # Dexie instance, singleton
-│   │   ├── schema.ts         # Dexie table definitions (leads, syncQueue, leaderboardSnapshot)
-│   │   └── queries.ts        # Typed Dexie query helpers
-│   └── sync/
-│       ├── engine.ts         # Core sync loop: flush queue, handle response
-│       ├── detector.ts       # navigator.onLine + window events
-│       └── status.ts         # React context: 'online'|'offline'|'syncing'|'error'
-├── features/
-│   └── leads/
-│       ├── hooks/
-│       │   ├── useLeads.ts         # useLiveQuery on Dexie leads
-│       │   └── useCreateLead.ts    # writes to Dexie + enqueues sync op
-│       ├── components/             # UI forms, list, capture
-│       └── types.ts                # Shared Lead type (Dexie shape)
-└── app/
-    ├── leads/                # Lead list + capture pages
-    └── dashboard/            # Stats + leaderboard
-
-packages/
-├── api/src/routers/
-│   └── leads.ts              # sync, list, leaderboard procedures
-└── db/src/schema/
-    └── leads.ts              # Drizzle: leads table
-```
-
-### Structure Rationale
-
-- **`lib/db/`:** Dexie is infrastructure, not a feature — isolated from UI and business logic.
-- **`lib/sync/`:** Sync is a cross-cutting concern that runs independently of any specific feature; keeps engine logic out of components.
-- **`features/leads/`:** All lead-specific UI, hooks, and types colocated. Hooks are the boundary between Dexie reads and React components.
+| Component | Responsibility | Status | Location |
+|-----------|----------------|--------|----------|
+| `RootLayout` | html/body, fonts, Providers | **MODIFY** — remove Header, remove grid | `app/layout.tsx` |
+| `PublicLayout` | Centered container, no nav | **NEW** | `app/(public)/layout.tsx` |
+| `AppLayout` | Auth guard, SidebarProvider, sidebar + main area | **NEW** | `app/(app)/layout.tsx` |
+| `AppSidebar` | Unified sidebar with vendedor + admin sections | **NEW** | `components/app-sidebar.tsx` |
+| `SidebarUserMenu` | User info + sign out in sidebar footer | **NEW** | `components/sidebar-user-menu.tsx` |
+| `AppTopbar` | Mobile trigger + breadcrumb/page title in SidebarInset | **NEW** | `components/app-topbar.tsx` |
+| `Header` | Top navigation bar | **DELETE** | `components/header.tsx` |
+| `AdminSidebar` | Admin-only sidebar | **DELETE** | `components/admin-sidebar.tsx` |
+| `AdminLayout` | Admin wrapper with SidebarProvider | **DELETE** | `app/admin/layout.tsx` |
+| `UserMenu` | Dropdown user menu in topbar | **REPURPOSE** into `SidebarUserMenu` | `components/user-menu.tsx` |
+| `ModeToggle` | Theme switcher | **MOVE** into sidebar footer | `components/mode-toggle.tsx` |
 
 ## Architectural Patterns
 
-### Pattern 1: Dexie as Primary Write Target (Optimistic Local-First)
+### Pattern 1: Route Group Layout Splitting
 
-**What:** Every write (create/update/delete) goes to Dexie immediately. The UI reads from Dexie via `useLiveQuery`. Sync to server happens asynchronously in the background.
+**What:** Use Next.js route groups `(public)` and `(app)` to apply different layouts without affecting URL paths.
 
-**When to use:** Always — for all lead mutations during the event.
+**When to use:** When authenticated and public pages need fundamentally different UI chrome (sidebar vs no sidebar).
 
-**Trade-offs:** UI is always fast; server eventually consistent. Acceptable for lead capture where speed matters more than immediate cross-device consistency.
+**Trade-offs:**
+- PRO: Clean separation, no conditional rendering, no layout flash
+- PRO: Server-side auth guard in one place
+- CON: Moving pages into route groups changes file paths (requires moving files)
+- CON: Shared components between groups need to live outside groups
+
+**Example:**
+```
+app/
+├── (public)/
+│   ├── layout.tsx        # <main className="flex min-h-svh items-center justify-center">
+│   ├── page.tsx           # / (home)
+│   └── login/page.tsx     # /login
+└── (app)/
+    ├── layout.tsx         # Auth + SidebarProvider + AppSidebar + SidebarInset
+    ├── dashboard/page.tsx # /dashboard (URL unchanged)
+    └── leads/page.tsx     # /leads (URL unchanged)
+```
+
+### Pattern 2: Server Component Auth Guard at Layout Level
+
+**What:** The `(app)/layout.tsx` is an async Server Component that checks auth and passes user/role data down.
+
+**When to use:** When all child routes require authentication.
+
+**Trade-offs:**
+- PRO: Auth check runs once per navigation, not per page
+- PRO: User data available to sidebar without client-side fetch
+- CON: Next.js caches layouts across navigations — this is desirable (avoids re-fetching auth on every page transition)
 
 **Example:**
 ```typescript
-// apps/web/src/features/leads/hooks/useCreateLead.ts
-export const useCreateLead = () => {
-  return async (data: CreateLeadInput) => {
-    const localId = crypto.randomUUID();
-    // 1. Write to Dexie immediately
-    await db.leads.add({
-      localId,
-      ...data,
-      syncStatus: "pending",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    // 2. Enqueue sync operation
-    await db.syncQueue.add({
-      operation: "CREATE",
-      localId,
-      payload: data,
-      timestamp: Date.now(),
-      retryCount: 0,
-      status: "pending",
-    });
-  };
-};
-```
+// app/(app)/layout.tsx
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-### Pattern 2: syncQueue as Ordered Mutation Log
+  if (!user) {
+    redirect("/login");
+  }
 
-**What:** Every mutation appends to a `syncQueue` table in Dexie (not just a flag on the record). The queue tracks: operation type, localId, payload, timestamp, retryCount, status.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userRole = (claimsData?.claims as Record<string, unknown>)?.user_role;
+  const isAdmin = userRole === "admin";
 
-**When to use:** Whenever you need ordered replay, retry on failure, and deduplication.
-
-**Trade-offs:** Slightly more storage/complexity than a simple `syncStatus` flag on records. Worth it for correctness when handling retries and deletions.
-
-**Why not just a flag:** A flag on the lead record can't represent a DELETE (record is gone), can't handle multiple operations on the same record in sequence, and can't retry independently.
-
-```typescript
-// Dexie schema (apps/web/src/lib/db/schema.ts)
-export interface SyncQueueItem {
-  id?: number;           // auto-increment
-  operation: "CREATE" | "UPDATE" | "DELETE";
-  localId: string;       // references leads.localId
-  serverId?: string;     // set after first successful sync
-  payload: unknown;
-  timestamp: number;
-  retryCount: number;
-  status: "pending" | "processing" | "failed";
-  error?: string;
+  return (
+    <SidebarProvider>
+      <AppSidebar isAdmin={isAdmin} user={user} />
+      <SidebarInset>
+        <AppTopbar />
+        <div className="flex-1 p-4 md:p-6">
+          {children}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }
 ```
 
-### Pattern 3: Server Wins — Pull After Push
+### Pattern 3: Role-Conditional Sidebar Groups
 
-**What:** After the sync engine pushes mutations to `leads.sync`, the tRPC procedure returns the authoritative server state for all affected records. The client overwrites local Dexie records with the server response.
+**What:** Single `AppSidebar` component with vendedor nav items always visible and admin nav items conditionally rendered based on `isAdmin` prop.
 
-**When to use:** Always for conflict resolution in this system. Rationale from PROJECT.md: server is source of truth.
+**When to use:** When different user roles share the same shell but see different navigation options.
 
-**Trade-offs:** A user who edited a lead offline and another user edited the same lead online will silently lose their offline change. Acceptable for a max-10-user team at a single event.
+**Trade-offs:**
+- PRO: One sidebar component to maintain
+- PRO: Admin section appears/disappears without page reload
+- CON: Sidebar component needs role prop from server
 
-**Implementation:**
+**Example:**
 ```typescript
-// Sync engine receives server response and overwrites local
-for (const serverLead of syncResponse.leads) {
-  await db.leads.where("serverId").equals(serverLead.id).modify({
-    ...serverLead,
-    syncStatus: "synced",
-    serverId: serverLead.id,
-  });
+// components/app-sidebar.tsx
+"use client";
+
+const VENDEDOR_ITEMS = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/leads", label: "Leads", icon: ClipboardList },
+  { href: "/leads/new", label: "Novo Lead", icon: PlusCircle },
+] as const;
+
+const ADMIN_ITEMS = [
+  { href: "/admin/leads", label: "Todos os Leads", icon: ClipboardList },
+  { href: "/admin/users", label: "Usuarios", icon: Users },
+  { href: "/admin/stats", label: "Stats Globais", icon: BarChart3 },
+] as const;
+
+export default function AppSidebar({ isAdmin, user }: AppSidebarProps) {
+  const pathname = usePathname();
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        {/* Logo / App name */}
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Vendedor</SidebarGroupLabel>
+          <SidebarMenu>
+            {VENDEDOR_ITEMS.map(/* nav items with isActive */)}
+          </SidebarMenu>
+        </SidebarGroup>
+        {isAdmin ? (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarMenu>
+              {ADMIN_ITEMS.map(/* nav items with isActive */)}
+            </SidebarMenu>
+          </SidebarGroup>
+        ) : null}
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarUserMenu user={user} />
+      </SidebarFooter>
+    </Sidebar>
+  );
 }
 ```
 
-### Pattern 4: Leaderboard as Read-Through Cache
+### Pattern 4: SidebarInset for Main Content
 
-**What:** The leaderboard data is server-only (requires aggregating all users). When online, the sync engine fetches it after each successful sync and writes a snapshot to a `leaderboardSnapshot` Dexie table. When offline, the UI reads the cached snapshot.
+**What:** Use shadcn's `SidebarInset` component as the main content wrapper inside `SidebarProvider`. It automatically handles margin/padding based on sidebar state.
 
-**When to use:** For any cross-user aggregate data that cannot be computed locally.
+**When to use:** Always when using shadcn Sidebar — it handles the responsive layout math.
 
-**Trade-offs:** Offline leaderboard is stale (last sync). Acceptable — event context means data is "good enough" for a few minutes. No need for a real-time subscription.
-
+**Example:**
 ```typescript
-// After successful sync
-const leaderboard = await trpc.leads.leaderboard.query();
-await db.leaderboardSnapshot.put({
-  id: 1, // single record, always overwrite
-  data: leaderboard,
-  cachedAt: new Date().toISOString(),
-});
+<SidebarProvider>
+  <AppSidebar />
+  <SidebarInset>
+    <header className="flex h-14 items-center gap-2 border-b px-4">
+      <SidebarTrigger />
+      {/* Breadcrumb or page title */}
+    </header>
+    <main className="flex-1 p-4 md:p-6">
+      {children}
+    </main>
+  </SidebarInset>
+</SidebarProvider>
 ```
 
 ## Data Flow
 
-### Offline Write Flow (Lead Capture)
+### Auth + Role Data Flow
 
 ```
-User submits form
-       |
-       v
-useCreateLead()
-       |
-       +---> db.leads.add({ syncStatus: "pending", localId: uuid })
-       |
-       +---> db.syncQueue.add({ operation: "CREATE", localId, payload })
-       |
-       v
-useLiveQuery() detects change
-       |
-       v
-UI updates immediately (optimistic)
-       |
-       v
-[network available?]
-       |
-  YES  +---> Sync Engine triggers (see Online Sync Flow)
-  NO       Nothing. Data persists in IndexedDB until reconnection.
+(app)/layout.tsx (Server Component)
+    │
+    ├── supabase.auth.getUser() → user object
+    ├── supabase.auth.getClaims() → user_role
+    │
+    ├── isAdmin = userRole === "admin"
+    │
+    ├──→ AppSidebar (client) ← props: { isAdmin, user }
+    │       ├── Vendedor nav items (always)
+    │       ├── Admin nav items (if isAdmin)
+    │       └── SidebarUserMenu ← props: { user }
+    │
+    └──→ {children} (page components)
+            └── Individual pages NO LONGER need auth guard
+                (except admin pages still need role guard)
 ```
 
-### Online Sync Flow (Reconnect or Periodic)
+### Mobile Sidebar State Flow
 
 ```
-network online event OR 30s poll
-       |
-       v
-Sync Engine
-       |
-       +---> Read all syncQueue WHERE status = "pending" (ordered by timestamp)
-       |
-       +---> Group by localId, collapse redundant operations
-       |         (CREATE + UPDATE = CREATE with latest payload)
-       |         (CREATE + DELETE = discard both)
-       |
-       +---> POST to tRPC leads.sync({ mutations: [...] })
-       |
-       v
-tRPC leads.sync procedure (packages/api)
-       |
-       +---> Validate input (Zod)
-       |
-       +---> For each mutation:
-       |         CREATE: INSERT leads ON CONFLICT DO UPDATE (upsert by localId+userId)
-       |         UPDATE: UPDATE leads WHERE id = serverId AND userId = ctx.userId
-       |         DELETE: soft DELETE (deletedAt timestamp, not physical row removal)
-       |
-       +---> Return { leads: AuthoritativeRecord[], leaderboard: LeaderboardData }
-       |
-       v
-Client receives server response
-       |
-       +---> Overwrite Dexie leads with server records (server wins)
-       |
-       +---> Set syncStatus = "synced" on affected records
-       |
-       +---> Remove processed items from syncQueue
-       |
-       +---> Write leaderboard to leaderboardSnapshot
-       |
-       v
-useLiveQuery() triggers re-render with fresh data
+SidebarProvider (context)
+    │
+    ├── useIsMobile() hook (768px breakpoint)
+    │
+    ├── Desktop: Sidebar renders as fixed side panel
+    │   └── collapsible="icon" — collapses to icons only
+    │
+    └── Mobile: Sidebar renders inside Sheet (drawer)
+        ├── SidebarTrigger (hamburger) in AppTopbar opens drawer
+        ├── Sheet slides from left
+        └── Sheet auto-closes on navigation (via Link click)
 ```
 
-### Read Flow (Online vs Offline)
+### Navigation State
 
 ```
-Component mounts
-       |
-       v
-useLiveQuery(db.leads.where("userId").equals(currentUserId))
-       |
-       v
-Always reads from Dexie (fast, same code online or offline)
-       |
-       v
-syncStatus field on each lead indicates freshness:
-  "pending"    → lead not yet confirmed by server (show indicator)
-  "synced"     → lead confirmed by server
-  "failed"     → sync failed after retries (show error action)
+usePathname() (Next.js hook)
+    ↓
+AppSidebar compares pathname to nav item hrefs
+    ↓
+SidebarMenuButton isActive={pathname.startsWith(href)}
+    ↓
+Active item highlighted via data-active styles
 ```
-
-### Leaderboard Read Flow
-
-```
-Component mounts
-       |
-       v
-[network available?]
-       |
-  YES  +---> trpc.leads.leaderboard.query() → live server data
-       |      on success: update leaderboardSnapshot in Dexie
-       |
-  NO   +---> useLiveQuery(db.leaderboardSnapshot) → cached data
-       |      show staleness indicator (cachedAt timestamp)
-```
-
-## Key Design Decisions
-
-### `localId` vs `serverId` duality
-
-Every lead record has two identifiers:
-
-- `localId` (UUID, generated client-side at creation) — permanent, never changes, used to correlate Dexie record with syncQueue entries
-- `serverId` (UUID or serial from Postgres, assigned on first successful sync) — null until synced
-
-The Dexie `leads` table is indexed on `localId`. The server upserts on `(localId, userId)` as a natural key to prevent duplicate rows if a CREATE is replayed.
-
-### Soft deletes
-
-Physical deletes in Dexie cause a sync problem: there is no payload to send to the server once the record is gone. Soft deletes (`deletedAt` timestamp) solve this — the record persists in Dexie with `deletedAt` set until sync confirms deletion server-side, then it can be removed from IndexedDB.
-
-### Batch sync, not per-operation
-
-Send all pending operations in a single tRPC call per sync cycle. This reduces round-trips on reconnect after extended offline periods (e.g., 2 hours in a conference hall with no signal).
-
-### No real-time subscription
-
-Supabase Realtime is out of scope for v1. The leaderboard updates on sync cycle completion (every 30s when online), which is sufficient for a 10-person team. Saves complexity of WebSocket management.
-
-## Build Order (What Depends on What)
-
-```
-1. Drizzle leads schema (packages/db)
-       ↓
-2. tRPC leads router — basic CRUD (packages/api)
-       ↓
-3. Dexie schema + db singleton (apps/web/src/lib/db)
-       ↓
-4. Sync Engine + detector (apps/web/src/lib/sync)
-       ↓
-5. Lead capture UI hooks (features/leads/hooks)
-       ↓
-6. Lead capture form + list (features/leads/components)
-       ↓
-7. Dashboard + leaderboard (app/dashboard)
-```
-
-Dependency rationale:
-- Dexie schema must mirror the Drizzle schema (same fields) — define server schema first.
-- Sync engine depends on both Dexie DB and tRPC client — build both before the engine.
-- UI hooks depend only on Dexie (not tRPC directly) — decouples UI from network.
-- Leaderboard depends on sync being functional (it piggybacks on sync cycle).
-
-## Scaling Considerations
-
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 1-10 users (v1 target) | Single Postgres DB, no caching layer, 30s sync poll, batch sync. Current design sufficient. |
-| 10-100 users | Add Supabase Realtime for leaderboard push instead of poll. Index `leads(userId, createdAt)` in Postgres. |
-| 100+ users | Separate leaderboard into a materialized view or Redis sorted set. Rate-limit sync endpoint per user. |
-
-### First bottleneck
-
-At 10 users creating leads rapidly, the `leads.leaderboard` query runs a COUNT aggregation on every sync. At 10 users this is trivial. First real bottleneck would be the leaderboard query — add a `GROUP BY userId` index or materialized view at 50+ users.
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Reading from tRPC in UI Components Directly (Bypassing Dexie)
-
-**What people do:** Use `trpc.leads.list.useQuery()` for the leads list page (normal React Query pattern).
-
-**Why it's wrong:** This works only when online. Going offline silently shows a loading state or error. The UI becomes non-functional when the network drops — exactly what this system is designed to prevent.
-
-**Do this instead:** Always read from Dexie via `useLiveQuery`. The sync engine keeps Dexie populated. UI never talks to tRPC directly for reads — only the sync engine does.
-
-### Anti-Pattern 2: syncStatus Flag on Lead Record Instead of a Separate Queue
-
-**What people do:** Add a `syncStatus: "pending" | "synced"` field to the lead Dexie record and loop over pending records on reconnect.
-
-**Why it's wrong:** Cannot represent DELETE operations (record is gone). Cannot handle sequenced operations (update then delete). Cannot retry independently from the read model. Creates race conditions if the same lead is modified again before the first sync completes.
-
-**Do this instead:** Separate `syncQueue` table with one row per mutation operation, ordered by timestamp.
-
-### Anti-Pattern 3: Syncing One Record at a Time
-
-**What people do:** When online, immediately fire a tRPC mutation for every Dexie write.
-
-**Why it's wrong:** At an event with intermittent WiFi, the user may capture 30 leads offline. On reconnect, firing 30 sequential requests creates waterfall latency, partial failures, and race conditions.
-
-**Do this instead:** Batch all pending operations into a single `leads.sync` call. The server processes them transactionally.
-
-### Anti-Pattern 4: Physical Deletes in Dexie Before Server Confirmation
-
-**What people do:** `db.leads.delete(id)` immediately when user hits delete, then enqueue a DELETE to the server.
-
-**Why it's wrong:** If the app closes before sync runs, the delete intent is preserved in the queue but the original record is gone — the server can't be told which record to delete (no payload to reference).
-
-**Do this instead:** Soft delete (`deletedAt = new Date()`), keep the record in Dexie until server confirms deletion, then remove from IndexedDB.
 
 ## Integration Points
 
-### External Services
+### Files to Create
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Supabase (Postgres) | Drizzle ORM → connection string via `DATABASE_URL` | Standard; no Supabase-specific SDK needed in v1 |
-| Better-Auth | Session cookie read in tRPC context (`packages/api/src/context.ts`) | `leads.sync` must be a `protectedProcedure` |
+| File | Purpose | Dependencies |
+|------|---------|-------------|
+| `app/(public)/layout.tsx` | Public pages layout (no sidebar) | None |
+| `app/(app)/layout.tsx` | Auth guard + sidebar shell | `AppSidebar`, `AppTopbar`, Supabase server client |
+| `components/app-sidebar.tsx` | Unified sidebar with role groups | shadcn Sidebar, Lucide icons, `usePathname` |
+| `components/app-topbar.tsx` | SidebarTrigger + page context bar | `SidebarTrigger` from shadcn |
+| `components/sidebar-user-menu.tsx` | User info + sign out in footer | Supabase client, `DropdownMenu` |
+
+### Files to Modify
+
+| File | Change | Reason |
+|------|--------|--------|
+| `app/layout.tsx` | Remove `Header` import, remove grid layout | Sidebar replaces topbar |
+| `app/(app)/dashboard/page.tsx` | Remove auth guard boilerplate | Layout handles auth |
+| `app/(app)/leads/page.tsx` | Remove auth guard boilerplate | Layout handles auth |
+| `app/(app)/leads/new/page.tsx` | Remove auth guard boilerplate | Layout handles auth |
+| `app/(app)/leads/[id]/page.tsx` | Remove auth guard boilerplate | Layout handles auth |
+| `app/(app)/admin/*/page.tsx` | Remove user auth guard (keep role guard) | Layout handles user auth |
+
+### Files to Delete
+
+| File | Reason |
+|------|--------|
+| `components/header.tsx` | Replaced by AppSidebar |
+| `components/admin-sidebar.tsx` | Merged into AppSidebar |
+| `app/admin/layout.tsx` | Merged into (app)/layout.tsx |
 
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| Dexie DB ↔ Sync Engine | Direct Dexie API calls (not via hooks) | Engine runs outside React tree |
-| Sync Engine ↔ tRPC | `createTRPCClient` (vanilla client, not React hooks) | Engine is not a component; cannot use `useMutation` |
-| UI ↔ Dexie | `useLiveQuery()` from `dexie-react-hooks` (v4.2.0 installed) | Reactive; re-renders on any Dexie change |
-| UI ↔ Sync Status | React Context (`SyncStatusContext`) | Exposes 'online'\|'offline'\|'syncing'\|'error' to components |
-| tRPC procedure ↔ Drizzle | Direct: `db.insert(leads).values(...)` in router handler | Follows existing pattern from `packages/api` |
+| RootLayout -> (app)/layout | children prop (Next.js routing) | No data passing needed |
+| (app)/layout -> AppSidebar | Props: `isAdmin`, `user` | Server-to-client boundary |
+| (app)/layout -> page children | children prop | Pages receive no layout props; use own data fetching |
+| AppSidebar -> SidebarUserMenu | Props: `user` | User data flows from layout through sidebar |
+| SidebarProvider -> all sidebar children | React Context | State: open/collapsed/mobile managed by context |
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Conditional Sidebar in Root Layout
+
+**What people do:** Keep Header/Sidebar in root layout with `pathname.includes("/login") ? null : <Sidebar />`.
+**Why it's wrong:** Client-side conditional causes layout flash. Root layout is a Server Component by default, so `usePathname()` forces it to become a client component (losing SSR benefits). Layout shifts on navigation.
+**Do this instead:** Use route groups. `(public)` has no sidebar, `(app)` has sidebar. Zero conditionals, zero flash.
+
+### Anti-Pattern 2: Separate SidebarProviders per Section
+
+**What people do:** Keep the admin `SidebarProvider` + `AdminSidebar` separate from a new vendedor sidebar.
+**Why it's wrong:** Two sidebars means inconsistent state (one open, one closed), doubled mobile drawers, and users "switch context" instead of smoothly navigating.
+**Do this instead:** Single `SidebarProvider` in `(app)/layout.tsx`, single `AppSidebar` with role-conditional groups.
+
+### Anti-Pattern 3: Client-Side Role Fetching in Sidebar
+
+**What people do:** Sidebar component does its own `useEffect` + `getUser()` to determine role (like current Header does).
+**Why it's wrong:** Flash of unauthenticated content, race condition with page render, duplicate Supabase calls.
+**Do this instead:** `(app)/layout.tsx` is a Server Component that fetches auth/role and passes as props to `AppSidebar`. No client-side fetch needed for role detection.
+
+### Anti-Pattern 4: Keeping the Topbar Alongside Sidebar
+
+**What people do:** Keep `Header` for non-admin pages and add sidebar only for admin.
+**Why it's wrong:** Inconsistent navigation UX, wasted vertical space on mobile (topbar + hamburger trigger), navigation items split between topbar and sidebar.
+**Do this instead:** Remove Header entirely. All navigation moves to sidebar. The only "topbar" is the `AppTopbar` inside `SidebarInset` with the `SidebarTrigger` button and optional breadcrumbs.
+
+## Build Order
+
+The build order respects component dependencies (bottom-up) and minimizes broken states.
+
+### Phase 1: Foundation (no visual changes yet)
+
+1. Create `app/(public)/layout.tsx` — minimal wrapper
+2. Move `app/page.tsx` -> `app/(public)/page.tsx`
+3. Move `app/login/` -> `app/(public)/login/`
+4. Verify: public pages render identically, URLs unchanged
+
+### Phase 2: App Shell
+
+5. Create `components/app-sidebar.tsx` — vendedor + admin nav items
+6. Create `components/sidebar-user-menu.tsx` — user footer
+7. Create `components/app-topbar.tsx` — SidebarTrigger + title area
+8. Create `app/(app)/layout.tsx` — auth guard + SidebarProvider + AppSidebar + SidebarInset
+
+### Phase 3: Migration
+
+9. Move `app/dashboard/` -> `app/(app)/dashboard/`
+10. Move `app/leads/` -> `app/(app)/leads/`
+11. Move `app/admin/` -> `app/(app)/admin/` (remove admin/layout.tsx)
+12. Remove auth boilerplate from moved page components
+13. Verify: all pages render with sidebar, admin items visible for admin role
+
+### Phase 4: Cleanup
+
+14. Remove `components/header.tsx`
+15. Remove `components/admin-sidebar.tsx`
+16. Update `app/layout.tsx` — remove Header import, simplify to just `{children}`
+17. Move `app/todos/` -> `app/(public)/todos/` or `app/(app)/todos/` depending on auth requirement
+18. Verify: no references to deleted components, clean build
+
+### Phase ordering rationale
+
+- Phase 1 first because route groups are non-breaking (same URLs)
+- Phase 2 before Phase 3 because the shell must exist before pages move into it
+- Phase 3 is the critical migration — old and new coexist briefly
+- Phase 4 cleanup only after everything works to avoid breaking mid-migration
+
+## Scaling Considerations
+
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| Current (10 vendedores) | Single sidebar with 2 groups is perfect |
+| 50+ vendedores | No sidebar changes needed; pagination in admin lists |
+| Multi-event (future) | Add event selector in SidebarHeader, no structural change |
+
+### Sidebar Navigation Growth
+
+The sidebar has ~6 nav items total (3 vendedor + 3 admin). shadcn Sidebar handles up to ~15-20 items comfortably before needing collapsible sub-groups or scrolling. No concern for this project.
 
 ## Sources
 
-- Dexie.js docs — [useLiveQuery()](https://dexie.org/docs/dexie-react-hooks/useLiveQuery())
-- [Offline sync & conflict resolution patterns practical guide (Feb 2026)](https://www.sachith.co.uk/offline-sync-conflict-resolution-patterns-architecture-trade%E2%80%91offs-practical-guide-feb-19-2026/)
-- [Offline-first frontend apps in 2025 — LogRocket Blog](https://blog.logrocket.com/offline-first-frontend-apps-2025-indexeddb-sqlite/)
-- [Build-from-scratch sync engine — DEV Community](https://dev.to/daliskafroyan/builing-an-offline-first-app-with-build-from-scratch-sync-engine-4a5e)
-- Existing codebase: `.planning/codebase/ARCHITECTURE.md` (tRPC + Drizzle + Better-Auth patterns)
-- `package.json` root: dexie@^4.3.0, dexie-react-hooks@^4.2.0 (already installed)
+- Codebase analysis: `apps/web/src/app/layout.tsx`, `admin/layout.tsx`, `components/header.tsx`, `components/admin-sidebar.tsx`
+- shadcn Sidebar component: `packages/ui/src/components/sidebar.tsx` (already installed, fully functional with Sheet mobile drawer)
+- shadcn `useIsMobile` hook: `packages/ui/src/hooks/use-mobile.ts` (768px breakpoint, already used by Sidebar)
+- Next.js App Router route groups: standard pattern — parenthesized folders create layout boundaries without affecting URLs
 
 ---
-*Architecture research for: offline-first lead capture — Dexie + tRPC + Drizzle + Supabase*
-*Researched: 2026-03-24*
+*Architecture research for: Sidebar navigation + mobile responsiveness integration*
+*Researched: 2026-03-26*
