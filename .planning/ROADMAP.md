@@ -134,10 +134,26 @@ Plans:
 
 **UI hint**: yes
 
+### Phase 7: Auth & Admin Fixes
+**Goal**: Fechar gaps críticos identificados pelo audit v1.0 — middleware de sessão ativo, admin vendor dashboard funcional, e consistência de auth guards
+**Depends on**: Phase 6
+**Requirements**: AUTH-05, ADMN-07
+**Gap Closure**: Fecha gaps do audit v1.0-MILESTONE-AUDIT.md
+**Success Criteria** (what must be TRUE):
+  1. `apps/web/middleware.ts` existe e é carregado pelo Next.js (middleware manifest não vazio)
+  2. Session refresh via cookies dispara em cada request (updateSession executa)
+  3. Admin que seleciona outro vendedor no dashboard vê os stats reais desse vendedor (não zeros)
+  4. `dashboard.tsx` usa `getClaims()` para detectar role admin (consistente com admin layout e tRPC context)
+  5. `/leads/new` redireciona para `/login` se não autenticado (consistente com /leads, /leads/[id], /dashboard)
+**Plans:** 1 plan
+
+Plans:
+- [ ] 07-01-PLAN.md — Auth middleware rename, isAdmin getClaims fix, /leads/new auth guard, ADMN-07 vendor stats via tRPC
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -146,4 +162,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Lead Capture | 4/4 | Complete   | 2026-03-25 |
 | 4. Lead Management | 3/3 | Complete | - |
 | 5. Dashboard & Leaderboard | 3/3 | Complete | - |
-| 6. Admin Panel | 2/5 | In Progress|  |
+| 6. Admin Panel | 5/5 | Complete |  |
+| 7. Auth & Admin Fixes | 0/1 | Not started | - |
