@@ -26,8 +26,10 @@ Vendedores conseguem coletar leads de forma rapida e confiavel mesmo sem interne
 ## Current State
 
 **v1.0 MVP — SHIPPED 2026-03-26**
+**v1.1 Phase 8: Layout Foundation — COMPLETE 2026-03-26**
 
-7 phases concluidos, 23 plans executados, 49 tasks:
+8 phases concluidos, 26 plans executados:
+- Phase 8: Route groups (public)/(app), sidebar navigation via shadcn Sidebar, auth guard centralizado, Header/AdminSidebar deletados
 - Auth: Supabase Auth com Google/Facebook/LinkedIn OAuth, roles admin/vendedor
 - Offline: Dexie + sync engine push-then-pull, server-wins, 74 testes passando
 - Captura: Form (<3 toques), QR scanner, foto comprimida + Supabase Storage
@@ -140,4 +142,4 @@ Tech debt ativo:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after v1.1 milestone start*
+*Last updated: 2026-03-26 after Phase 8 completion*
