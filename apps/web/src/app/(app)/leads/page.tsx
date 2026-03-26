@@ -1,5 +1,3 @@
-import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
 
 import LeadList from "./lead-list";
@@ -10,9 +8,5 @@ export default async function LeadsPage() {
 		data: { user },
 	} = await supabase.auth.getUser();
 
-	if (!user) {
-		redirect("/login");
-	}
-
-	return <LeadList userId={user.id} />;
+	return <LeadList userId={user?.id ?? ""} />;
 }

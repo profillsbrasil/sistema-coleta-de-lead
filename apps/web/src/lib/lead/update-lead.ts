@@ -1,8 +1,8 @@
 import { db } from "../db/index";
 import type { LeadFormData } from "./validation";
 
-function emptyToNull(value: string): string | null {
-	return value === "" ? null : value;
+function emptyToNull(value: string | undefined): string | null {
+	return !value || value === "" ? null : value;
 }
 
 export async function updateLead(
