@@ -1,9 +1,4 @@
-import {
-	SidebarProvider,
-	SidebarTrigger,
-} from "@dashboard-leads-profills/ui/components/sidebar";
 import { redirect } from "next/navigation";
-import AdminSidebar from "@/components/admin-sidebar";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminLayout({
@@ -27,17 +22,5 @@ export default async function AdminLayout({
 		redirect("/dashboard");
 	}
 
-	return (
-		<SidebarProvider>
-			<div className="flex min-h-[calc(100svh-49px)] w-full">
-				<AdminSidebar />
-				<main className="flex-1 p-6">
-					<div className="mb-4 md:hidden">
-						<SidebarTrigger />
-					</div>
-					{children}
-				</main>
-			</div>
-		</SidebarProvider>
-	);
+	return <>{children}</>;
 }
