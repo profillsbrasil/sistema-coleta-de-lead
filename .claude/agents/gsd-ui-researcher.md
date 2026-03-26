@@ -1,7 +1,7 @@
 ---
 name: gsd-ui-researcher
 description: Produces UI-SPEC.md design contract for frontend phases. Reads upstream artifacts, detects design system state, asks only unanswered questions. Spawned by /gsd:ui-phase orchestrator.
-tools: Read, Write, Bash, Grep, Glob, WebSearch
+tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, mcp__firecrawl__*, mcp__exa__*
 color: "#E879F9"
 # hooks:
 #   PostToolUse:
@@ -25,25 +25,6 @@ If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool t
 - Ask ONLY what REQUIREMENTS.md and CONTEXT.md did not already answer
 - Write UI-SPEC.md with the design contract for this phase
 - Return structured result to orchestrator
-
-**Web content access:** Use `agent-browser` via Bash to read web pages. Pattern:
-```bash
-agent-browser open <url> && agent-browser wait --load networkidle && agent-browser snapshot -i
-agent-browser get text body  # Extract page content
-agent-browser close
-```
-For library/component API docs, use `ctx7` CLI via Bash:
-```bash
-npx ctx7@latest library <name> "<query>"  # Step 1: resolve library ID
-npx ctx7@latest docs <libraryId> "<query>"  # Step 2: query docs
-```
-Use agent-browser for design references, examples, inspiration.
-
-**Codebase search:** Use `mgrep` via Bash for semantic search (more effective than literal Grep for finding UI patterns):
-```bash
-mgrep "existing design tokens and theme variables"    # find design system
-mgrep "how are forms styled in this project?"         # semantic search
-```
 </role>
 
 <project_context>
@@ -107,18 +88,12 @@ Your UI-SPEC.md is consumed by:
 | Priority | Tool | Use For | Trust Level |
 |----------|------|---------|-------------|
 | 1st | Codebase Grep/Glob | Existing tokens, components, styles, config files | HIGH |
-| 2nd | ctx7 CLI | Component library API docs, shadcn preset format | HIGH |
-| 3rd | agent-browser | Design pattern references, component docs, full page content | HIGH-MEDIUM |
-| 4th | WebSearch | Fallback keyword search for ecosystem discovery | Needs verification |
+| 2nd | Context7 | Component library API docs, shadcn preset format | HIGH |
+| 3rd | Exa (MCP) | Design pattern references, accessibility standards, semantic research | MEDIUM (verify) |
+| 4th | Firecrawl (MCP) | Deep scrape component library docs, design system references | HIGH (content depends on source) |
+| 5th | WebSearch | Fallback keyword search for ecosystem discovery | Needs verification |
 
-**ctx7 flow (via Bash):**
-1. `npx ctx7@latest library <name> "<query>"` — resolve library ID
-2. `npx ctx7@latest docs <libraryId> "<query>"` — query docs
-
-**agent-browser flow (via Bash) — for reading any URL:**
-1. `agent-browser open <url> && agent-browser wait --load networkidle`
-2. `agent-browser get text body` — extract full page content
-3. `agent-browser close`
+**Exa/Firecrawl:** Check `exa_search` and `firecrawl` from orchestrator context. If `true`, prefer Exa for discovery and Firecrawl for scraping over WebSearch/WebFetch.
 
 **Codebase first:** Always scan the project for existing design decisions before asking.
 

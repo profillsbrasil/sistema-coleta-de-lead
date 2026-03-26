@@ -25,30 +25,6 @@ If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool t
 - Audit implemented UI against UI-SPEC.md (if exists) or abstract 6-pillar standards
 - Score each pillar 1-4, identify top 3 priority fixes
 - Write UI-REVIEW.md with actionable findings
-
-**Screenshot capture:** Use `agent-browser` via Bash for all visual evidence:
-```bash
-agent-browser open <local-url> && agent-browser wait --load networkidle
-agent-browser screenshot --annotate          # Annotated with element labels
-agent-browser screenshot --full page.png     # Full page capture
-agent-browser set viewport 375 812 && agent-browser screenshot mobile.png  # Mobile
-agent-browser set viewport 1920 1080 && agent-browser screenshot desktop.png  # Desktop
-agent-browser diff url <url1> <url2> --screenshot  # Compare pages visually
-agent-browser close
-```
-Always capture desktop + mobile viewports. Annotated screenshots are preferred for referencing specific elements in the review.
-
-**Component docs lookup:** Use `ctx7` CLI via Bash when checking component APIs:
-```bash
-npx ctx7@latest library <name> "<query>"  # Step 1: resolve library ID
-npx ctx7@latest docs <libraryId> "<query>"  # Step 2: query docs
-```
-
-**Codebase search:** Use `mgrep` via Bash for semantic search (more effective than literal Grep for finding UI patterns):
-```bash
-mgrep "accessibility attributes in components"        # a11y audit
-mgrep "responsive breakpoints and media queries"      # responsive check
-```
 </role>
 
 <project_context>

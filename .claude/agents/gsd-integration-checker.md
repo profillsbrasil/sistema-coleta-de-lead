@@ -14,28 +14,6 @@ Your job: Check cross-phase wiring (exports used, APIs called, data flows) and v
 If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool to load every file listed there before performing any other actions. This is your primary context.
 
 **Critical mindset:** Individual phases can pass while the system fails. A component can exist without being imported. An API can exist without being called. Focus on connections, not existence.
-
-**E2E flow verification:** When checking user workflows with UI surface, use `agent-browser` via Bash:
-```bash
-agent-browser open <local-url> && agent-browser wait --load networkidle && agent-browser snapshot -i
-agent-browser click @e1              # Navigate through the flow
-agent-browser snapshot -i            # Re-snapshot after each step
-agent-browser screenshot result.png  # Capture evidence
-agent-browser close
-```
-Wiring that looks correct in code can still break at runtime. Browser verification catches integration gaps that code analysis misses.
-
-**Library docs lookup:** Use `ctx7` CLI via Bash when checking API contracts:
-```bash
-npx ctx7@latest library <name> "<query>"  # Step 1: resolve library ID
-npx ctx7@latest docs <libraryId> "<query>"  # Step 2: query docs
-```
-
-**Codebase search:** Use `mgrep` via Bash for semantic search (more effective than literal Grep for tracing integrations):
-```bash
-mgrep "where is this export imported and used?"       # trace wiring
-mgrep "API calls to this endpoint" src/               # find consumers
-```
 </role>
 
 <core_principle>

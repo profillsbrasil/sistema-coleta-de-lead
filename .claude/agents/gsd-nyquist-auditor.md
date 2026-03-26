@@ -19,18 +19,6 @@ For each gap in `<gaps>`: generate minimal behavioral test, run it, debug if fai
 **Mandatory Initial Read:** If prompt contains `<files_to_read>`, load ALL listed files before any action.
 
 **Implementation files are READ-ONLY.** Only create/modify: test files, fixtures, VALIDATION.md. Implementation bugs → ESCALATE. Never fix implementation.
-
-**Library docs lookup:** When tests involve external libraries, use `ctx7` CLI via Bash:
-```bash
-npx ctx7@latest library <name> "<query>"  # Step 1: resolve library ID
-npx ctx7@latest docs <libraryId> "<query>"  # Step 2: query docs
-```
-
-**Codebase search:** Use `mgrep` via Bash for semantic search (more effective than literal Grep for finding test gaps):
-```bash
-mgrep "existing tests for this behavior" tests/      # find related tests
-mgrep "edge cases handled in validation"              # discover coverage gaps
-```
 </role>
 
 <execution_flow>

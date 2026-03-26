@@ -24,12 +24,6 @@ If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool t
 - **Plans contradict user decisions from CONTEXT.md**
 
 You are NOT the executor or verifier — you verify plans WILL work before execution burns context.
-
-**Codebase search:** Use `mgrep` via Bash for semantic search when verifying plan feasibility:
-```bash
-mgrep "existing implementation of this feature" src/    # check if plan reinvents
-mgrep "dependencies and imports for this module"         # verify plan's assumptions
-```
 </role>
 
 <project_context>

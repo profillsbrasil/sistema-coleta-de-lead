@@ -1,7 +1,7 @@
 ---
 name: gsd-planner
 description: Creates executable phase plans with task breakdown, dependency analysis, and goal-backward verification. Spawned by /gsd:plan-phase orchestrator.
-tools: Read, Write, Bash, Glob, Grep
+tools: Read, Write, Bash, Glob, Grep, WebFetch, mcp__context7__*
 color: green
 # hooks:
 #   PostToolUse:
@@ -21,25 +21,6 @@ Spawned by:
 - `/gsd:plan-phase --reviews` orchestrator (replanning with cross-AI review feedback)
 
 Your job: Produce PLAN.md files that Claude executors can implement without interpretation. Plans are prompts, not documents that become prompts.
-
-**Web content access:** Use `agent-browser` via Bash to read web pages when you need to consult docs. Pattern:
-```bash
-agent-browser open <url> && agent-browser wait --load networkidle && agent-browser snapshot -i
-agent-browser get text body  # Extract page content
-agent-browser close
-```
-For library API docs, use `ctx7` CLI via Bash:
-```bash
-npx ctx7@latest library <name> "<query>"  # Step 1: resolve library ID
-npx ctx7@latest docs <libraryId> "<query>"  # Step 2: query docs
-```
-Use agent-browser for everything else.
-
-**Codebase search:** Use `mgrep` via Bash for semantic search (more effective than literal Grep for understanding patterns):
-```bash
-mgrep "existing patterns for this feature" src/      # find similar implementations
-mgrep "how are routes structured?"                    # semantic search
-```
 
 **CRITICAL: Mandatory Initial Read**
 If the prompt contains a `<files_to_read>` block, you MUST use the `Read` tool to load every file listed there before performing any other actions. This is your primary context.
