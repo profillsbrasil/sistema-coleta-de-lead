@@ -1,146 +1,129 @@
-# Requirements: Dashboard Leads Profills
+# Requirements: Dashboard Leads Profills v1.1
 
-**Defined:** 2026-03-24
+**Defined:** 2026-03-26
 **Core Value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
+**Milestone:** v1.1 UI Refactor & Mobile UX
 
-## v1 Requirements
+---
 
-### Authentication
+## v1.1 Requirements
 
-- [x] **AUTH-01**: Migrar de Better-Auth para Supabase Auth
-- [x] **AUTH-02**: User pode fazer login via Google OAuth
-- [x] **AUTH-03**: User pode fazer login via Facebook OAuth
-- [x] **AUTH-04**: User pode fazer login via LinkedIn OAuth
-- [x] **AUTH-05**: Sessao persiste apos refresh do browser
-- [x] **AUTH-06**: User tem role (admin ou vendedor) armazenado no perfil
-- [x] **AUTH-07**: Rotas de admin sao protegidas — vendedor nao acessa
+### Layout — Sidebar Navigation
 
-### Offline Infrastructure
+- [ ] **LAYOUT-01**: App possui sidebar de navegacao (shadcn Sidebar) substituindo o topbar `Header` em todas as rotas autenticadas
+- [ ] **LAYOUT-02**: Route groups `(public)` e `(app)` separam paginas sem sidebar (login, home) de paginas com sidebar — zero condicional no root layout
+- [ ] **LAYOUT-03**: `SidebarProvider` unico em `(app)/layout.tsx` — nenhum `SidebarProvider` aninhado (admin layout nao tem provider proprio)
+- [ ] **LAYOUT-04**: `AppSidebar` unificado com dois grupos: "Vendedor" (sempre visivel) e "Admin" (collapsible, visivel apenas para role admin)
+- [ ] **LAYOUT-05**: `Header` topbar removido — sem referencia a `header.tsx` no codebase apos migracao
+- [ ] **LAYOUT-06**: `AdminSidebar` e `admin/layout.tsx` removidos — admin layout simplificado para guard de role apenas
+- [ ] **LAYOUT-07**: Auth guard centralizado em `(app)/layout.tsx` como Server Component — paginas individuais nao duplicam `getUser()` + `redirect()`
+- [ ] **LAYOUT-08**: `UserMenu` e `ModeToggle` migrados para `SidebarFooter` — removidos do topbar
 
-- [x] **OFFL-01**: Schema de leads no Drizzle com soft-delete (deleted_at), timestamps (created_at, updated_at), UUID client (local_id) e server_id
-- [x] **OFFL-02**: Dexie DB configurado com schema espelhado do servidor (leads, syncQueue)
-- [x] **OFFL-03**: Sync engine via tRPC vanilla client (fora do React tree) — push local changes, pull server changes
-- [x] **OFFL-04**: Conflict resolution server-wins baseado em updated_at do servidor
-- [x] **OFFL-05**: Sync automatico quando conexao detectada (polling fallback para Safari)
-- [x] **OFFL-06**: Dados locais preservados quando sync falha (ex: 401 por sessao expirada)
+### Mobile — Drawer & Navigation
 
-### Lead Capture
+- [ ] **MOBILE-01**: No mobile (< 768px), sidebar renderiza como Sheet drawer a partir da esquerda com botao hamburguer
+- [ ] **MOBILE-02**: Drawer fecha automaticamente apos navegacao (click em link) no mobile — sem fechar manualmente
+- [ ] **MOBILE-03**: Sidebar nao aparece nas paginas de login e home — layout publico sem sidebar
+- [ ] **MOBILE-04**: Sheet mobile nao exibe gap na parte inferior no iOS Safari (usa `100svh` ou `inset: 0`, nao `100dvh`)
+- [ ] **MOBILE-05**: Sidebar em desktop e collapsible para modo icon-only (Ctrl+B) com estado persistido via cookie
 
-- [x] **CAPT-01**: Vendedor pode criar lead via formulario rapido (nome, telefone/email, interesse obrigatorios)
-- [x] **CAPT-02**: Campos opcionais: empresa, cargo, segmento (texto livre), notas (multi-line)
-- [x] **CAPT-03**: Vendedor pode escanear QR Code do WhatsApp e auto-preencher telefone (parse wa.me URL)
-- [x] **CAPT-04**: Vendedor pode tirar foto (cartao de visita, crachat) e anexar ao lead
-- [x] **CAPT-05**: Foto comprimida antes de armazenar no Dexie (max 1280px, JPEG 0.7) para evitar QuotaExceededError
-- [x] **CAPT-06**: Foto sincronizada para Supabase Storage quando online
-- [x] **CAPT-07**: Vendedor pode atribuir tag de interesse ao criar lead (quente, morno, frio)
-- [x] **CAPT-08**: Coleta funciona 100% offline — dados salvos no Dexie primeiro
+### Responsividade — Todas as Paginas
 
-### Lead Management
+- [ ] **RESP-01**: Admin leads table renderiza como card layout em mobile (< 768px) com acoes acessiveis via DropdownMenu
+- [ ] **RESP-02**: Admin users table renderiza como card layout em mobile (< 768px) com acoes acessiveis via DropdownMenu
+- [ ] **RESP-03**: Formulario de captura de lead (`lead-form.tsx`) usa `grid-cols-1` em mobile e `grid-cols-2` em `md`+
+- [ ] **RESP-04**: Dashboard stat cards usam grid responsivo (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`)
+- [ ] **RESP-05**: Charts do dashboard (Recharts) redimensionam corretamente com `ResponsiveContainer` — sem overflow apos sidebar toggle
+- [ ] **RESP-06**: Lead list com infinite scroll funciona corretamente dentro do layout com sidebar (IntersectionObserver com `root` correto)
+- [ ] **RESP-07**: Todas as rotas autenticadas (/dashboard, /leads, /leads/new, /leads/[id], /admin/*) renderizam corretamente em 320px sem overflow horizontal
 
-- [x] **LEAD-01**: Vendedor pode listar seus proprios leads (ordenados por recencia)
-- [x] **LEAD-02**: Vendedor pode editar qualquer campo de seus leads
-- [x] **LEAD-03**: Vendedor pode excluir seus leads (soft-delete)
-- [x] **LEAD-04**: Vendedor pode filtrar leads por tag de interesse
-- [x] **LEAD-05**: CRUD de leads funciona offline via Dexie
+### Touch & Acessibilidade
 
-### Dashboard & Stats
+- [ ] **TOUCH-01**: Todos os elementos interativos da sidebar (nav items, botoes) tem touch target minimo de 44x44px
+- [ ] **TOUCH-02**: Acoes nas tabelas admin (editar, excluir, trocar role) acessiveis via DropdownMenu no mobile (sem botoes minusculos)
+- [ ] **TOUCH-03**: FAB "Novo Lead" nao sobrepoe sidebar trigger no mobile; nao salta quando teclado virtual abre no iOS
+- [ ] **TOUCH-04**: Active state da sidebar indica rota atual corretamente (incluindo rotas aninhadas como `/admin/leads/[id]`)
 
-- [x] **DASH-01**: Vendedor ve dashboard pessoal com total de leads coletados
-- [x] **DASH-02**: Dashboard mostra breakdown por tag (quente, morno, frio)
-- [x] **DASH-03**: Dashboard mostra leads coletados hoje
-- [x] **DASH-04**: Leaderboard comparativo de todos vendedores (quantidade + score ponderado)
-- [x] **DASH-05**: Score ponderado: quente = 3, morno = 2, frio = 1
-- [x] **DASH-06**: Leaderboard funciona offline com dados da ultima sincronizacao
-- [x] **DASH-07**: Dashboard e leaderboard acessiveis offline via cache no Dexie
+### Polish Visual
 
-### Admin
+- [ ] **POLISH-01**: AppTopbar dentro de `SidebarInset` exibe SidebarTrigger + breadcrumb mostrando localizacao atual
+- [ ] **POLISH-02**: SidebarFooter exibe avatar + nome + role do usuario logado
+- [ ] **POLISH-03**: Leaderboard exibe na horizontal com scroll no mobile (manter comparabilidade — rank + nome + score visiveis)
+- [ ] **POLISH-04**: Sidebar funciona corretamente em dark mode e light mode
+- [ ] **POLISH-05**: Polish visual com impeccable skills: espacamento, tipografia, hierarquia visual consistentes em todas as paginas
 
-- [x] **ADMN-01**: Admin pode ver lista de todos os leads de todos vendedores
-- [x] **ADMN-02**: Admin pode filtrar leads por vendedor
-- [x] **ADMN-03**: Admin pode editar qualquer lead (mesmo de outro vendedor)
-- [x] **ADMN-04**: Admin pode excluir qualquer lead (soft-delete)
-- [x] **ADMN-05**: Admin pode gerenciar usuarios (CRUD de vendedores)
-- [x] **ADMN-06**: Admin tem tela de stats globais com filtros avancados
-- [x] **ADMN-07**: Admin tem acesso a todas as telas de vendedor (com filtro por vendedor)
+---
 
-## v2 Requirements
+## v1.2 Requirements (Deferred)
 
-### Enhancements
+### PWA
+
+- **PWA-01**: App tem manifest PWA configurado para instalacao em homescreen
+- **PWA-02**: Prompt de instalacao aparece na home para usuarios mobile
+
+### Backlog Original
 
 - **ENH-01**: Exportacao de leads para CSV/Excel
-- **ENH-02**: Indicador visual de conectividade para o usuario
-- **ENH-03**: Autocomplete no campo segmento (baseado em entradas anteriores)
+- **ENH-02**: Indicador visual de conectividade
+- **ENH-03**: Autocomplete no campo segmento
 - **ENH-04**: Alerta visual de lead duplicado (mesmo telefone)
-- **ENH-05**: PWA com prompt de instalacao na home screen (previne evicao iOS)
-- **ENH-06**: Supabase Realtime para leaderboard sub-5s (substituir polling)
+- **ENH-05**: Supabase Realtime para leaderboard sub-5s
+- **ENH-06**: Leaderboard mostra nome real de todos os vendedores (JOIN a auth.users)
 
-## Out of Scope
+---
+
+## Out of Scope (v1.1)
 
 | Feature | Reason |
 |---------|--------|
-| Login email/password | v1 usa apenas OAuth (Google, Facebook, LinkedIn) por simplicidade |
-| Multi-evento | v1 e para um evento so; muda modelo de dados fundamentalmente |
-| Custom field builder | Overkill para equipe de 10; segmento + notas cobrem 90% |
-| Push notifications | Service worker complexo, Safari incompleto, baixo ROI |
-| CRM integration | Zero ROI para 10 vendedores em evento unico; CSV em v2 |
-| Real-time collaborative list | Quebra modelo offline; leaderboard ja cobre visibilidade |
-| OCR de cartao de visita | Requer API paga, latencia offline, precisao ruim em PT-BR |
-| Magic link login | Supabase Auth com OAuth ja cobre; simplificar |
-| Chat entre vendedores | Fora do escopo do produto |
-| App mobile nativo | PWA web suficiente para o evento |
-| Deduplicacao/merge de leads | Alta complexidade, beneficio marginal; alerta visual em v2 |
+| Bottom tab navigation | Conflita com sidebar drawer; dois paradigmas de nav confundem; FAB overlap |
+| Sidebar com largura customizavel (drag resize) | Complexidade de pointer events, quebra assumptions de layout; shadcn defaults sao battle-tested |
+| Nested sidebar menus | App tem apenas ~8 rotas; aninhamento adiciona cognitive load sem valor |
+| Skeleton loading para nav items | Items sao estaticos/hardcoded — loading state seria visual falso |
+| Swipe left/right para abrir sidebar | Conflita com swipe horizontal em tabelas e leaderboard |
+| Features de produto novas | Foco exclusivo em refatoracao de layout e UX mobile |
+
+---
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Complete |
-| AUTH-02 | Phase 1 | Complete |
-| AUTH-03 | Phase 1 | Complete |
-| AUTH-04 | Phase 1 | Complete |
-| AUTH-05 | Phase 7 | Complete |
-| AUTH-06 | Phase 1 | Complete |
-| AUTH-07 | Phase 1 | Complete |
-| OFFL-01 | Phase 2 | Complete |
-| OFFL-02 | Phase 2 | Complete |
-| OFFL-03 | Phase 2 | Complete |
-| OFFL-04 | Phase 2 | Complete |
-| OFFL-05 | Phase 2 | Complete |
-| OFFL-06 | Phase 2 | Complete |
-| CAPT-01 | Phase 3 | Complete |
-| CAPT-02 | Phase 3 | Complete |
-| CAPT-03 | Phase 3 | Complete |
-| CAPT-04 | Phase 3 | Complete |
-| CAPT-05 | Phase 3 | Complete |
-| CAPT-06 | Phase 3 | Complete |
-| CAPT-07 | Phase 3 | Complete |
-| CAPT-08 | Phase 3 | Complete |
-| LEAD-01 | Phase 4 | Complete |
-| LEAD-02 | Phase 4 | Complete |
-| LEAD-03 | Phase 4 | Complete |
-| LEAD-04 | Phase 4 | Complete |
-| LEAD-05 | Phase 4 | Complete |
-| DASH-01 | Phase 5 | Complete |
-| DASH-02 | Phase 5 | Complete |
-| DASH-03 | Phase 5 | Complete |
-| DASH-04 | Phase 5 | Complete |
-| DASH-05 | Phase 5 | Complete |
-| DASH-06 | Phase 5 | Complete |
-| DASH-07 | Phase 5 | Complete |
-| ADMN-01 | Phase 6 | Complete |
-| ADMN-02 | Phase 6 | Complete |
-| ADMN-03 | Phase 6 | Complete |
-| ADMN-04 | Phase 6 | Complete |
-| ADMN-05 | Phase 6 | Complete |
-| ADMN-06 | Phase 6 | Complete |
-| ADMN-07 | Phase 7 | Complete |
+| LAYOUT-01 | Phase 8 | Pending |
+| LAYOUT-02 | Phase 8 | Pending |
+| LAYOUT-03 | Phase 8 | Pending |
+| LAYOUT-04 | Phase 9 | Pending |
+| LAYOUT-05 | Phase 8 | Pending |
+| LAYOUT-06 | Phase 8 | Pending |
+| LAYOUT-07 | Phase 8 | Pending |
+| LAYOUT-08 | Phase 9 | Pending |
+| MOBILE-01 | Phase 9 | Pending |
+| MOBILE-02 | Phase 9 | Pending |
+| MOBILE-03 | Phase 8 | Pending |
+| MOBILE-04 | Phase 9 | Pending |
+| MOBILE-05 | Phase 9 | Pending |
+| RESP-01 | Phase 10 | Pending |
+| RESP-02 | Phase 10 | Pending |
+| RESP-03 | Phase 10 | Pending |
+| RESP-04 | Phase 11 | Pending |
+| RESP-05 | Phase 11 | Pending |
+| RESP-06 | Phase 10 | Pending |
+| RESP-07 | Phase 10 | Pending |
+| TOUCH-01 | Phase 9 | Pending |
+| TOUCH-02 | Phase 10 | Pending |
+| TOUCH-03 | Phase 10 | Pending |
+| TOUCH-04 | Phase 9 | Pending |
+| POLISH-01 | Phase 11 | Pending |
+| POLISH-02 | Phase 9 | Pending |
+| POLISH-03 | Phase 11 | Pending |
+| POLISH-04 | Phase 11 | Pending |
+| POLISH-05 | Phase 11 | Pending |
 
 **Coverage:**
-- v1 requirements: 40 total
-- Mapped to phases: 40
-- Unmapped: 0
-- Pending (gap closure): 2 (AUTH-05, ADMN-07 → Phase 7)
+- v1.1 requirements: 29 total
+- Mapped to phases: 29
+- Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after roadmap creation — all 41 requirements mapped to 6 phases*
+*Requirements defined: 2026-03-26*
+*Last updated: 2026-03-26 after initial definition*
