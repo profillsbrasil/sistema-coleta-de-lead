@@ -16,7 +16,7 @@ import { Skeleton } from "@dashboard-leads-profills/ui/components/skeleton";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { StatCard } from "@/components/stat-card";
-import { type PersonalStats, getPersonalStats } from "@/lib/lead/stats";
+import { getPersonalStats, type PersonalStats } from "@/lib/lead/stats";
 
 const chartConfig: ChartConfig = {
 	quente: { label: "Quente", color: "oklch(0.45 0.18 17)" },
@@ -25,11 +25,14 @@ const chartConfig: ChartConfig = {
 };
 
 interface PersonalDashboardProps {
-	userId: string;
 	overrideStats?: PersonalStats | null;
+	userId: string;
 }
 
-export default function PersonalDashboard({ userId, overrideStats = null }: PersonalDashboardProps) {
+export default function PersonalDashboard({
+	userId,
+	overrideStats = null,
+}: PersonalDashboardProps) {
 	const localStats = useLiveQuery(() => getPersonalStats(userId), [userId]);
 
 	const stats = overrideStats ?? localStats;
