@@ -49,7 +49,7 @@
 Plans:
 - [x] 08-01: Criar route groups (public) e (app) — mover paginas publicas para (public), criar layouts
 - [x] 08-02: Criar (app)/layout.tsx com auth guard + SidebarProvider + AppSidebar shell + SidebarInset
-- [ ] 08-03: Remover Header do root layout, deletar header.tsx + admin-sidebar.tsx + admin/layout.tsx, limpar root layout
+- [x] 08-03: Remover Header do root layout, deletar header.tsx + admin-sidebar.tsx + admin/layout.tsx, limpar root layout
 
 ### Phase 9: Sidebar Content + Mobile UX
 **Goal**: Sidebar totalmente funcional com navegacao por role, drawer mobile que fecha sozinho apos navegacao, e user menu no footer
