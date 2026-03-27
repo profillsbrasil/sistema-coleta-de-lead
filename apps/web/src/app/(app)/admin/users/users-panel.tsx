@@ -11,7 +11,13 @@ import {
 	AlertDialogTitle,
 } from "@dashboard-leads-profills/ui/components/alert-dialog";
 import { Badge } from "@dashboard-leads-profills/ui/components/badge";
-import { Button } from "@dashboard-leads-profills/ui/components/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@dashboard-leads-profills/ui/components/dropdown-menu";
 import {
 	Empty,
 	EmptyDescription,
@@ -44,19 +50,22 @@ import {
 	TableHeader,
 	TableRow,
 } from "@dashboard-leads-profills/ui/components/table";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@dashboard-leads-profills/ui/components/tooltip";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Ban, CheckCircle, Pencil, Search, Shield, Users } from "lucide-react";
+import {
+	Ban,
+	CheckCircle,
+	MoreVertical,
+	Pencil,
+	Search,
+	Shield,
+	Users,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
 import { trpc } from "@/utils/trpc";
+import { AdminUserCard } from "./admin-user-card";
 
 const PER_PAGE = 20;
 
@@ -309,7 +318,25 @@ function UsersContent({
 
 	return (
 		<>
-			<TooltipProvider>
+			{/* Mobile: card list */}
+			<div className="flex flex-col gap-4 md:hidden">
+				{users.map((user) => (
+					<AdminUserCard
+						currentUserId={currentUserId}
+						isEditing={editingUserId === user.id}
+						key={user.id}
+						onCancelEdit={() => onEditRole(null)}
+						onDeactivate={onDeactivate}
+						onEditRole={(userId) => onEditRole(userId)}
+						onReactivate={onReactivate}
+						onRoleChange={onRoleChange}
+						user={user}
+					/>
+				))}
+			</div>
+
+			{/* Desktop: table */}
+			<div className="hidden md:block">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -336,7 +363,7 @@ function UsersContent({
 						))}
 					</TableBody>
 				</Table>
-			</TooltipProvider>
+			</div>
 
 			{totalPages > 1 && (
 				<UsersPagination
@@ -402,63 +429,54 @@ function UserRow({
 			</TableCell>
 			<TableCell>{user.leadCount}</TableCell>
 			<TableCell className="text-right">
-				<div className="flex justify-end gap-1">
-					<Tooltip>
-						<TooltipTrigger
-							render={
-								<Button
-									aria-label="Editar usuario"
-									onClick={() => onEditRole(isEditing ? null : user.id)}
-									size="icon-xs"
-									variant="ghost"
-								/>
-							}
+				<DropdownMenu>
+					<DropdownMenuTrigger
+						render={
+							<button
+								aria-label="Abrir menu de acoes"
+								className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg hover:bg-muted"
+								type="button"
+							/>
+						}
+					>
+						<MoreVertical className="size-4" />
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end">
+						<DropdownMenuItem
+							onClick={() => onEditRole(isEditing ? null : user.id)}
 						>
-							<Pencil className="size-3.5" />
-						</TooltipTrigger>
-						<TooltipContent>Editar role</TooltipContent>
-					</Tooltip>
-
-					{showDeactivate && (
-						<Tooltip>
-							<TooltipTrigger
-								render={
-									<Button
-										aria-label="Desativar usuario"
-										onClick={() =>
-											onDeactivate({ id: user.id, name: displayName })
-										}
-										size="icon-xs"
-										variant="ghost"
-									/>
-								}
-							>
-								<Ban className="size-3.5" />
-							</TooltipTrigger>
-							<TooltipContent>Desativar usuario</TooltipContent>
-						</Tooltip>
-					)}
-
-					{user.isBanned && (
-						<Tooltip>
-							<TooltipTrigger
-								render={
-									<Button
-										aria-label="Reativar usuario"
-										onClick={() =>
-											onReactivate({ id: user.id, name: displayName })
-										}
-										size="icon-xs"
-										variant="ghost"
-									/>
-								}
-							>
-								<CheckCircle className="size-3.5" />
-							</TooltipTrigger>
-							<TooltipContent>Reativar usuario</TooltipContent>
-						</Tooltip>
-					)}
-				</div>
+							<Pencil className="size-4" />
+							Editar role
+						</DropdownMenuItem>
+						{showDeactivate && (
+							<>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									onClick={() =>
+										onDeactivate({ id: user.id, name: displayName })
+									}
+									variant="destructive"
+								>
+									<Ban className="size-4" />
+									Desativar usuario
+								</DropdownMenuItem>
+							</>
+						)}
+						{user.isBanned && (
+							<>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									onClick={() =>
+										onReactivate({ id: user.id, name: displayName })
+									}
+								>
+									<CheckCircle className="size-4" />
+									Reativar usuario
+								</DropdownMenuItem>
+							</>
+						)}
+					</DropdownMenuContent>
+				</DropdownMenu>
 			</TableCell>
 		</TableRow>
 	);
@@ -615,41 +633,55 @@ function StatusBadge({ isBanned }: { isBanned: boolean }) {
 
 function UsersTableSkeleton() {
 	return (
-		<Table>
-			<TableHeader>
-				<TableRow>
-					<TableHead>Nome</TableHead>
-					<TableHead>Email</TableHead>
-					<TableHead>Role</TableHead>
-					<TableHead>Status</TableHead>
-					<TableHead>Leads</TableHead>
-					<TableHead className="text-right">Acoes</TableHead>
-				</TableRow>
-			</TableHeader>
-			<TableBody>
+		<>
+			{/* Mobile skeleton */}
+			<div className="flex flex-col gap-4 md:hidden">
 				{Array.from({ length: 5 }, (_, i) => (
-					<TableRow key={`skeleton-${i.toString()}`}>
-						<TableCell>
-							<Skeleton className="h-4 w-24" />
-						</TableCell>
-						<TableCell>
-							<Skeleton className="h-4 w-36" />
-						</TableCell>
-						<TableCell>
-							<Skeleton className="h-5 w-16" />
-						</TableCell>
-						<TableCell>
-							<Skeleton className="h-5 w-14" />
-						</TableCell>
-						<TableCell>
-							<Skeleton className="h-4 w-8" />
-						</TableCell>
-						<TableCell>
-							<Skeleton className="ml-auto h-6 w-16" />
-						</TableCell>
-					</TableRow>
+					<Skeleton
+						className="h-[72px] w-full rounded-lg"
+						key={`skeleton-mobile-${String(i)}`}
+					/>
 				))}
-			</TableBody>
-		</Table>
+			</div>
+			{/* Desktop skeleton */}
+			<div className="hidden md:block">
+				<Table>
+					<TableHeader>
+						<TableRow>
+							<TableHead>Nome</TableHead>
+							<TableHead>Email</TableHead>
+							<TableHead>Role</TableHead>
+							<TableHead>Status</TableHead>
+							<TableHead>Leads</TableHead>
+							<TableHead className="text-right">Acoes</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{Array.from({ length: 5 }, (_, i) => (
+							<TableRow key={`skeleton-${i.toString()}`}>
+								<TableCell>
+									<Skeleton className="h-4 w-24" />
+								</TableCell>
+								<TableCell>
+									<Skeleton className="h-4 w-36" />
+								</TableCell>
+								<TableCell>
+									<Skeleton className="h-5 w-16" />
+								</TableCell>
+								<TableCell>
+									<Skeleton className="h-5 w-14" />
+								</TableCell>
+								<TableCell>
+									<Skeleton className="h-4 w-8" />
+								</TableCell>
+								<TableCell>
+									<Skeleton className="ml-auto h-6 w-16" />
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+			</div>
+		</>
 	);
 }

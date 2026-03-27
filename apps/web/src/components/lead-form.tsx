@@ -180,7 +180,7 @@ export default function LeadForm({
 
 	return (
 		<div className="flex flex-col px-4 py-8">
-			<header className="mx-auto flex w-full max-w-[480px] items-center gap-4 pb-6">
+			<header className="mx-auto flex w-full max-w-none items-center gap-4 pb-6 md:max-w-2xl">
 				<Button
 					aria-label="Voltar"
 					onClick={() => router.back()}
@@ -195,14 +195,14 @@ export default function LeadForm({
 				</h1>
 			</header>
 
-			<Card className="mx-auto mb-8 w-full max-w-[480px]">
+			<Card className="mx-auto mb-8 w-full max-w-none md:max-w-2xl">
 				<CardHeader>
 					<CardTitle className="sr-only">Formulario de lead</CardTitle>
 				</CardHeader>
 				<CardContent>
 					<form
 						aria-busy={isSubmitting}
-						className="flex flex-col gap-4"
+						className="grid grid-cols-1 gap-4 md:grid-cols-2"
 						onSubmit={handleSubmit}
 					>
 						<div className="flex flex-col gap-2">
@@ -319,7 +319,11 @@ export default function LeadForm({
 							</div>
 						)}
 
-						<Collapsible onOpenChange={setShowDetails} open={showDetails}>
+						<Collapsible
+							className="md:col-span-2"
+							onOpenChange={setShowDetails}
+							open={showDetails}
+						>
 							<CollapsibleTrigger
 								className="inline-flex w-full items-center justify-between rounded-lg px-2.5 py-2 font-medium text-sm hover:bg-muted"
 								disabled={isSubmitting}
@@ -331,7 +335,7 @@ export default function LeadForm({
 								/>
 							</CollapsibleTrigger>
 							<CollapsibleContent>
-								<div className="flex flex-col gap-4 pt-4">
+								<div className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-2">
 									<div className="flex flex-col gap-2">
 										<Label htmlFor="lead-company">Empresa</Label>
 										<Input
@@ -368,7 +372,7 @@ export default function LeadForm({
 										/>
 									</div>
 
-									<div className="flex flex-col gap-2">
+									<div className="flex flex-col gap-2 md:col-span-2">
 										<Label htmlFor="lead-notes">Notas</Label>
 										<Textarea
 											disabled={isSubmitting}
@@ -384,7 +388,7 @@ export default function LeadForm({
 
 						<Button
 							aria-busy={isSubmitting}
-							className="mt-2 w-full"
+							className="mt-2 w-full md:col-span-2"
 							disabled={isSubmitting}
 							size="lg"
 							type="submit"
@@ -395,7 +399,7 @@ export default function LeadForm({
 
 						{isEditMode && onDelete ? (
 							<Button
-								className="w-full text-destructive"
+								className="w-full text-destructive md:col-span-2"
 								disabled={isSubmitting}
 								onClick={onDelete}
 								size="lg"

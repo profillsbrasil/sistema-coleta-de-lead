@@ -46,6 +46,9 @@ export default function LeadList({ userId }: LeadListProps) {
 			return;
 		}
 
+		// IntersectionObserver uses root: null (viewport) because document body is the scroll container.
+		// The layout does NOT have overflow-auto on any intermediate wrapper, so no nested scroll container exists.
+		// If future layout changes add overflow to an ancestor, set root to the scrollable ancestor element.
 		const observer = new IntersectionObserver(
 			(entries) => {
 				const entry = entries[0];
