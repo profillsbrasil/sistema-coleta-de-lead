@@ -27,8 +27,10 @@ Vendedores conseguem coletar leads de forma rapida e confiavel mesmo sem interne
 
 **v1.0 MVP — SHIPPED 2026-03-26**
 **v1.1 Phase 8: Layout Foundation — COMPLETE 2026-03-26**
+**v1.1 Phase 9: Sidebar Content + Mobile UX — COMPLETE 2026-03-27**
 
-8 phases concluidos, 26 plans executados:
+9 phases concluidos, 28 plans executados:
+- Phase 9: Sidebar funcional com nav por role, user menu (avatar+nome+role+ModeToggle+logout), drawer mobile auto-close, touch targets 44px, active state refinado
 - Phase 8: Route groups (public)/(app), sidebar navigation via shadcn Sidebar, auth guard centralizado, Header/AdminSidebar deletados
 - Auth: Supabase Auth com Google/Facebook/LinkedIn OAuth, roles admin/vendedor
 - Offline: Dexie + sync engine push-then-pull, server-wins, 74 testes passando
@@ -142,4 +144,4 @@ Tech debt ativo:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 8 completion*
+*Last updated: 2026-03-27 after Phase 9 completion*
