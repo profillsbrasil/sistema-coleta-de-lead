@@ -20,8 +20,8 @@ Sidebar totalmente funcional com navegação por role, drawer mobile que fecha s
 - **D-02:** `collapsible="offcanvas"` mantido — permite Sheet mobile mas sem collapse desktop.
 
 ### User menu no footer
-- **D-03:** SidebarFooter exibe avatar + nome + role badge + botão "Sair" inline (sem DropdownMenu). 1 clique para logout.
-- **D-04:** Avatar via Gravatar usando hash MD5 do email do usuário. Fallback para iniciais do nome quando Gravatar não existe.
+- **D-03:** SidebarFooter exibe avatar + nome + role badge + ModeToggle (Sun/Moon) + botão "Sair" inline (sem DropdownMenu). 1 clique para logout.
+- **D-04:** Avatar via Gravatar usando hash SHA-256 do email do usuário (`crypto.subtle.digest("SHA-256", ...)`). Fallback para iniciais do nome quando Gravatar não existe. (Atualizado de MD5 para SHA-256 — recomendação atual do Gravatar.)
 - **D-05:** Nome e role vêm de server props — `(app)/layout.tsx` já faz `getUser()`, passa `userName`, `userEmail` e `userRole` como props adicionais ao AppSidebar. Zero client-side fetch.
 - **D-06:** Role badge exibe "Admin" ou "Vendedor" como texto simples ao lado do nome.
 
@@ -72,6 +72,7 @@ Sidebar totalmente funcional com navegação por role, drawer mobile que fecha s
 - `useSidebar()` hook em `sidebar.tsx`: Expõe `setOpenMobile(false)` para auto-close
 - `useIsMobile()` hook em `use-mobile.ts`: Breakpoint 768px já configurado
 - Supabase `getUser()` em `(app)/layout.tsx`: Já retorna user data — expandir para extrair nome/email
+- `mode-toggle.tsx`: Componente existente usando `useTheme()` de `next-themes` — adaptar para icon button simples no SidebarFooter
 
 ### Established Patterns
 - Server Component → Client Component via props: `(app)/layout.tsx` (Server) → `AppSidebar` (Client)
@@ -80,7 +81,7 @@ Sidebar totalmente funcional com navegação por role, drawer mobile que fecha s
 
 ### Integration Points
 - `(app)/layout.tsx`: Precisa expandir para passar userName, userEmail, userRole ao AppSidebar
-- `app-sidebar.tsx`: Recebe novas props, adiciona SidebarFooter com user menu, adiciona useEffect auto-close
+- `app-sidebar.tsx`: Recebe novas props, adiciona SidebarFooter com user menu + ModeToggle, adiciona useEffect auto-close
 - CSS: `min-h-11` nos SidebarMenuButton para touch targets 44px
 
 </code_context>
@@ -89,7 +90,8 @@ Sidebar totalmente funcional com navegação por role, drawer mobile que fecha s
 ## Specific Ideas
 
 - Logout direto com botão inline — sem dropdown, 1 clique para sair
-- Gravatar como fonte primária de avatar — hash MD5 do email, fallback iniciais
+- Gravatar como fonte primária de avatar — hash SHA-256 do email, fallback iniciais
+- ModeToggle como icon button (Sun/Moon) no SidebarFooter ao lado do logout — completa LAYOUT-08
 
 </specifics>
 
