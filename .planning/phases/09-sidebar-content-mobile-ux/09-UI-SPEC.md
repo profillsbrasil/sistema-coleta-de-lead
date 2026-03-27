@@ -53,13 +53,31 @@ Exceptions:
 | Role | Size | Weight | Line Height | Usage in Phase 9 |
 |------|------|--------|-------------|-------------------|
 | Body | 14px (`text-sm`) | 400 (regular) | 1.5 (20px) | Nav item labels, user email display |
-| Label | 12px (`text-xs`) | 500 (medium) | 1.5 (18px) | Sidebar group labels ("Vendedor", "Admin"), role text in user menu |
+| Label | 12px (`text-xs`) | 400 (regular) | 1.5 (18px) | Sidebar group labels ("Vendedor", "Admin"), role text in user menu |
 | Heading | 16px (`text-base`) | 600 (semibold) | 1.2 (19px) | Sidebar header brand "Leads Profills" |
-| User name | 14px (`text-sm`) | 500 (medium) | 1.25 (18px) | User display name in SidebarFooter |
+| User name | 14px (`text-sm`) | 600 (semibold) | 1.25 (18px) | User display name in SidebarFooter |
+
+**Declared weights:** 400 (regular), 600 (semibold). No other weights are used.
+
+**Rationale:** Labels and group text are secondary information -- regular weight (400) provides sufficient readability at 12px without competing with primary content. User name is an identity element in the footer that benefits from visual prominence (600) to anchor the user's attention alongside the avatar.
 
 **Font stack:** `"Inter Variable", sans-serif` via CSS custom property `--font-sans`.
 
 **Source:** globals.css `--font-sans`, existing `app-sidebar.tsx` classes.
+
+---
+
+## Visual Focal Points
+
+The sidebar has three visual zones with a clear hierarchy:
+
+| Zone | Focal Point | Visual Weight |
+|------|-------------|---------------|
+| Header | Brand text "Leads Profills" (`text-base font-semibold text-sidebar-primary`) | Primary identity anchor -- semibold + accent color draws the eye first |
+| Content | Navigation items with active state indicator | Primary interaction zone -- active item uses `bg-sidebar-accent` + `text-sidebar-primary` to signal current location |
+| Footer | User avatar + name | Secondary identity zone -- 32px avatar provides a visual anchor; semibold name reinforces user identity |
+
+**Reading flow:** Top-down. User scans brand (identity confirmation) then nav items (wayfinding) then footer (account context). Active nav item is the strongest visual signal due to combined background + foreground color shift.
 
 ---
 
@@ -168,7 +186,7 @@ All colors use the project's existing semantic CSS custom properties from `globa
 | Element | Spec |
 |---------|------|
 | Avatar | 32x32px (`size="default"`, which is `size-8`), Gravatar image with `d=404`, AvatarFallback with 2-letter initials |
-| Name | `text-sm font-medium`, truncate with `truncate` class, max 1 line |
+| Name | `text-sm font-semibold`, truncate with `truncate` class, max 1 line |
 | Role | `text-xs text-muted-foreground`, plain text "Admin" or "Vendedor", truncate |
 | Logout | `Button` variant `ghost`, size `icon`, `LogOut` Lucide icon, `aria-label="Sair"` |
 | Layout | Horizontal flex: `[Avatar] [Name + Role stacked] [Logout button]` |
