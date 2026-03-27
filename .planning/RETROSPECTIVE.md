@@ -55,12 +55,66 @@
 
 ---
 
+## Milestone: v1.1 — UI Refactor & Mobile UX
+
+**Shipped:** 2026-03-27
+**Phases:** 4 | **Plans:** 11 | **Tasks:** ~19
+
+### What Was Built
+
+- Route groups `(public)/(app)` com auth guard centralizado em `(app)/layout.tsx` — zero rendering condicional no root
+- AppSidebar unificada (shadcn Sidebar) com drawer mobile auto-close, nav por role (vendedor/admin collapsible), user menu (Gravatar + ModeToggle + logout)
+- Tabelas admin responsivas via CSS visibility switching: `md:hidden`/`hidden md:block` — card layout mobile com DropdownMenu 44px
+- Lead form convertido para CSS grid responsivo (1-col mobile / 2-col md+) + FAB com visualViewport keyboard detection
+- Dashboard totalmente responsivo: stat grid 1→2→4 colunas, ChartConfig theme-aware (dark mode via CSS vars), chart key reset apos sidebar toggle
+- AppTopbar com SidebarTrigger mobile-only e breadcrumb dinamico via `usePathname()`
+- Polish final: space-y→flex/gap, dark mode consistente em todos os componentes, sem padding/max-width duplicados
+
+### What Worked
+
+- **Impeccable skills para polish** — arrange, adapt, polish, typeset guiaram o processo de polish visual de forma sistematica
+- **Route groups pattern** — `(public)/(app)` resolveu o problema de layout sem nenhuma logica condicional; solucao mais limpa que a alternativa com state no root layout
+- **CSS visibility switching** — `md:hidden`/`hidden md:block` para tabelas responsivas evitou hydration mismatch que teria acontecido com renderizacao condicional JS
+- **`100svh` no Sheet mobile** — preveniu o gap inferior no iOS Safari (bug com `100dvh` em Safari 26)
+- **audit-milestone antes de complete-milestone** — encontrou SUMMARY frontmatters incompletos, skeleton max-w residual, e commits em branch orphan — todos itens de tech debt documentados
+
+### What Was Inefficient
+
+- **Commits em branch orphan (Phase 11-02)** — executor paralelo criou worktree e os commits ficaram em `worktree-agent-aba73162`; foram recuperados via cherry-pick mas indicam processo frágil no executor paralelo com worktrees
+- **SUMMARY frontmatters incompletos** — fases 10 e 11 tinham `requirements_completed` vazios em varios planos; o extrator de accomplishments da CLI falhou por isso; tivemos que corrigir MILESTONES.md manualmente
+- **11 itens de human verification pendentes** — especialmente mobile (iOS visualViewport, dark mode visual) que nao podem ser verificados automaticamente e ficaram para verificacao humana posterior
+- **Progress table do ROADMAP.md stale** — phases 8 e 9 mostravam "Not started / 0/3" mesmo completas; desatualizado durante execucao
+
+### Patterns Established
+
+- **ChartConfig theme pattern** — usar `theme: { light: "...", dark: "..." }` em vez de `color:` para dark mode correto em shadcn Charts. CSS variables injetadas pelo ChartContainer via `--color-{key}`
+- **Chart key reset** — `key={`chart-${String(open)}`}` forca remount do Recharts canvas apos sidebar toggle (ResizeObserver nao detecta sidebar toggle automaticamente)
+- **FAB visualViewport** — `window.visualViewport.addEventListener("resize", ...)` para detectar teclado virtual no iOS; fallback graceful se API indisponivel
+- **AppTopbar como leaf use-client** — importada por Server Component (layout.tsx); mantem layout como SC sem propagar use-client para o root
+
+### Key Lessons
+
+1. **Worktrees + commits** — ao usar executor paralelo com worktrees, verificar se todos os commits chegaram no branch correto antes de marcar plan como completo
+2. **SUMMARY frontmatter e critico** — `requirements_completed` vazio quebra o extrator de accomplishments da CLI. Verificar sempre antes de marcar plan completo
+3. **Human verification e um plano proprio** — Phase 09-02 dedicada a verificacao humana funcionou bem; fases 10/11 sem fase de verificacao ficaram com 11 itens pendentes
+4. **Audit encontra debt nao-critico valioso** — o skeleton max-w residual e os SUMMARY incompletos nao eram bloqueadores, mas audit os documentou — sem audit, ficaria invisivel
+
+### Cost Observations
+
+- 2 dias de desenvolvimento (2026-03-26 → 2026-03-27)
+- 79 arquivos modificados em v1.1
+- ~14.5k LOC TypeScript/TSX (vs 13.9k em v1.0)
+
+---
+
 ## Cross-Milestone Trends
 
 | Metric | v1.0 | v1.1 |
 |--------|------|------|
-| Phases | 7 | — |
-| Plans | 23 | — |
-| Tests | 74 | — |
-| Bugs em audit | 2 criticos + 2 medium | — |
-| Timeline | 3 dias | — |
+| Phases | 7 | 4 |
+| Plans | 23 | 11 |
+| Tests | 74 | 74 (sem novos em v1.1 — UI only) |
+| Bugs em audit | 2 criticos + 2 medium | 0 criticos, tech debt nao-critico |
+| Timeline | 3 dias | 2 dias |
+| LOC TypeScript/TSX | ~13.9k | ~14.5k |
+| Human verification pendente | — | 11 itens |

@@ -1,5 +1,25 @@
 # Milestones
 
+## v1.1 UI Refactor & Mobile UX (Shipped: 2026-03-27)
+
+**Phases completed:** 4 phases, 11 plans, 13 tasks
+
+**Key accomplishments:**
+
+- Route groups (public) e (app) criados com login isolado, home como redirect por auth, e /todos removido
+- Auth guard centralizado em (app)/layout.tsx com SidebarProvider unico e AppSidebar unificado (vendedor + admin collapsible)
+- Header e AdminSidebar deletados, root layout limpo para pure shell, auth guards per-page removidos com centralizacao em (app)/layout.tsx
+- Sidebar completa com user menu (Gravatar + ModeToggle + logout), auto-close mobile, touch targets 44px, e active state refinado para rotas aninhadas
+- Verificacao humana completa: sidebar navigation por role, mobile drawer auto-close, user menu com ModeToggle, touch targets 44px, e active state -- todos 12 itens do checklist aprovados
+- Admin leads panel com card layout mobile (AdminLeadCard) e DropdownMenu 44px substituting Tooltip actions em ambas views
+- Admin users panel com card layout mobile (< 768px) e DropdownMenu actions substituindo Tooltip inline buttons em ambas views
+- FAB com keyboard detection (visualViewport) e route filtering (/leads, /dashboard), lead form convertido para CSS grid responsivo (1-col mobile, 2-col md+), IntersectionObserver verificado com layout atual
+- AppTopbar "use client" com SidebarTrigger mobile-only e breadcrumb dinamico derivado de usePathname() substituindo o header md:hidden no layout autenticado
+- Dashboard responsivo com grid 1→2→4 stat cards, ChartConfig theme-aware para dark mode correto via CSS variables, e chart key reset vinculado a useSidebar().open para resize apos sidebar toggle
+- Pass final de polish substituindo space-y por flex/gap, corrigindo dark mode dos charts via CSS vars, e removendo padding/max-width duplicados em leads pages
+
+---
+
 ## v1.0 MVP (Shipped: 2026-03-26)
 
 **Phases completed:** 7 phases, 23 plans, 49 tasks
