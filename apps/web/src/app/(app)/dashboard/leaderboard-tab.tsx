@@ -69,7 +69,7 @@ export default function LeaderboardTab({ userId }: { userId: string }) {
 
 	if (isLoading && (!cachedEntries || cachedEntries.length === 0)) {
 		return (
-			<div aria-busy="true" className="space-y-2">
+			<div aria-busy="true" className="flex flex-col gap-2">
 				<Skeleton className="h-4 w-40" />
 				<Skeleton className="h-20" />
 				<Skeleton className="h-20" />
@@ -89,9 +89,9 @@ export default function LeaderboardTab({ userId }: { userId: string }) {
 	}
 
 	return (
-		<div className="space-y-2">
+		<div className="flex flex-col gap-2">
 			<StalenessIndicator lastSyncAt={lastSyncAt} />
-			<ol className="space-y-2">
+			<ol className="flex flex-col gap-2">
 				{displayEntries.map((entry) => (
 					<li key={entry.userId}>
 						<LeaderboardEntry
