@@ -5,6 +5,7 @@ import {
 } from "@dashboard-leads-profills/ui/components/sidebar";
 import { redirect } from "next/navigation";
 import AppSidebar from "@/components/app-sidebar";
+import { getGravatarUrl } from "@/lib/gravatar";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({
@@ -22,12 +23,25 @@ export default async function AppLayout({
 	}
 
 	const { data: claimsData } = await supabase.auth.getClaims();
-	const userRole = (claimsData?.claims as Record<string, unknown>)?.user_role;
+	const claims = claimsData?.claims as Record<string, unknown>;
+	const userRole = (claims?.user_role as string) ?? "vendedor";
 	const isAdmin = userRole === "admin";
+	const userName =
+		(user?.user_metadata?.full_name as string) ??
+		user?.email?.split("@")[0] ??
+		"Usuario";
+	const userEmail = user?.email ?? "";
+	const gravatarUrl = await getGravatarUrl(userEmail);
 
 	return (
 		<SidebarProvider defaultOpen>
-			<AppSidebar isAdmin={isAdmin} />
+			<AppSidebar
+				gravatarUrl={gravatarUrl}
+				isAdmin={isAdmin}
+				userEmail={userEmail}
+				userName={userName}
+				userRole={userRole}
+			/>
 			<SidebarInset>
 				<header className="flex h-14 items-center gap-2 border-b px-4 md:hidden">
 					<SidebarTrigger />
