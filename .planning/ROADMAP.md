@@ -28,7 +28,7 @@
 
 - [ ] **Phase 8: Layout Foundation** - Route groups + sidebar shell atomico
 - [ ] **Phase 9: Sidebar Content + Mobile UX** - Nav items, roles, drawer mobile correto
-- [ ] **Phase 10: Responsive Pages** - Tabelas, formularios e touch targets em 320px
+- [x] **Phase 10: Responsive Pages** - Tabelas, formularios e touch targets em 320px (completed 2026-03-27)
 - [ ] **Phase 11: Dashboard + Visual Polish** - Charts responsivos e polish final
 
 ## Phase Details
@@ -84,9 +84,9 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 10-01-PLAN.md — Admin leads table: card layout mobile com DropdownMenu de acoes; touch targets 44px; stat cards grid responsivo
-- [ ] 10-02-PLAN.md — Admin users table: card layout mobile com DropdownMenu de acoes; touch targets 44px; skeleton responsivo
-- [ ] 10-03-PLAN.md — Lead form grid responsivo (cols-1 mobile / cols-2 md+); FAB keyboard hide + route filtering; IntersectionObserver verificacao
+- [x] 10-01-PLAN.md — Admin leads table: card layout mobile com DropdownMenu de acoes; touch targets 44px; stat cards grid responsivo
+- [x] 10-02-PLAN.md — Admin users table: card layout mobile com DropdownMenu de acoes; touch targets 44px; skeleton responsivo
+- [x] 10-03-PLAN.md — Lead form grid responsivo (cols-1 mobile / cols-2 md+); FAB keyboard hide + route filtering; IntersectionObserver verificacao
 
 ### Phase 11: Dashboard + Visual Polish
 **Goal**: Dashboard responsivo com charts que redimensionam apos sidebar toggle, breadcrumb contextual, e polish visual consistente em toda a aplicacao
@@ -120,5 +120,5 @@ Plans:
 | 7. Auth & Admin Fixes | v1.0 | 1/1 | Complete | 2026-03-26 |
 | 8. Layout Foundation | v1.1 | 0/3 | Not started | - |
 | 9. Sidebar Content + Mobile UX | v1.1 | 0/2 | Not started | - |
-| 10. Responsive Pages | v1.1 | 0/3 | Not started | - |
+| 10. Responsive Pages | v1.1 | 3/3 | Complete   | 2026-03-27 |
 | 11. Dashboard + Visual Polish | v1.1 | 0/3 | Not started | - |
