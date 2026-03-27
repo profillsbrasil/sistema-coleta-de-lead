@@ -20,8 +20,10 @@ const ROUTE_LABELS: Record<string, string> = {
 	stats: "Estatisticas",
 };
 
+const UUID_REGEX = /^[0-9a-f-]{8,}$/;
+
 function isUuid(segment: string): boolean {
-	return /^[0-9a-f-]{8,}$/.test(segment);
+	return UUID_REGEX.test(segment);
 }
 
 function buildSegments(pathname: string) {

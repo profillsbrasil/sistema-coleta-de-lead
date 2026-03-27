@@ -1,10 +1,10 @@
 import {
 	SidebarInset,
 	SidebarProvider,
-	SidebarTrigger,
 } from "@dashboard-leads-profills/ui/components/sidebar";
 import { redirect } from "next/navigation";
 import AppSidebar from "@/components/app-sidebar";
+import { AppTopbar } from "@/components/app-topbar";
 import { getGravatarUrl } from "@/lib/gravatar";
 import { createClient } from "@/lib/supabase/server";
 
@@ -43,9 +43,7 @@ export default async function AppLayout({
 				userRole={userRole}
 			/>
 			<SidebarInset>
-				<header className="flex h-14 items-center gap-2 border-b px-4 md:hidden">
-					<SidebarTrigger />
-				</header>
+				<AppTopbar />
 				<div className="flex-1 p-4 md:p-6">{children}</div>
 			</SidebarInset>
 		</SidebarProvider>
