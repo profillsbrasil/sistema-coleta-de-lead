@@ -12,6 +12,13 @@ import {
 } from "@dashboard-leads-profills/ui/components/alert-dialog";
 import { Badge } from "@dashboard-leads-profills/ui/components/badge";
 import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@dashboard-leads-profills/ui/components/dropdown-menu";
+import {
 	Empty,
 	EmptyDescription,
 	EmptyHeader,
@@ -41,20 +48,15 @@ import {
 	TableHeader,
 	TableRow,
 } from "@dashboard-leads-profills/ui/components/table";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@dashboard-leads-profills/ui/components/tooltip";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2 } from "lucide-react";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { StatCard } from "@/components/stat-card";
 import { trpc } from "@/utils/trpc";
+import { AdminLeadCard } from "./admin-lead-card";
 
 const PAGE_SIZE = 20;
 
@@ -138,6 +140,10 @@ export default function LeadsPanel() {
 	const offset = (page - 1) * PAGE_SIZE;
 	const rangeStart = total > 0 ? offset + 1 : 0;
 	const rangeEnd = Math.min(offset + PAGE_SIZE, total);
+	const selectedVendorName =
+		vendorsQuery.data?.find((v) => v.userId === selectedVendor)?.name ??
+		selectedVendor?.slice(0, 8) ??
+		"";
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -168,7 +174,7 @@ export default function LeadsPanel() {
 			)}
 
 			{selectedVendor && statsQuery.data && (
-				<div className="grid grid-cols-3 gap-4">
+				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
 					<StatCard label="Total de Leads" value={statsQuery.data.total} />
 					<StatCard label="Score" value={statsQuery.data.score} />
 					<StatCard label="Leads Hoje" value={statsQuery.data.today} />
@@ -211,7 +217,20 @@ export default function LeadsPanel() {
 						Mostrando {rangeStart}-{rangeEnd} de {total}
 					</p>
 
-					<TooltipProvider>
+					{/* Mobile: card list */}
+					<div className="flex flex-col gap-4 md:hidden">
+						{leads.map((lead) => (
+							<AdminLeadCard
+								key={lead.localId}
+								lead={lead}
+								onDelete={(localId) => setDeletingLeadId(localId)}
+								vendorName={selectedVendorName}
+							/>
+						))}
+					</div>
+
+					{/* Desktop: table */}
+					<div className="hidden md:block">
 						<Table>
 							<TableHeader>
 								<TableRow>
@@ -242,45 +261,47 @@ export default function LeadsPanel() {
 										<TableCell>{lead.segment ?? "-"}</TableCell>
 										<TableCell>{formatDate(lead.createdAt)}</TableCell>
 										<TableCell className="text-right">
-											<div className="flex justify-end gap-1">
-												<Tooltip>
-													<TooltipTrigger
+											<DropdownMenu>
+												<DropdownMenuTrigger
+													render={
+														<button
+															aria-label="Abrir menu de acoes"
+															className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg hover:bg-muted"
+															type="button"
+														/>
+													}
+												>
+													<MoreVertical className="size-4" />
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="end">
+													<DropdownMenuItem
 														render={
 															<Link
-																aria-label="Editar lead"
-																className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-sm outline-none hover:bg-muted"
 																href={
 																	`/admin/leads/${lead.localId}` as unknown as "/"
 																}
-															>
-																<Pencil className="size-4" />
-															</Link>
+															/>
 														}
-													/>
-													<TooltipContent>Editar</TooltipContent>
-												</Tooltip>
-												<Tooltip>
-													<TooltipTrigger
-														render={
-															<button
-																aria-label="Excluir lead"
-																className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-sm outline-none hover:bg-muted"
-																onClick={() => setDeletingLeadId(lead.localId)}
-																type="button"
-															>
-																<Trash2 className="size-4 text-destructive" />
-															</button>
-														}
-													/>
-													<TooltipContent>Excluir</TooltipContent>
-												</Tooltip>
-											</div>
+													>
+														<Pencil className="size-4" />
+														Editar lead
+													</DropdownMenuItem>
+													<DropdownMenuSeparator />
+													<DropdownMenuItem
+														onClick={() => setDeletingLeadId(lead.localId)}
+														variant="destructive"
+													>
+														<Trash2 className="size-4" />
+														Excluir lead
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
 										</TableCell>
 									</TableRow>
 								))}
 							</TableBody>
 						</Table>
-					</TooltipProvider>
+					</div>
 
 					{totalPages > 1 && (
 						<Pagination>
