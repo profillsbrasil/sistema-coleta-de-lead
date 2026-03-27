@@ -29,28 +29,28 @@
 
 ### Responsividade — Todas as Paginas
 
-- [ ] **RESP-01**: Admin leads table renderiza como card layout em mobile (< 768px) com acoes acessiveis via DropdownMenu
-- [ ] **RESP-02**: Admin users table renderiza como card layout em mobile (< 768px) com acoes acessiveis via DropdownMenu
-- [ ] **RESP-03**: Formulario de captura de lead (`lead-form.tsx`) usa `grid-cols-1` em mobile e `grid-cols-2` em `md`+
-- [ ] **RESP-04**: Dashboard stat cards usam grid responsivo (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`)
-- [ ] **RESP-05**: Charts do dashboard (Recharts) redimensionam corretamente com `ResponsiveContainer` — sem overflow apos sidebar toggle
-- [ ] **RESP-06**: Lead list com infinite scroll funciona corretamente dentro do layout com sidebar (IntersectionObserver com `root` correto)
-- [ ] **RESP-07**: Todas as rotas autenticadas (/dashboard, /leads, /leads/new, /leads/[id], /admin/*) renderizam corretamente em 320px sem overflow horizontal
+- [x] **RESP-01**: Admin leads table renderiza como card layout em mobile (< 768px) com acoes acessiveis via DropdownMenu
+- [x] **RESP-02**: Admin users table renderiza como card layout em mobile (< 768px) com acoes acessiveis via DropdownMenu
+- [x] **RESP-03**: Formulario de captura de lead (`lead-form.tsx`) usa `grid-cols-1` em mobile e `grid-cols-2` em `md`+
+- [x] **RESP-04**: Dashboard stat cards usam grid responsivo (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`)
+- [x] **RESP-05**: Charts do dashboard (Recharts) redimensionam corretamente com `ResponsiveContainer` — sem overflow apos sidebar toggle
+- [x] **RESP-06**: Lead list com infinite scroll funciona corretamente dentro do layout com sidebar (IntersectionObserver com `root` correto)
+- [x] **RESP-07**: Todas as rotas autenticadas (/dashboard, /leads, /leads/new, /leads/[id], /admin/*) renderizam corretamente em 320px sem overflow horizontal
 
 ### Touch & Acessibilidade
 
 - [x] **TOUCH-01**: Todos os elementos interativos da sidebar (nav items, botoes) tem touch target minimo de 44x44px
-- [ ] **TOUCH-02**: Acoes nas tabelas admin (editar, excluir, trocar role) acessiveis via DropdownMenu no mobile (sem botoes minusculos)
-- [ ] **TOUCH-03**: FAB "Novo Lead" nao sobrepoe sidebar trigger no mobile; nao salta quando teclado virtual abre no iOS
+- [x] **TOUCH-02**: Acoes nas tabelas admin (editar, excluir, trocar role) acessiveis via DropdownMenu no mobile (sem botoes minusculos)
+- [x] **TOUCH-03**: FAB "Novo Lead" nao sobrepoe sidebar trigger no mobile; nao salta quando teclado virtual abre no iOS
 - [x] **TOUCH-04**: Active state da sidebar indica rota atual corretamente (incluindo rotas aninhadas como `/admin/leads/[id]`)
 
 ### Polish Visual
 
-- [ ] **POLISH-01**: AppTopbar dentro de `SidebarInset` exibe SidebarTrigger + breadcrumb mostrando localizacao atual
+- [x] **POLISH-01**: AppTopbar dentro de `SidebarInset` exibe SidebarTrigger + breadcrumb mostrando localizacao atual
 - [x] **POLISH-02**: SidebarFooter exibe avatar + nome + role do usuario logado
-- [ ] **POLISH-03**: Leaderboard exibe na horizontal com scroll no mobile (manter comparabilidade — rank + nome + score visiveis)
-- [ ] **POLISH-04**: Sidebar funciona corretamente em dark mode e light mode
-- [ ] **POLISH-05**: Polish visual com impeccable skills: espacamento, tipografia, hierarquia visual consistentes em todas as paginas
+- [x] **POLISH-03**: Leaderboard exibe na horizontal com scroll no mobile (manter comparabilidade — rank + nome + score visiveis)
+- [x] **POLISH-04**: Sidebar funciona corretamente em dark mode e light mode
+- [x] **POLISH-05**: Polish visual com impeccable skills: espacamento, tipografia, hierarquia visual consistentes em todas as paginas
 
 ---
 
@@ -102,22 +102,22 @@
 | MOBILE-03 | Phase 8 | Complete |
 | MOBILE-04 | Phase 9 | Complete |
 | MOBILE-05 | Phase 9 | Complete |
-| RESP-01 | Phase 10 | Pending |
-| RESP-02 | Phase 10 | Pending |
-| RESP-03 | Phase 10 | Pending |
-| RESP-04 | Phase 11 | Pending |
-| RESP-05 | Phase 11 | Pending |
-| RESP-06 | Phase 10 | Pending |
-| RESP-07 | Phase 10 | Pending |
+| RESP-01 | Phase 10 | Complete |
+| RESP-02 | Phase 10 | Complete |
+| RESP-03 | Phase 10 | Complete |
+| RESP-04 | Phase 11 | Complete |
+| RESP-05 | Phase 11 | Complete |
+| RESP-06 | Phase 10 | Complete |
+| RESP-07 | Phase 10 | Complete |
 | TOUCH-01 | Phase 9 | Complete |
-| TOUCH-02 | Phase 10 | Pending |
-| TOUCH-03 | Phase 10 | Pending |
+| TOUCH-02 | Phase 10 | Complete |
+| TOUCH-03 | Phase 10 | Complete |
 | TOUCH-04 | Phase 9 | Complete |
-| POLISH-01 | Phase 11 | Pending |
+| POLISH-01 | Phase 11 | Complete |
 | POLISH-02 | Phase 9 | Complete |
-| POLISH-03 | Phase 11 | Pending |
-| POLISH-04 | Phase 11 | Pending |
-| POLISH-05 | Phase 11 | Pending |
+| POLISH-03 | Phase 11 | Complete |
+| POLISH-04 | Phase 11 | Complete |
+| POLISH-05 | Phase 11 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 29 total
@@ -126,4 +126,4 @@
 
 ---
 *Requirements defined: 2026-03-26*
-*Last updated: 2026-03-26 after initial definition*
+*Last updated: 2026-03-27 after milestone v1.1 audit — all 29 requirements complete*
