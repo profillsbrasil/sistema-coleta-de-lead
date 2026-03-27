@@ -1,6 +1,6 @@
 export async function getGravatarUrl(
 	email: string,
-	size = 80,
+	size = 80
 ): Promise<string> {
 	const trimmed = email.trim().toLowerCase();
 	const encoder = new TextEncoder();

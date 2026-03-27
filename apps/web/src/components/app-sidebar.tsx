@@ -15,6 +15,7 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
+	useSidebar,
 } from "@dashboard-leads-profills/ui/components/sidebar";
 import {
 	BarChart3,
@@ -25,6 +26,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
+import SidebarUserMenu from "@/components/sidebar-user-menu";
 
 const VENDEDOR_ITEMS = [
 	{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -39,11 +42,37 @@ const ADMIN_ITEMS = [
 ] as const;
 
 interface AppSidebarProps {
+	gravatarUrl: string;
 	isAdmin: boolean;
+	userEmail: string;
+	userName: string;
+	userRole: string;
 }
 
-export default function AppSidebar({ isAdmin }: AppSidebarProps) {
+function isItemActive(href: string, pathname: string): boolean {
+	if (href === "/leads") {
+		return pathname === "/leads";
+	}
+	return pathname.startsWith(href);
+}
+
+export default function AppSidebar({
+	gravatarUrl,
+	isAdmin,
+	userEmail,
+	userName,
+	userRole,
+}: AppSidebarProps) {
 	const pathname = usePathname();
+	const { setOpenMobile } = useSidebar();
+	const prevPathRef = useRef(pathname);
+
+	useEffect(() => {
+		if (prevPathRef.current !== pathname) {
+			prevPathRef.current = pathname;
+			setOpenMobile(false);
+		}
+	});
 
 	return (
 		<Sidebar collapsible="offcanvas">
@@ -61,7 +90,8 @@ export default function AppSidebar({ isAdmin }: AppSidebarProps) {
 						{VENDEDOR_ITEMS.map(({ href, label, icon: Icon }) => (
 							<SidebarMenuItem key={href}>
 								<SidebarMenuButton
-									isActive={pathname.startsWith(href)}
+									className="min-h-11"
+									isActive={isItemActive(href, pathname)}
 									render={<Link href={href as unknown as "/"} />}
 								>
 									<Icon />
@@ -82,6 +112,7 @@ export default function AppSidebar({ isAdmin }: AppSidebarProps) {
 									{ADMIN_ITEMS.map(({ href, label, icon: Icon }) => (
 										<SidebarMenuItem key={href}>
 											<SidebarMenuButton
+												className="min-h-11"
 												isActive={pathname.startsWith(href)}
 												render={<Link href={href as unknown as "/"} />}
 											>
@@ -96,7 +127,14 @@ export default function AppSidebar({ isAdmin }: AppSidebarProps) {
 					</Collapsible>
 				)}
 			</SidebarContent>
-			<SidebarFooter />
+			<SidebarFooter>
+				<SidebarUserMenu
+					gravatarUrl={gravatarUrl}
+					userEmail={userEmail}
+					userName={userName}
+					userRole={userRole}
+				/>
+			</SidebarFooter>
 		</Sidebar>
 	);
 }
