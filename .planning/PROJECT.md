@@ -8,45 +8,27 @@ Sistema offline-first de coleta de leads para vendedores em congressos e confere
 
 Vendedores conseguem coletar leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
 
-## Current Milestone: v1.1 UI Refactor & Mobile UX
-
-**Goal:** Refatorar toda a UI para sidebar navigation (shadcn Sidebar) com drawer mobile, garantir 100% de responsividade em todas as rotas/paginas, e elevar a qualidade visual.
-
-**Target features:**
-- Sidebar navigation com shadcn/ui Sidebar (collapsible, icones, grupos)
-- Drawer/Sheet no mobile (hamburger, conteudo 100% da tela)
-- Sidebar unica para vendedor e admin (secao "Admin" expandivel por role)
-- Remocao do topbar atual — sidebar assume toda a navegacao
-- 100% responsividade em todas as rotas e paginas
-- Tabelas/listas responsivas (card layout no mobile)
-- Formularios otimizados para mobile (touch-friendly)
-- Touch targets adequados (min 44x44px)
-- Polish visual com Impeccable skills (arrange, adapt, polish, typeset)
-
 ## Current State
 
 **v1.0 MVP — SHIPPED 2026-03-26**
-**v1.1 Phase 8: Layout Foundation — COMPLETE 2026-03-26**
-**v1.1 Phase 9: Sidebar Content + Mobile UX — COMPLETE 2026-03-27**
-**v1.1 Phase 10: Responsive Pages — COMPLETE 2026-03-27**
-**v1.1 Phase 11: Dashboard Visual Polish — COMPLETE 2026-03-27**
+**v1.1 UI Refactor & Mobile UX — SHIPPED 2026-03-27**
 
-11 phases concluidos, 33 plans executados:
-- Phase 11: AppTopbar com breadcrumb dinâmico, dashboard totalmente responsivo (grid 1→2→4 colunas), dark mode correto via theme CSS vars, chart resize pós-sidebar toggle, polish final em leaderboard/stats/leads
-- Phase 10: Páginas responsivas com layout fluid
-- Phase 9: Sidebar funcional com nav por role, user menu (avatar+nome+role+ModeToggle+logout), drawer mobile auto-close, touch targets 44px, active state refinado
-- Phase 8: Route groups (public)/(app), sidebar navigation via shadcn Sidebar, auth guard centralizado, Header/AdminSidebar deletados
+11 phases concluidos, 34 plans executados, ~14.5k LOC TypeScript/TSX:
 - Auth: Supabase Auth com Google/Facebook/LinkedIn OAuth, roles admin/vendedor
 - Offline: Dexie + sync engine push-then-pull, server-wins, 74 testes passando
 - Captura: Form (<3 toques), QR scanner, foto comprimida + Supabase Storage
 - Gestao: CRUD completo offline, filtro por tag, edit/delete
 - Dashboard: stats pessoais, leaderboard com cache offline, score ponderado
 - Admin: leads/usuarios/stats, vendor dashboard via tRPC
+- Layout: Route groups (public)/(app), AppSidebar unificada (shadcn Sidebar), auth guard centralizado
+- Mobile: Drawer auto-close, touch targets 44px, card layout em tabelas admin, form grid responsivo
+- Polish: AppTopbar com breadcrumb, dark mode correto via CSS vars, chart resize pós-sidebar toggle
 
 Tech debt ativo:
 - LinkedIn/Facebook OAuth requer configuracao no Supabase Dashboard (manual)
 - Leaderboard mostra "Vendedor" para nao-current users (JOIN a auth.users pendente)
-- Nyquist validation pendente para todas as fases
+- Nyquist validation incompleta: 4 fases com `nyquist_compliant: false`
+- 11 itens de human verification visual pendentes (media queries, dark mode, chart resize em browser real)
 
 ## Requirements
 
@@ -73,27 +55,30 @@ Tech debt ativo:
 - ✓ Admin: stats globais com filtros avancados — v1.0
 - ✓ Admin: vendor dashboard via tRPC (ve stats reais de outro vendedor) — v1.0
 
-### Active — v1.1
+### Validated — v1.1
 
-- [ ] Sidebar navigation com shadcn/ui Sidebar (collapsible, icones, grupos)
-- [ ] Drawer/Sheet no mobile (hamburger, conteudo 100% da tela)
-- [ ] Sidebar unica vendedor+admin (secao "Admin" expandivel por role)
-- [ ] Remocao do topbar — sidebar assume navegacao
-- [ ] 100% responsividade em todas as rotas e paginas
-- [ ] Tabelas/listas responsivas (card layout no mobile)
-- [ ] Formularios otimizados para mobile (touch-friendly)
-- [ ] Touch targets adequados (min 44x44px)
-- [ ] Polish visual (arrange, adapt, polish, typeset)
+- ✓ Sidebar navigation com shadcn/ui Sidebar (route groups, SidebarProvider unico) — v1.1
+- ✓ Drawer/Sheet no mobile (hamburger, auto-close apos navegacao, 100svh iOS) — v1.1
+- ✓ Sidebar unica vendedor+admin (secao "Admin" collapsible por role) — v1.1
+- ✓ Remocao do topbar (Header + AdminSidebar deletados, AppTopbar com breadcrumb) — v1.1
+- ✓ 100% responsividade em todas as rotas (320px sem overflow horizontal) — v1.1
+- ✓ Tabelas admin responsivas (card layout mobile com DropdownMenu de acoes) — v1.1
+- ✓ Formularios otimizados para mobile (grid-cols-1 mobile / grid-cols-2 md+) — v1.1
+- ✓ Touch targets adequados (min 44x44px em todos os elementos interativos) — v1.1
+- ✓ Polish visual: dark mode correto via CSS vars, chart resize pós-sidebar, FAB keyboard-aware — v1.1
 
-### Backlog — v1.2+
+### Active — v1.2
 
 - [ ] Exportacao de leads para CSV/Excel (ENH-01)
 - [ ] Indicador visual de conectividade (ENH-02)
+- [ ] Leaderboard mostra nome real de todos os vendedores (JOIN a auth.users)
+- [ ] PWA com prompt de instalacao na home screen (PWA-01, PWA-02)
+
+### Backlog
+
 - [ ] Autocomplete no campo segmento (ENH-03)
 - [ ] Alerta visual de lead duplicado (mesmo telefone) (ENH-04)
-- [ ] PWA com prompt de instalacao na home screen (ENH-05)
-- [ ] Supabase Realtime para leaderboard sub-5s (ENH-06)
-- [ ] Leaderboard mostra nome real de todos os vendedores (JOIN a auth.users)
+- [ ] Supabase Realtime para leaderboard sub-5s (ENH-05)
 
 ### Out of Scope
 
@@ -111,8 +96,9 @@ Tech debt ativo:
 - **Usuarios:** Equipe de ate 10 vendedores da empresa
 - **Device:** Celulares e tablets (browser Chrome/Safari mobile)
 - **Stack:** Next.js 16.2 (React 19, React Compiler), tRPC 11, Drizzle ORM, Supabase Auth + Postgres, Dexie 4, shadcn/ui, TailwindCSS 4
-- **Codebase:** ~13.9k LOC TypeScript/TSX, 161 arquivos fonte, 74 testes automatizados
+- **Codebase:** ~14.5k LOC TypeScript/TSX, 79 arquivos modificados em v1.1, 74 testes automatizados
 - **Auth:** Supabase Auth com getClaims() para role detection, Next.js middleware para session refresh
+- **Layout:** Route groups (public)/(app) com SidebarProvider unico em (app)/layout.tsx; sidebar sempre expandida no desktop (decisao D-01)
 
 ## Constraints
 
@@ -133,6 +119,13 @@ Tech debt ativo:
 | getClaims() para role detection | Consistencia entre tRPC context, admin layout e dashboard | ✓ Bom — unica fonte de verdade para roles |
 | overrideStats prop em PersonalDashboard | Admin ve stats de outro vendedor sem reescrever componente | ✓ Bom — minimal invasao no componente existente |
 | Tags quente/morno/frio para score | Simples e intuitivo para vendedores em campo | ✓ Bom — score ponderado funciona bem no leaderboard |
+| Route groups (public)/(app) | Separacao limpa de layouts; zero renderizacao condicional no root layout | ✓ Bom — zero layout flash, auth guard centralizado |
+| SidebarProvider unico em (app)/layout.tsx | Evita nested providers (pitfall principal do shadcn Sidebar) | ✓ Bom — sidebar funciona em todas as rotas autenticadas |
+| D-01: sidebar sempre expandida (sem icon-only) | Simplificacao — MOBILE-05 cancelado; sidebar collapsible em mobile ja suficiente | ✓ Bom — UX mais simples, sem estado cookie de collapse |
+| 100svh em vez de 100dvh no Sheet mobile | Evita gap inferior no iOS Safari (bug Safari 26 com dvh) | ✓ Bom — Sheet sem gap em Safari mobile |
+| CSS visibility switching (md:hidden/hidden md:block) | Evita hydration mismatch vs renderizacao condicional | ✓ Bom — tabelas admin responsive sem erro de hidratacao |
+| ChartConfig theme: {light, dark} em vez de color | dark mode correto via CSS variables injetadas pelo ChartContainer | ✓ Bom — charts respondem ao theme toggle |
+| Chart key vinculado a useSidebar().open | Forca remount do Recharts canvas apos sidebar toggle (ResizeObserver nao reage) | ✓ Bom — charts redimensionam corretamente |
 
 ## Evolution
 
@@ -148,4 +141,4 @@ Tech debt ativo:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after Phase 11 completion*
+*Last updated: 2026-03-27 after v1.1 milestone*
