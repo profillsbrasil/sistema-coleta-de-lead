@@ -66,7 +66,7 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 09-01-PLAN.md — Implementar sidebar completa: gravatar utility, user menu, auto-close mobile, touch targets 44px, active state refinado
+- [x] 09-01-PLAN.md — Implementar sidebar completa: gravatar utility, user menu, auto-close mobile, touch targets 44px, active state refinado
 - [ ] 09-02-PLAN.md — Build + verificacao automatizada + checkpoint visual/funcional no browser
 
 ### Phase 10: Responsive Pages
