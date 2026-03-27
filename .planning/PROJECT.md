@@ -28,8 +28,12 @@ Vendedores conseguem coletar leads de forma rapida e confiavel mesmo sem interne
 **v1.0 MVP — SHIPPED 2026-03-26**
 **v1.1 Phase 8: Layout Foundation — COMPLETE 2026-03-26**
 **v1.1 Phase 9: Sidebar Content + Mobile UX — COMPLETE 2026-03-27**
+**v1.1 Phase 10: Responsive Pages — COMPLETE 2026-03-27**
+**v1.1 Phase 11: Dashboard Visual Polish — COMPLETE 2026-03-27**
 
-9 phases concluidos, 28 plans executados:
+11 phases concluidos, 33 plans executados:
+- Phase 11: AppTopbar com breadcrumb dinâmico, dashboard totalmente responsivo (grid 1→2→4 colunas), dark mode correto via theme CSS vars, chart resize pós-sidebar toggle, polish final em leaderboard/stats/leads
+- Phase 10: Páginas responsivas com layout fluid
 - Phase 9: Sidebar funcional com nav por role, user menu (avatar+nome+role+ModeToggle+logout), drawer mobile auto-close, touch targets 44px, active state refinado
 - Phase 8: Route groups (public)/(app), sidebar navigation via shadcn Sidebar, auth guard centralizado, Header/AdminSidebar deletados
 - Auth: Supabase Auth com Google/Facebook/LinkedIn OAuth, roles admin/vendedor
@@ -144,4 +148,4 @@ Tech debt ativo:
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after Phase 9 completion*
+*Last updated: 2026-03-27 after Phase 11 completion*
