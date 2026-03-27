@@ -41,7 +41,7 @@ const SKELETON_ROWS = ["s1", "s2", "s3", "s4", "s5"] as const;
 
 function RankingTableSkeleton() {
 	return (
-		<div className="space-y-2">
+		<div className="flex flex-col gap-2">
 			{SKELETON_ROWS.map((k) => (
 				<Skeleton className="h-10 w-full" key={k} />
 			))}

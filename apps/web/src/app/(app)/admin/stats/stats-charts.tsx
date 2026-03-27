@@ -23,6 +23,18 @@ interface StatsChartsProps {
 
 const tagChartConfig: ChartConfig = {
 	count: { label: "Leads" },
+	quente: {
+		label: "Quente",
+		theme: { light: "oklch(0.45 0.18 17)", dark: "oklch(0.85 0.12 17)" },
+	},
+	morno: {
+		label: "Morno",
+		theme: { light: "oklch(0.5 0.13 85)", dark: "oklch(0.85 0.1 85)" },
+	},
+	frio: {
+		label: "Frio",
+		theme: { light: "oklch(0.45 0.15 240)", dark: "oklch(0.85 0.1 240)" },
+	},
 };
 
 const timelineChartConfig: ChartConfig = {
@@ -49,9 +61,9 @@ export default function StatsCharts({
 	}
 
 	const barData = [
-		{ tag: "Quente", count: tagData.quente, fill: "oklch(0.45 0.18 17)" },
-		{ tag: "Morno", count: tagData.morno, fill: "oklch(0.5 0.13 85)" },
-		{ tag: "Frio", count: tagData.frio, fill: "oklch(0.45 0.15 240)" },
+		{ tag: "Quente", count: tagData.quente, fill: "var(--color-quente)" },
+		{ tag: "Morno", count: tagData.morno, fill: "var(--color-morno)" },
+		{ tag: "Frio", count: tagData.frio, fill: "var(--color-frio)" },
 	];
 
 	const lineData = timelineData.map((d) => ({
