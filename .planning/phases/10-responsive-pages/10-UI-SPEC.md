@@ -51,11 +51,13 @@ Exceptions:
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px (`text-sm`) | 400 (regular) | 1.43 (20px) |
-| Label | 14px (`text-sm`) | 500 (medium) | 1.43 (20px) |
+| Label | 14px (`text-sm`) | 400 (regular) | 1.43 (20px) |
 | Heading | 20px (`text-xl`) | 600 (semibold) | 1.4 (28px) |
 | Caption | 12px (`text-xs`) | 400 (regular) | 1.33 (16px) |
 
-Source: Existing codebase patterns -- `font-semibold text-xl` for h1, `text-sm` for body/table cells, `text-xs` for timestamps and error messages. Weights limited to 400 + 500 + 600 as already used across components.
+Two weights only: 400 (regular) for body, labels, and captions; 600 (semibold) for headings and emphasis. Labels differentiate from body text via context and color (`text-muted-foreground` for secondary labels) rather than font weight.
+
+Source: Existing codebase patterns -- `font-semibold text-xl` for h1, `text-sm` for body/table cells, `text-xs` for timestamps and error messages.
 
 ---
 
@@ -121,6 +123,18 @@ Semantic badge colors (existing, not changed in this phase):
 
 ## Layout Contracts
 
+### Focal Points
+
+| Screen | Primary Visual Anchor | Secondary Anchor |
+|--------|----------------------|------------------|
+| `/leads` (vendedor) | FAB "Novo Lead" (bottom-right, accent color, 56px) | Lead card list (scrollable content area) |
+| `/dashboard` | FAB "Novo Lead" (bottom-right, accent color, 56px) | Stats cards row (top of content) |
+| `/admin/leads` (mobile) | Admin lead card list (full-width stacked cards) | Vendor selector (top filter bar) |
+| `/admin/leads` (desktop) | Data table (center content area) | Stat cards row (top of content) |
+| `/admin/users` (mobile) | Admin user card list (full-width stacked cards) | Search input (top filter bar) |
+| `/admin/users` (desktop) | Data table (center content area) | Search input (top filter bar) |
+| `/leads/new` and `/leads/[id]` | Lead form (centered, single-column mobile / 2-col desktop) | Submit button "Salvar Lead" (bottom of form, accent color) |
+
 ### Admin Lead Card (mobile < 768px)
 
 ```
@@ -161,14 +175,14 @@ Semantic badge colors (existing, not changed in this phase):
 ### DropdownMenu Actions
 
 **Admin leads card DropdownMenu items:**
-1. "Editar" (icon: Pencil) -- navigates to `/admin/leads/{localId}`
+1. "Editar lead" (icon: Pencil) -- navigates to `/admin/leads/{localId}`
 2. separator
-3. "Excluir" (icon: Trash2, `text-destructive`) -- opens existing AlertDialog
+3. "Excluir lead" (icon: Trash2, `text-destructive`) -- opens existing AlertDialog
 
 **Admin users card DropdownMenu items:**
 1. "Editar role" (icon: Pencil) -- triggers inline role select
-2. "Desativar" (icon: Ban, `text-destructive`) -- opens existing AlertDialog (only if not banned and not self)
-3. "Reativar" (icon: CheckCircle) -- opens existing AlertDialog (only if banned)
+2. "Desativar usuario" (icon: Ban, `text-destructive`) -- opens existing AlertDialog (only if not banned and not self)
+3. "Reativar usuario" (icon: CheckCircle) -- opens existing AlertDialog (only if banned)
 
 ### Lead Form Grid (responsive)
 
@@ -237,6 +251,11 @@ Table/Card switch: Use `hidden md:block` on Table wrapper and `md:hidden` on Car
 |---------|------|
 | Primary CTA (leads) | "Salvar Lead" (new) / "Salvar alteracoes" (edit) |
 | DropdownMenu trigger label | `aria-label="Abrir menu de acoes"` |
+| DropdownMenu: edit lead | "Editar lead" |
+| DropdownMenu: delete lead | "Excluir lead" |
+| DropdownMenu: edit role | "Editar role" |
+| DropdownMenu: deactivate user | "Desativar usuario" |
+| DropdownMenu: reactivate user | "Reativar usuario" |
 | Admin leads empty (no vendor selected) | Heading: "Nenhum vendedor selecionado" / Body: "Selecione um vendedor no seletor acima para visualizar seus leads." |
 | Admin leads empty (no leads) | Heading: "Nenhum lead encontrado" / Body: "Este vendedor ainda nao coletou nenhum lead." |
 | Admin users empty (no results) | Heading: "Nenhum usuario encontrado" / Body: "Nenhum usuario corresponde a busca. Tente outro termo." |
@@ -244,11 +263,11 @@ Table/Card switch: Use `hidden md:block` on Table wrapper and `md:hidden` on Car
 | Error state (tables) | Heading: "Erro ao carregar dados" / Body: "Verifique sua conexao e tente novamente." |
 | Error state (users) | Heading: "Erro ao carregar usuarios" / Body: "Nao foi possivel carregar a lista de usuarios. Tente novamente." |
 | Vendedor leads empty | Heading: "Nenhum lead ainda" / Body: "Comece coletando seu primeiro lead no evento." |
-| Destructive: Excluir Lead | AlertDialog title: "Excluir Lead" / Body: "Tem certeza que deseja excluir este lead? Essa acao nao pode ser desfeita." / Confirm: "Excluir" / Cancel: "Cancelar" |
-| Destructive: Desativar Usuario | AlertDialog title: "Desativar Usuario" / Body: "O usuario **{nome}** perdera acesso ao sistema imediatamente. Deseja continuar?" / Confirm: "Desativar" / Cancel: "Cancelar" |
-| Destructive: Reativar Usuario | AlertDialog title: "Reativar Usuario" / Body: "O usuario **{nome}** voltara a ter acesso ao sistema. Confirmar?" / Confirm: "Reativar" / Cancel: "Cancelar" |
+| Destructive: Excluir Lead | AlertDialog title: "Excluir lead" / Body: "Tem certeza que deseja excluir este lead? Essa acao nao pode ser desfeita." / Confirm: "Excluir lead" / Cancel: "Voltar" |
+| Destructive: Desativar Usuario | AlertDialog title: "Desativar usuario" / Body: "O usuario **{nome}** perdera acesso ao sistema imediatamente. Deseja continuar?" / Confirm: "Desativar usuario" / Cancel: "Voltar" |
+| Destructive: Reativar Usuario | AlertDialog title: "Reativar usuario" / Body: "O usuario **{nome}** voltara a ter acesso ao sistema. Confirmar?" / Confirm: "Reativar usuario" / Cancel: "Voltar" |
 
-All copy preserved from existing codebase. No new copy introduced in this phase.
+All copy preserved from existing codebase where applicable. DropdownMenu items use verb+noun pattern for clarity. AlertDialog cancel buttons use "Voltar" instead of generic "Cancelar" to indicate the non-destructive escape path.
 
 ---
 
