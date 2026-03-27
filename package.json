@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@dashboard-leads-profills/env": "workspace:*",
+    "@dashboard-leads-profills/ui": "workspace:*",
     "dexie": "^4.3.0",
     "dexie-react-hooks": "^4.2.0",
     "dotenv": "^17.3.1",
