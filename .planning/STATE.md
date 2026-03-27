@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: UI Refactor & Mobile UX
 status: executing
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-03-27T20:41:23.527Z"
+stopped_at: Completed 11-03-PLAN.md
+last_updated: "2026-03-27T20:49:31.700Z"
 last_activity: 2026-03-27
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 11
   percent: 75
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 11 (dashboard-visual-polish) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-03-27
 
@@ -57,6 +57,7 @@ Progress: [███████░░░] 75% (v1.1) — v1.0 complete, phases 
 | Phase 10 P02 | 26min | 1 tasks | 2 files |
 | Phase 10 P03 | 23min | 2 tasks | 4 files |
 | Phase 11 P01 | 1min | 2 tasks | 2 files |
+| Phase 11 P03 | 1 | 2 tasks | 5 files |
 
 ### Decisions
 
@@ -84,6 +85,9 @@ Decisoes relevantes para v1.1:
 - [Phase 10]: IntersectionObserver root: null documentado — depende de body como scroll container
 - [Phase 11]: UUID_REGEX extraida para top-level para satisfazer Biome useTopLevelRegex em AppTopbar
 - [Phase 11]: AppTopbar como leaf use-client importada por Server Component layout — nenhum use-client adicionado ao layout
+- [Phase 11]: flex flex-col gap-* substituiu space-y-* em todos arquivos restantes da fase (padrao consistente)
+- [Phase 11]: stats-charts barData usa var(--color-quente/morno/frio) via tagChartConfig theme — dark mode correto
+- [Phase 11]: lead-list e lead-detail delegam padding para layout.tsx — sem px-4 py-8 nem max-w-[480px] duplicados
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T20:41:23.525Z
-Stopped at: Completed 11-01-PLAN.md
+Last session: 2026-03-27T20:49:31.698Z
+Stopped at: Completed 11-03-PLAN.md
 Resume file: None
