@@ -64,69 +64,65 @@ export default function LeadList({ userId }: LeadListProps) {
 	}, [hasMore, loadMore]);
 
 	return (
-		<div className="flex flex-col px-4 py-8">
-			<div className="mx-auto w-full max-w-[480px]">
-				<div className="flex items-center justify-between">
-					<h1 className="font-semibold text-xl">Meus Leads</h1>
-					{leads === undefined ? null : (
-						<span aria-live="polite" className="text-muted-foreground text-sm">
-							{leads.length} leads
-						</span>
-					)}
-				</div>
-
-				<div className="mt-4">
-					<TagFilter onChange={setActiveTag} value={activeTag} />
-				</div>
-
-				{leads === undefined ? (
-					<div aria-busy="true" className="mt-6 flex flex-col gap-4">
-						<Skeleton className="h-[72px] w-full rounded-lg" />
-						<Skeleton className="h-[72px] w-full rounded-lg" />
-						<Skeleton className="h-[72px] w-full rounded-lg" />
-					</div>
-				) : leads.length === 0 ? (
-					activeTag === "todos" ? (
-						<div className="mt-16 flex flex-col items-center gap-4 text-center">
-							<Users className="size-12 text-muted-foreground" />
-							<h2 className="font-semibold text-lg">Nenhum lead ainda</h2>
-							<p className="text-muted-foreground text-sm">
-								Comece coletando seu primeiro lead no evento.
-							</p>
-							<Link
-								className="font-medium text-primary text-sm underline-offset-4 hover:underline"
-								href={LEADS_NEW_HREF}
-							>
-								Novo Lead
-							</Link>
-						</div>
-					) : (
-						<p className="mt-16 text-center text-muted-foreground text-sm">
-							Nenhum lead {activeTag} encontrado
-						</p>
-					)
-				) : (
-					<div aria-label="Lista de leads" className="mt-6 flex flex-col gap-4">
-						{leads.map((lead) => (
-							<LeadCard
-								key={lead.localId}
-								lead={lead}
-								onClick={() =>
-									router.push(`/leads/${lead.localId}` as unknown as "/")
-								}
-							/>
-						))}
-
-						{hasMore ? (
-							<div className="flex justify-center py-4">
-								<Loader2 className="size-6 animate-spin text-muted-foreground" />
-							</div>
-						) : null}
-
-						<div className="h-px" ref={sentinelRef} />
-					</div>
+		<div className="flex flex-col gap-6">
+			<div className="flex items-center justify-between">
+				<h1 className="font-semibold text-xl">Meus Leads</h1>
+				{leads === undefined ? null : (
+					<span aria-live="polite" className="text-muted-foreground text-sm">
+						{leads.length} leads
+					</span>
 				)}
 			</div>
+
+			<TagFilter onChange={setActiveTag} value={activeTag} />
+
+			{leads === undefined ? (
+				<div aria-busy="true" className="flex flex-col gap-4">
+					<Skeleton className="h-[72px] w-full rounded-lg" />
+					<Skeleton className="h-[72px] w-full rounded-lg" />
+					<Skeleton className="h-[72px] w-full rounded-lg" />
+				</div>
+			) : leads.length === 0 ? (
+				activeTag === "todos" ? (
+					<div className="flex flex-col items-center gap-4 py-8 text-center">
+						<Users className="size-12 text-muted-foreground" />
+						<h2 className="font-semibold text-lg">Nenhum lead ainda</h2>
+						<p className="text-muted-foreground text-sm">
+							Comece coletando seu primeiro lead no evento.
+						</p>
+						<Link
+							className="font-medium text-primary text-sm underline-offset-4 hover:underline"
+							href={LEADS_NEW_HREF}
+						>
+							Novo Lead
+						</Link>
+					</div>
+				) : (
+					<p className="py-8 text-center text-muted-foreground text-sm">
+						Nenhum lead {activeTag} encontrado
+					</p>
+				)
+			) : (
+				<div aria-label="Lista de leads" className="flex flex-col gap-4">
+					{leads.map((lead) => (
+						<LeadCard
+							key={lead.localId}
+							lead={lead}
+							onClick={() =>
+								router.push(`/leads/${lead.localId}` as unknown as "/")
+							}
+						/>
+					))}
+
+					{hasMore ? (
+						<div className="flex justify-center py-4">
+							<Loader2 className="size-6 animate-spin text-muted-foreground" />
+						</div>
+					) : null}
+
+					<div className="h-px" ref={sentinelRef} />
+				</div>
+			)}
 
 			<FAB />
 		</div>
