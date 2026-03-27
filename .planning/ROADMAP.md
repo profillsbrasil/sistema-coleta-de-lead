@@ -61,14 +61,13 @@ Plans:
   3. No mobile, abrir sidebar exibe drawer a partir da esquerda; clicar em qualquer nav link fecha o drawer automaticamente
   4. Footer da sidebar exibe avatar + nome + role do usuario logado com opcao de logout
   5. Nav item da rota atual aparece highlighted — incluindo rotas aninhadas como /admin/leads/123
-  6. Sidebar em desktop colapsa para modo icon-only (Ctrl+B) com estado persistido via cookie
-**Plans**: 3 plans
+  6. ~~Sidebar em desktop colapsa para modo icon-only (Ctrl+B) com estado persistido via cookie~~ CANCELADO (D-01: sidebar sempre expandida)
+**Plans**: 2 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 09-01: Construir AppSidebar com grupos Vendedor + Admin (collapsible, role-gated), active state, touch targets 44px
-- [ ] 09-02: Criar SidebarUserMenu (avatar + nome + role + logout) e integrar no SidebarFooter
-- [ ] 09-03: Fix drawer mobile — useEffect pathname + setOpenMobile(false); verificar 100svh no Sheet do iOS Safari
+- [ ] 09-01-PLAN.md — Implementar sidebar completa: gravatar utility, user menu, auto-close mobile, touch targets 44px, active state refinado
+- [ ] 09-02-PLAN.md — Build + verificacao automatizada + checkpoint visual/funcional no browser
 
 ### Phase 10: Responsive Pages
 **Goal**: Todas as rotas autenticadas sao usaveis em 320px — tabelas como cards, formularios full-width, FAB sem conflito com teclado virtual
@@ -120,6 +119,6 @@ Plans:
 | 6. Admin Panel | v1.0 | 5/5 | Complete | 2026-03-26 |
 | 7. Auth & Admin Fixes | v1.0 | 1/1 | Complete | 2026-03-26 |
 | 8. Layout Foundation | v1.1 | 0/3 | Not started | - |
-| 9. Sidebar Content + Mobile UX | v1.1 | 0/3 | Not started | - |
+| 9. Sidebar Content + Mobile UX | v1.1 | 0/2 | Not started | - |
 | 10. Responsive Pages | v1.1 | 0/3 | Not started | - |
 | 11. Dashboard + Visual Polish | v1.1 | 0/3 | Not started | - |
