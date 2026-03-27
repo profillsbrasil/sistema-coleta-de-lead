@@ -14,7 +14,7 @@ export default async function DashboardPage() {
 	const isAdmin = userRole === "admin";
 
 	return (
-		<div className="mx-auto w-full max-w-[480px] px-4 pt-8">
+		<div className="w-full">
 			<Dashboard isAdmin={isAdmin} userId={user?.id ?? ""} />
 			<FAB />
 		</div>
