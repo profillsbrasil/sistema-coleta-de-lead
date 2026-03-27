@@ -84,9 +84,9 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 10-01: Admin leads table — card layout mobile com DropdownMenu de acoes; touch targets 44px
-- [ ] 10-02: Admin users table — card layout mobile com DropdownMenu de acoes; touch targets 44px
-- [ ] 10-03: Lead form grid responsivo (cols-1 mobile / cols-2 md+); FAB repositioning (sticky); IntersectionObserver root fix
+- [ ] 10-01-PLAN.md — Admin leads table: card layout mobile com DropdownMenu de acoes; touch targets 44px; stat cards grid responsivo
+- [ ] 10-02-PLAN.md — Admin users table: card layout mobile com DropdownMenu de acoes; touch targets 44px; skeleton responsivo
+- [ ] 10-03-PLAN.md — Lead form grid responsivo (cols-1 mobile / cols-2 md+); FAB keyboard hide + route filtering; IntersectionObserver verificacao
 
 ### Phase 11: Dashboard + Visual Polish
 **Goal**: Dashboard responsivo com charts que redimensionam apos sidebar toggle, breadcrumb contextual, e polish visual consistente em toda a aplicacao
