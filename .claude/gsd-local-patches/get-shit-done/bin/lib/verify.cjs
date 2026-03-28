@@ -19,6 +19,7 @@ const {
 	planningRoot,
 	output,
 	error,
+	checkAgentsInstalled,
 } = require("./core.cjs");
 const {
 	extractFrontmatter,
@@ -1013,6 +1014,32 @@ function cmdValidateHealth(cwd, options, raw) {
 		/* intentionally empty */
 	}
 
+	// ─── Check 7c: Agent installation (#1371) ──────────────────────────────────
+	// Verify GSD agents are installed. Missing agents cause Task(subagent_type=...)
+	// to silently fall back to general-purpose, losing specialized instructions.
+	try {
+		const agentStatus = checkAgentsInstalled();
+		if (!agentStatus.agents_installed) {
+			if (agentStatus.installed_agents.length === 0) {
+				addIssue(
+					"warning",
+					"W010",
+					`No GSD agents found in ${agentStatus.agents_dir} — Task(subagent_type="gsd-*") will fall back to general-purpose`,
+					"Run the GSD installer: npx get-shit-done-cc@latest"
+				);
+			} else {
+				addIssue(
+					"warning",
+					"W010",
+					`Missing ${agentStatus.missing_agents.length} GSD agents: ${agentStatus.missing_agents.join(", ")} — affected workflows will fall back to general-purpose`,
+					"Run the GSD installer: npx get-shit-done-cc@latest"
+				);
+			}
+		}
+	} catch {
+		/* intentionally empty — agent check is non-blocking */
+	}
+
 	// ─── Check 8: Run existing consistency checks ─────────────────────────────
 	// Inline subset of cmdValidateConsistency
 	if (fs.existsSync(roadmapPath)) {
@@ -1207,6 +1234,27 @@ function cmdValidateHealth(cwd, options, raw) {
 	);
 }
 
+/**
+ * Validate agent installation status (#1371).
+ * Returns detailed information about which agents are installed and which are missing.
+ */
+function cmdValidateAgents(cwd, raw) {
+	const { MODEL_PROFILES } = require("./model-profiles.cjs");
+	const agentStatus = checkAgentsInstalled();
+	const expected = Object.keys(MODEL_PROFILES);
+
+	output(
+		{
+			agents_dir: agentStatus.agents_dir,
+			agents_found: agentStatus.agents_installed,
+			installed: agentStatus.installed_agents,
+			missing: agentStatus.missing_agents,
+			expected,
+		},
+		raw
+	);
+}
+
 module.exports = {
 	cmdVerifySummary,
 	cmdVerifyPlanStructure,
@@ -1217,4 +1265,5 @@ module.exports = {
 	cmdVerifyKeyLinks,
 	cmdValidateConsistency,
 	cmdValidateHealth,
+	cmdValidateAgents,
 };

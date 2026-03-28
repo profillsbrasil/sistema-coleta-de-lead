@@ -59,6 +59,7 @@
  * Validation:
  *   validate consistency               Check phase numbering, disk/roadmap sync
  *   validate health [--repair]         Check .planning/ integrity, optionally repair
+ *   validate agents                    Check GSD agent installation status
  *
  * Progress:
  *   progress [json|table|bar]          Render progress in various formats
@@ -68,6 +69,7 @@
  *
  * UAT Audit:
  *   audit-uat                           Scan all phases for unresolved UAT/verification items
+ *   uat render-checkpoint --file <path> Render the current UAT checkpoint block
  *
  * Scaffolding:
  *   scaffold context --phase <N>       Create CONTEXT.md template
@@ -151,10 +153,6 @@ const frontmatter = require("./lib/frontmatter.cjs");
 const profilePipeline = require("./lib/profile-pipeline.cjs");
 const profileOutput = require("./lib/profile-output.cjs");
 const workstream = require("./lib/workstream.cjs");
-
-const FIELD_PATH_BRACKET_RE = /^(.+?)\[(-?\d+)]$/;
-const WORKSTREAM_NAME_SAFE_RE = /^[a-zA-Z0-9_-]+$/;
-const LEADING_DOUBLE_DASH_RE = /^--/;
 
 // ─── Arg parsing helpers ──────────────────────────────────────────────────────
 
@@ -266,7 +264,7 @@ async function main() {
 		ws = getActiveWorkstream(cwd);
 	}
 	// Validate workstream name to prevent path traversal attacks.
-	if (ws && !WORKSTREAM_NAME_SAFE_RE.test(ws)) {
+	if (ws && !/^[a-zA-Z0-9_-]+$/.test(ws)) {
 		error(
 			"Invalid workstream name: must be alphanumeric, hyphens, and underscores only"
 		);
@@ -370,7 +368,7 @@ function extractField(obj, fieldPath) {
 		if (current === null || current === undefined) {
 			return undefined;
 		}
-		const bracketMatch = FIELD_PATH_BRACKET_RE.exec(part);
+		const bracketMatch = part.match(/^(.+?)\[(-?\d+)]$/);
 		if (bracketMatch) {
 			const key = bracketMatch[1];
 			const index = Number.parseInt(bracketMatch[2], 10);
@@ -399,7 +397,7 @@ async function runCommand(command, args, cwd, raw) {
 			} else if (subcommand === "patch") {
 				const patches = {};
 				for (let i = 2; i < args.length; i += 2) {
-					const key = args[i].replace(LEADING_DOUBLE_DASH_RE, "");
+					const key = args[i].replace(/^--/, "");
 					const value = args[i + 1];
 					if (key && value !== undefined) {
 						patches[key] = value;
@@ -710,6 +708,11 @@ async function runCommand(command, args, cwd, raw) {
 			break;
 		}
 
+		case "agent-skills": {
+			init.cmdAgentSkills(cwd, args[1], raw);
+			break;
+		}
+
 		case "history-digest": {
 			commands.cmdHistoryDigest(cwd, raw);
 			break;
@@ -814,8 +817,12 @@ async function runCommand(command, args, cwd, raw) {
 			} else if (subcommand === "health") {
 				const repairFlag = args.includes("--repair");
 				verify.cmdValidateHealth(cwd, { repair: repairFlag }, raw);
+			} else if (subcommand === "agents") {
+				verify.cmdValidateAgents(cwd, raw);
 			} else {
-				error("Unknown validate subcommand. Available: consistency, health");
+				error(
+					"Unknown validate subcommand. Available: consistency, health, agents"
+				);
 			}
 			break;
 		}
@@ -829,6 +836,18 @@ async function runCommand(command, args, cwd, raw) {
 		case "audit-uat": {
 			const uat = require("./lib/uat.cjs");
 			uat.cmdAuditUat(cwd, raw);
+			break;
+		}
+
+		case "uat": {
+			const subcommand = args[1];
+			const uat = require("./lib/uat.cjs");
+			if (subcommand === "render-checkpoint") {
+				const options = parseNamedArgs(args, ["file"]);
+				uat.cmdRenderCheckpoint(cwd, options, raw);
+			} else {
+				error("Unknown uat subcommand. Available: render-checkpoint");
+			}
 			break;
 		}
 
