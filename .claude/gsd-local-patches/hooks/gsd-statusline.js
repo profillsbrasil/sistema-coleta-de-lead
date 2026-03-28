@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 "use strict";
-// gsd-hook-version: 1.28.0
+// gsd-hook-version: 1.29.0
 // Claude Code Statusline - GSD Edition
 // Shows: model | current task | directory | context usage
 

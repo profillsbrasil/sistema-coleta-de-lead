@@ -62,13 +62,13 @@ bun run db:studio      # drizzle studio (UI)
 
 Arquivo: `apps/web/.env` (nao versionado)
 
-| Variavel | Validacao | Escopo | Descricao |
-|----------|-----------|--------|-----------|
-| `DATABASE_URL` | `z.string().min(1)` | server | Connection string PostgreSQL (Supabase) |
-| `NEXT_PUBLIC_SUPABASE_URL` | `z.string().url()` | server + client | URL do projeto Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `z.string().min(1)` | server + client | Anon key publica do Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | `z.string().min(1)` | server | Service role key (admin ops, nunca expor ao client) |
-| `NODE_ENV` | `z.enum(["development","production","test"])` | server | Ambiente (default: development) |
+| Variavel                        | Validacao                                     | Escopo          | Descricao                                           |
+| ------------------------------- | --------------------------------------------- | --------------- | --------------------------------------------------- |
+| `DATABASE_URL`                  | `z.string().min(1)`                           | server          | Connection string PostgreSQL (Supabase)             |
+| `NEXT_PUBLIC_SUPABASE_URL`      | `z.string().url()`                            | server + client | URL do projeto Supabase                             |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `z.string().min(1)`                           | server + client | Anon key publica do Supabase                        |
+| `SUPABASE_SERVICE_ROLE_KEY`     | `z.string().min(1)`                           | server          | Service role key (admin ops, nunca expor ao client) |
+| `NODE_ENV`                      | `z.enum(["development","production","test"])` | server          | Ambiente (default: development)                     |
 
 Validacao server em `packages/env/src/server.ts`, client em `packages/env/src/web.ts`. T3 Env + Zod, roda no import time.
 
@@ -92,6 +92,7 @@ Validacao server em `packages/env/src/server.ts`, client em `packages/env/src/we
 ## CI
 
 GitHub Actions em `.github/workflows/ci.yml`:
+
 1. Biome check (sem --write)
 2. Type check
 3. Test (Vitest)
@@ -99,15 +100,15 @@ GitHub Actions em `.github/workflows/ci.yml`:
 
 ## Entrypoints XP
 
-| Command | Uso |
-|---------|-----|
-| `/xp` | Fluxo estruturado (feature, bug, refactor, cleanup, docs) |
-| `/fix` | Bug pequeno/medio com TDD |
-| `/debug` | Investigar causa raiz |
-| `/tdd` | Executar fatia via Red-Green-Refactor |
-| `/ci` | Gerar evidencia tecnica |
-| `/verify` | Gerar evidencia visual/E2E |
-| `/gh-pr` | Criar PR via gh CLI |
+| Command   | Uso                                                       |
+| --------- | --------------------------------------------------------- |
+| `/xp`     | Fluxo estruturado (feature, bug, refactor, cleanup, docs) |
+| `/fix`    | Bug pequeno/medio com TDD                                 |
+| `/debug`  | Investigar causa raiz                                     |
+| `/tdd`    | Executar fatia via Red-Green-Refactor                     |
+| `/ci`     | Gerar evidencia tecnica                                   |
+| `/verify` | Gerar evidencia visual/E2E                                |
+| `/gh-pr`  | Criar PR via gh CLI                                       |
 
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project
@@ -131,15 +132,20 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 ## Technology Stack
 
 ## Languages
+
 - TypeScript 5 (strict) - Used across all packages and applications
 - JavaScript - React components, Next.js configuration, client code
 - SQL - PostgreSQL queries via Drizzle ORM
+
 ## Runtime
+
 - Node.js 22.13.14 (pinned via `@types/node` dependency)
 - Bun 1.3.11 - Package manager and runtime
 - Bun 1.3.11 (configured in `package.json` `packageManager` field)
 - Lockfile: `bun.lock` (present)
+
 ## Frameworks
+
 - Next.js 16.2 - React framework with App Router, typed routes, and React Compiler enabled
 - React 19.2.3 - UI library with functional components
 - TailwindCSS 4.1.18 - Utility-first CSS framework
@@ -158,20 +164,26 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - next-themes 0.4.6 - Theme provider for Next.js
 - Dexie 4.3.0 - Client-side IndexedDB wrapper (installed but minimal usage in codebase)
 - dexie-react-hooks 4.2.0 - React hooks for Dexie
+
 ## Testing
+
 - Vitest 3.2.1 - Unit test runner with workspace support
 - `@vitest/coverage-v8` 3.2.1 - Code coverage via V8
 - Config files: `vitest.workspace.ts` (root), `vitest.config.ts` (per package)
 - Testable packages: `packages/api`, `packages/env`
 - Vitest built-in assertions
+
 ## Build & Dev Tools
+
 - Turborepo 2.8.12 - Build orchestration and caching
 - Biome 2.4.7 - Unified linter and formatter
 - Ultracite 7.3.2 - Zero-config preset for Biome
 - Drizzle Kit 0.31.8 - Schema generation and migration management
 - TypeScript 5 - Strict type checking across packages
 - Babel Plugin React Compiler 1.0.0 - Automatic memoization (Next.js 16 feature)
+
 ## Key Dependencies
+
 - `zod` 4.1.13 - Schema validation for environment, input, and API contracts
 - `dotenv` 17.2.2 - Environment variable loading from `.env` files
 - `pg` 8.17.1 - Native PostgreSQL driver for Drizzle
@@ -182,7 +194,9 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - `@types/react` 19.2.10 - React type definitions
 - `@types/react-dom` 19.2.3 - React DOM type definitions
 - `typescript` 5.9.3+ - TypeScript compiler
+
 ## Configuration
+
 - File location: `apps/web/.env` (not versioned, contains secrets)
 - Validation: T3 Env with Zod (schema-based)
 - Validation run time: Import-time (enforced on app start)
@@ -199,10 +213,14 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Turbo: `turbo.json` (task dependencies, caching rules)
 - Drizzle: `packages/db/drizzle.config.ts`
 - Biome: `biome.json` (linting + formatting)
+
 ## Package Structure
+
 - Workspace refs: `workspace:*` (internal packages)
 - Catalog refs: `catalog:` (pinned versions in root `package.json` catalog)
+
 ## Platform Requirements
+
 - Bun 1.3.11
 - Node.js 22+ (inferred from `@types/node`)
 - PostgreSQL database (Supabase or compatible)
@@ -215,6 +233,7 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 ## Conventions
 
 ## Naming Patterns
+
 - Components: PascalCase (e.g., `header.tsx`, `sign-in-form.tsx`) in `components/` directory
 - Pages: kebab-case in App Router structure (e.g., `todos/page.tsx`, `dashboard/page.tsx`)
 - Utilities: camelCase (e.g., `utils.ts`, `auth-client.ts`)
@@ -230,7 +249,9 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - PascalCase for type definitions and interfaces (imported from Zod schemas, React types)
 - Type assertions use `as const` for literal types (observed in `{ to: "/", label: "Home" } as const`)
 - Explicit type imports: `import type { ... }` for type-only imports
+
 ## Code Style
+
 - Indentation: tabs (configured in Biome)
 - Quote style: double quotes (configured in Biome)
 - Max line length: no explicit limit observed, but lines kept reasonable
@@ -238,26 +259,36 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Framework: Biome 2.4.7 with Ultracite preset
 - Extends: `ultracite/biome/core`, `ultracite/biome/next`
 - Key rules enforced:
+
 ## Import Organization
+
 - `@/` → app root in `apps/web/src/` (configured via Next.js tsconfig)
 - `@dashboard-leads-profills/*` → workspace package imports (e.g., `@dashboard-leads-profills/ui/components/button`)
 - Absolute imports preferred over relative `../../../` patterns
 - No barrel files (index.ts re-exports) in hot paths; import directly from source
+
 ## Error Handling
+
 - tRPC: Use `TRPCError` with specific error codes and descriptive messages
 - Supabase Auth: Errors handled via error response checks in form submissions
 - Database: No explicit error handling visible in CRUD operations; relies on ORM/framework
 - Input validation: Zod schemas with descriptive error messages
 - No silent failures; errors propagated to UI via toast notifications or form validation display
+
 ## Logging
+
 - No debug statements in production code (enforced by `hookify.debug-statements`)
 - No `console.log` in committed code
 - Errors displayed to users via toast notifications (`toast.error()`, `toast.success()`)
+
 ## Comments
+
 - Self-documenting code preferred (clear function/variable names)
 - No JSDoc observed in codebase
 - No inline comments observed; code structure speaks for itself
+
 ## Function Design
+
 - Example: `handleAddTodo` (5 lines), `handleToggleTodo` (2 lines), `handleDeleteTodo` (2 lines)
 - Destructured parameters when multiple values needed
 - Explicit type annotations for clarity
@@ -265,14 +296,18 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Implicit returns in arrow functions when single expression
 - Explicit `return` statements in multiline blocks
 - Async functions always return Promises or void
+
 ## Module Design
+
 - Named exports for specific symbols (e.g., `export const router`, `export const publicProcedure`)
 - Default exports for React components
 - Type exports use `export type` syntax
 - Example: `export type AppRouter = typeof appRouter;`
 - NOT used in the codebase; components imported directly from source
 - Example: `import { Button } from "@dashboard-leads-profills/ui/components/button"` (not from `@dashboard-leads-profills/ui`)
+
 ## React & JSX
+
 - Function components only (no class components)
 - PascalCase names
 - Props typed explicitly with TypeScript interfaces or inline types
@@ -287,14 +322,18 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Example: `<Label htmlFor={field.name}>Email</Label>`
 - ARIA labels for icon-only buttons: `aria-label="Delete todo"`
 - Semantic HTML: `<button>`, `<nav>`, `<hr />`, `<form>`
+
 ## Async & Promises
+
 - `async/await` preferred over `.then()` chains
 - Example: `return await db.select().from(todo);`
 - Always `await` promises in async functions
 - Errors caught via `try-catch` or library-specific handlers
 - tanstack/react-query: `useMutation()`, `useQuery()`
 - Example from `todos/page.tsx`:
+
 ## TypeScript
+
 - No `any` types; use `unknown` if genuinely unknown
 - Explicit return types on functions when clarity matters
 - Type narrowing preferred over assertions
@@ -307,6 +346,7 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 ## Architecture
 
 ## Pattern Overview
+
 - Modular workspace structure (apps + packages)
 - tRPC for type-safe API communication (no REST)
 - Server-client separation with Supabase Auth for session management
@@ -314,7 +354,9 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Environment validation at import time (T3 Env + Zod)
 - React 19 with Server Components where applicable
 - Component library shared via workspace packages
+
 ## Layers
+
 - Purpose: Next.js application serving UI pages and API routes
 - Location: `apps/web/src`
 - Contains: Next.js pages (App Router), client components, API route handlers, hooks, utilities
@@ -345,12 +387,16 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Contains: Styled components (button, card, input, checkbox, dropdown, etc.), utility functions, global styles
 - Depends on: shadcn/ui dependencies, Tailwind CSS
 - Used by: `apps/web`
+
 ## Data Flow
+
 - **Server State:** PostgreSQL (source of truth)
 - **Session State:** Supabase Auth cookies (via `@supabase/ssr`) + NextRequest headers
 - **Client Cache:** React Query (via `QueryClient` in `apps/web/src/utils/trpc.ts`)
 - **UI State:** React hooks (useState in components)
+
 ## Key Abstractions
+
 - Purpose: Type-safe RPC endpoints with automatic client generation
 - Examples: `packages/api/src/routers/todo.ts`, `packages/api/src/routers/index.ts`
 - Pattern: `publicProcedure.input(Zod schema).mutation/query(async handler)`
@@ -366,7 +412,9 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Purpose: Client-side caching, synchronization with server state
 - Example: `apps/web/src/utils/trpc.ts`, usage in pages like `apps/web/src/app/todos/page.tsx`
 - Pattern: `useQuery()` for fetches, `useMutation()` for writes, automatic error handling
+
 ## Entry Points
+
 - Location: `apps/web/src/app/layout.tsx`
 - Triggers: `bun run dev:web` (Next.js dev server on port 3001)
 - Responsibilities: Root layout, font loading, provider setup (Providers component)
@@ -376,12 +424,16 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 - Generate Migration: `bun run db:generate` → Drizzle generates migration files
 - Migrate: `bun run db:migrate` → Applies pending migrations
 - Studio: `bun run db:studio` → Opens Drizzle Studio (UI)
+
 ## Error Handling
+
 - **API Errors:** tRPC throws `TRPCError` with code + message (e.g., "UNAUTHORIZED" in `protectedProcedure`)
 - **Validation Errors:** Zod validation in procedure `.input()` automatically rejects invalid data
 - **Client-side:** React Query catches errors, displays via Sonner toast in `apps/web/src/utils/trpc.ts`
 - **Auth Errors:** Supabase Auth returns error responses on failed signup/signin
+
 ## Cross-Cutting Concerns
+
 - Input: Zod schemas in tRPC procedures (e.g., `z.object({ id: z.number() })`)
 - Environment: T3 Env at module import time
 - Database: Drizzle table constraints (unique, notNull, etc.)
@@ -399,6 +451,7 @@ Sistema de coleta de leads para vendedores utilizarem durante congressos e confe
 Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
 
 Use these entry points:
+
 - `/gsd:quick` for small fixes, doc updates, and ad-hoc tasks
 - `/gsd:debug` for investigation and bug fixing
 - `/gsd:execute-phase` for planned phase work
