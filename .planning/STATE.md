@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Export, Connectivity & PWA
-status: verifying
-stopped_at: Completed 12-02-PLAN.md
-last_updated: "2026-03-29T15:41:05.300Z"
+status: human_needed
+stopped_at: Phase 12 awaiting manual spreadsheet verification
+last_updated: "2026-03-29T15:45:24.000Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 2
+  completed_phases: 0
+  total_plans: 9
   completed_plans: 2
-  percent: 11
+  percent: 22
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Phase 12 verification and Phase 13 readiness
+**Current focus:** Phase 12 manual verification
 
 ## Current Position
 
 Milestone: v1.2 Export, Connectivity & PWA
 Phase: 12 Export Workflows
 Plan: 2 of 2 in current phase
-Status: Phase complete — ready for verification
-Last activity: 2026-03-29
+Status: Awaiting manual spreadsheet verification
+Last activity: 2026-03-29 — Phase 12 needs Excel/Sheets verification
 
-Progress: Phase 12 complete — 1/4 phases and 2/9 v1.2 plans complete
+Progress: [██░░░░░░░░] 22% (v1.2) — 0/4 phases, 2/9 plans complete
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: Phase 12 complete — 1/4 phases and 2/9 v1.2 plans complete
 | Phase 11 P01 | 1min | 2 tasks | 2 files |
 | Phase 11 P03 | 1 | 2 tasks | 5 files |
 | Phase 12 P01 | 4min | 3 tasks | 6 files |
+| Phase 12 P02 | 8min | 3 tasks | 6 files |
 
 ### Decisions
 
@@ -104,10 +105,10 @@ None yet.
 
 - CTA de instalacao nao pode depender da rota `/` porque a home publica redireciona imediatamente
 - Verificar cedo se browsers alvo exigem service worker minimo para install prompt; manter escopo estrito se isso surgir
-- Workspace lint gate (`bun run check`) segue bloqueado por nested Biome configs em `.claude/worktrees/*/biome.json`, fora do escopo do plano 12-02
+- Workspace lint gate (`bun run check`) segue bloqueado por debt fora do escopo da fase, incluindo `.claude/worktrees/*/biome.json` e arquivos operacionais em `.codex/get-shit-done`
 
 ## Session Continuity
 
-Last session: 2026-03-29T15:41:05.298Z
-Stopped at: Completed 12-02-PLAN.md
-Resume file: None
+Last session: 2026-03-29T15:45:24.000Z
+Stopped at: Phase 12 awaiting manual spreadsheet verification
+Resume file: .planning/phases/12-export-workflows/12-VERIFICATION.md
