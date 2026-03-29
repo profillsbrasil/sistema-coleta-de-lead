@@ -12,6 +12,10 @@ import {
 } from "@dashboard-leads-profills/ui/components/alert-dialog";
 import { Badge } from "@dashboard-leads-profills/ui/components/badge";
 import {
+	Button,
+	buttonVariants,
+} from "@dashboard-leads-profills/ui/components/button";
+import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
@@ -48,13 +52,22 @@ import {
 	TableHeader,
 	TableRow,
 } from "@dashboard-leads-profills/ui/components/table";
+import { cn } from "@dashboard-leads-profills/ui/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import {
+	Download,
+	MessageCircle,
+	MoreVertical,
+	Pencil,
+	Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { StatCard } from "@/components/stat-card";
+import { exportLeadsCsv } from "@/lib/lead/export-csv";
+import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
 import { trpc } from "@/utils/trpc";
 import { AdminLeadCard } from "./admin-lead-card";
 
@@ -84,20 +97,28 @@ export default function LeadsPanel() {
 	const [selectedVendor, setSelectedVendor] = useState<string>("");
 	const [page, setPage] = useState(1);
 	const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
+	const [isExporting, setIsExporting] = useState(false);
 
 	const queryClient = useQueryClient();
+	const adminLeadFilters = selectedVendor ? { userId: selectedVendor } : null;
+	const paginatedLeadFilters = adminLeadFilters
+		? {
+				...adminLeadFilters,
+				limit: PAGE_SIZE,
+				offset: (page - 1) * PAGE_SIZE,
+			}
+		: {
+				userId: "00000000-0000-0000-0000-000000000000",
+				limit: PAGE_SIZE,
+				offset: (page - 1) * PAGE_SIZE,
+			};
 
 	const vendorsQuery = useQuery(trpc.admin.leads.listVendors.queryOptions());
 
 	const leadsQuery = useQuery(
-		trpc.admin.leads.listByUser.queryOptions(
-			{
-				userId: selectedVendor ?? "",
-				limit: PAGE_SIZE,
-				offset: (page - 1) * PAGE_SIZE,
-			},
-			{ enabled: !!selectedVendor }
-		)
+		trpc.admin.leads.listByUser.queryOptions(paginatedLeadFilters, {
+			enabled: adminLeadFilters !== null,
+		})
 	);
 
 	const statsQuery = useQuery(
@@ -132,6 +153,24 @@ export default function LeadsPanel() {
 			return;
 		}
 		deleteMutation.mutate({ localId: deletingLeadId });
+	}
+
+	async function handleExport() {
+		if (!adminLeadFilters) {
+			return;
+		}
+
+		setIsExporting(true);
+
+		try {
+			const result = await queryClient.fetchQuery(
+				trpc.admin.leads.exportByFilters.queryOptions(adminLeadFilters)
+			);
+
+			exportLeadsCsv(result.leads);
+		} finally {
+			setIsExporting(false);
+		}
 	}
 
 	const total = leadsQuery.data?.total ?? 0;
@@ -213,9 +252,23 @@ export default function LeadsPanel() {
 
 			{selectedVendor && leadsQuery.isSuccess && leads.length > 0 && (
 				<>
-					<p className="text-right text-muted-foreground text-sm">
-						Mostrando {rangeStart}-{rangeEnd} de {total}
-					</p>
+					<div className="flex items-center justify-between">
+						<Button
+							aria-label="Exportar leads como CSV"
+							disabled={adminLeadFilters === null || isExporting}
+							onClick={() => {
+								void handleExport();
+							}}
+							size="sm"
+							variant="outline"
+						>
+							<Download className="size-4" />
+							Exportar
+						</Button>
+						<p className="text-muted-foreground text-sm">
+							Mostrando {rangeStart}-{rangeEnd} de {total}
+						</p>
+					</div>
 
 					{/* Mobile: card list */}
 					<div className="flex flex-col gap-4 md:hidden">
@@ -246,7 +299,29 @@ export default function LeadsPanel() {
 								{leads.map((lead) => (
 									<TableRow key={lead.localId}>
 										<TableCell className="font-medium">{lead.name}</TableCell>
-										<TableCell>{lead.phone ?? lead.email ?? "-"}</TableCell>
+										<TableCell>
+											<span className="flex items-center gap-1">
+												{lead.phone
+													? formatPhone(lead.phone)
+													: (lead.email ?? "-")}
+												{lead.phone ? (
+													<a
+														aria-label="Abrir conversa no WhatsApp"
+														className={cn(
+															buttonVariants({
+																variant: "ghost",
+																size: "icon-sm",
+															})
+														)}
+														href={`https://wa.me/55${unmaskPhone(lead.phone)}`}
+														rel="noopener noreferrer"
+														target="_blank"
+													>
+														<MessageCircle className="size-4" />
+													</a>
+												) : null}
+											</span>
+										</TableCell>
 										<TableCell>
 											<Badge
 												className="text-white"
