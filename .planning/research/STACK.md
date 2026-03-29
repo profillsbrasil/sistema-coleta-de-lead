@@ -1,204 +1,95 @@
 # Stack Research
 
-**Domain:** UI Refactor -- Sidebar Navigation + Mobile Responsiveness
-**Researched:** 2026-03-26
+**Domain:** Offline-first lead collection app milestone enhancements
+**Researched:** 2026-03-28
 **Confidence:** HIGH
 
-## Executive Summary
+## Recommended Stack
 
-O projeto ja possui todas as dependencias necessarias para o v1.1 UI refactor. Os componentes shadcn/ui criticos (Sidebar, Sheet, Drawer, Collapsible, ScrollArea, Table) ja estao instalados em `packages/ui/src/components/`. O hook `useIsMobile` ja existe. A AdminSidebar ja funciona com `SidebarProvider` no admin layout. **Nenhuma nova dependencia e necessaria.** O trabalho e 100% de composicao e refatoracao de layout.
+### Core Technologies
 
-## Current State (Already Installed)
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| Next.js App Router | 16.2.1 | Manifest metadata, root layout, public assets, install surface | Official support exists for `app/manifest.ts`; no extra framework layer is needed for installability work. |
+| Existing browser APIs | Platform built-ins | CSV download, install prompt, display-mode detection | `Blob`, `URL.createObjectURL`, `matchMedia`, and `beforeinstallprompt` cover this milestone without adding runtime packages; CSV should keep UTF-8 BOM and spreadsheet-friendly line endings. |
+| Existing Dexie + sync engine | Dexie 4 + current app code | Connectivity and sync state surface | The app already has `syncQueue`, connectivity detection, and sync orchestration. The milestone should expose that state, not replace it. |
+| Supabase Auth metadata + Postgres | Current stack | Seller identity resolution for leaderboard | The backend already queries `auth.users`; fixing the metadata fallback is lower cost than introducing a new profile subsystem in v1.2. |
 
-### shadcn/ui Components -- Ready to Use
+### Supporting Libraries
 
-| Component | File | Purpose for v1.1 | Status |
-|-----------|------|-------------------|--------|
-| `Sidebar` (full suite) | `sidebar.tsx` (20KB) | Navigation principal, SidebarProvider, SidebarTrigger, SidebarMenu*, SidebarGroup*, SidebarFooter, SidebarHeader, SidebarRail | Instalado, usado no admin |
-| `Sheet` | `sheet.tsx` | Mobile sidebar overlay (usado internamente pelo Sidebar no mobile) | Instalado |
-| `Drawer` | `drawer.tsx` | Bottom drawer para acoes mobile (ex: filtros, acoes rapidas) | Instalado (via `vaul`) |
-| `Collapsible` | `collapsible.tsx` | Secao "Admin" expandivel na sidebar por role | Instalado |
-| `ScrollArea` | `scroll-area.tsx` | Scroll dentro da sidebar quando muitos itens | Instalado |
-| `Table` | `table.tsx` | Tabelas de leads/users (ja tem overflow-x-auto) | Instalado |
-| `Separator` | `separator.tsx` | Divisores entre grupos na sidebar | Instalado |
-| `Tooltip` | `tooltip.tsx` | Labels em sidebar collapsed (icon-only mode) | Instalado |
-| `Skeleton` | `skeleton.tsx` | Loading states na sidebar | Instalado |
-| `Card` | `card.tsx` | Card layout alternativo no mobile para tabelas | Instalado |
-| `Badge` | `badge.tsx` | Tags quente/morno/frio nos cards mobile | Instalado |
-| `Accordion` | `accordion.tsx` | Alternativa ao Collapsible para grupos de nav | Instalado |
-| `DropdownMenu` | `dropdown-menu.tsx` | User menu na sidebar footer | Instalado |
-| `Avatar` | `avatar.tsx` | User avatar na sidebar footer | Instalado |
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| No new CSV library | Current app code | Generate Excel-compatible CSV with UTF-8 BOM | Use the existing export utility pattern unless native `.xlsx` becomes a hard requirement later. |
+| No new PWA plugin | N/A | Avoid unnecessary service-worker/plugin complexity | Use only if the scope expands beyond manifest + install UX into robust offline caching or push infrastructure. |
+| Existing shadcn/ui components | Current workspace | Install CTA, sync badge, inline status UI | Reuse for badges, alerts, buttons, and empty states to keep UI consistent. |
 
-### Hooks -- Ready to Use
+### Development Tools
 
-| Hook | File | Purpose |
-|------|------|---------|
-| `useIsMobile` | `hooks/use-mobile.ts` | Breakpoint 768px, usado pelo Sidebar component internamente | Instalado |
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| Browser verification | Confirm install CTA and display-mode behavior | Required for Chromium install prompt and iOS Safari fallback validation. |
+| Existing test stack | Verify CSV generation and fallback logic | Unit tests fit export formatting and leaderboard name fallback well. |
 
-### Dependencies -- Already Present
+## Installation
 
-| Dependency | Version | Used By |
-|------------|---------|---------|
-| `vaul` | ^1.1.2 | Drawer component (bottom sheet) |
-| `@base-ui/react` | ^1.3.0 | Sheet component primitives |
-| `class-variance-authority` | ^0.7.1 | Sidebar variant styles |
-| `lucide-react` | ^1.6.0 | Navigation icons |
-| `cmdk` | ^1.1.1 | Command palette (opcional para search na sidebar) |
+```bash
+# Core
+# No new runtime packages required for the planned v1.2 scope.
 
-## Recommended Stack -- Zero New Dependencies
+# Supporting
+# No new supporting libraries required by default.
 
-### Core Pattern: SidebarProvider no Root Layout
-
-O padrao ja funciona no admin layout. Para v1.1, mover o `SidebarProvider` do admin layout para o root layout (ou um layout intermediario de app autenticado).
-
-**Por que:** O shadcn Sidebar component ja gerencia:
-- Estado collapsed/expanded via cookie (`sidebar_state`)
-- Mobile detection via `useIsMobile` hook
-- Mobile drawer automatico via Sheet (built-in no Sidebar component)
-- Keyboard shortcut (Ctrl+B) para toggle
-- Width constants: 16rem (desktop), 18rem (mobile), 3rem (icon-only)
-
-### Responsive Patterns com TailwindCSS 4
-
-TailwindCSS 4 ja esta no projeto. Os breakpoints default sao suficientes:
-
-| Breakpoint | Width | Uso no v1.1 |
-|------------|-------|-------------|
-| `sm` | 640px | Cards de lead empilhados |
-| `md` | 768px | Sidebar collapse threshold (alinhado com `useIsMobile`) |
-| `lg` | 1024px | Sidebar expanded + tabela completa |
-| `xl` | 1280px | Espacamento extra, colunas adicionais visiveis |
-
-**Padrao para tabelas responsivas:** `hidden md:table-cell` para colunas secundarias + card layout via `md:hidden` para mobile.
-
-**Padrao para touch targets:** `min-h-11 min-w-11` (44px) nos botoes interativos. TailwindCSS 4 usa `size-11` = 2.75rem = 44px.
-
-### Sidebar Architecture
-
+# Dev dependencies
+# None required unless later phases expand into service workers or push notifications.
 ```
-RootLayout
-  Providers (theme, trpc, query)
-    AuthenticatedLayout          // novo layout para rotas autenticadas
-      SidebarProvider
-        AppSidebar               // novo componente unificado
-          SidebarHeader          // logo/brand
-          SidebarContent
-            SidebarGroup "Vendedor"
-              - Home
-              - Dashboard
-              - Leads
-              - Captura
-            SidebarGroup "Admin" (Collapsible, role-gated)
-              - Leads (admin)
-              - Usuarios
-              - Stats Globais
-          SidebarFooter
-            - UserMenu (avatar + dropdown)
-            - ModeToggle
-        SidebarRail              // resize handle desktop
-        main (conteudo da pagina)
-```
-
-## What NOT to Install
-
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| `@tanstack/react-table` | Overkill para tabelas simples de leads/users. Adiciona ~50KB. Tabelas do app tem <10 colunas, sem sorting complexo | Composicao manual com `Table` + `hidden md:table-cell` + card layout mobile |
-| `react-responsive` | Duplica funcionalidade do `useIsMobile` hook e dos breakpoints TailwindCSS | `useIsMobile` hook + Tailwind responsive classes |
-| `framer-motion` | Transicoes ja cobertas por CSS transitions no Sheet/Drawer/Sidebar. Adiciona ~30KB gzipped | CSS transitions + `tw-animate-css` (ja instalado) |
-| `hamburger-react` | Icon de menu ja disponivel via `lucide-react` (Menu, PanelLeftIcon) | `PanelLeftIcon` (usado pelo SidebarTrigger) ou `Menu` do lucide |
-| `react-swipeable` | Drawer/vaul ja tem gesture handling built-in para swipe | `vaul` (Drawer component) |
-| `@radix-ui/react-*` | Projeto usa `@base-ui/react` (successor do Radix). Nao misturar | `@base-ui/react` (ja presente) |
 
 ## Alternatives Considered
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| shadcn Sidebar (built-in) | Custom sidebar com Sheet | Nunca neste projeto -- o Sidebar component ja resolve 100% do caso |
-| `hidden md:table-cell` + card layout | `@tanstack/react-table` com responsive plugin | Quando tiver >15 colunas, sorting, filtering, pagination complexa |
-| `useIsMobile` hook (768px) | CSS-only via Tailwind breakpoints | Preferir CSS-only quando possivel; hook so para logica JS (ex: Drawer vs Dialog) |
-| `vaul` Drawer (bottom sheet) | Sheet (side panel) | Drawer para acoes contextuais no mobile (filtros); Sheet para navegacao (ja usado pelo Sidebar) |
+| UTF-8 BOM CSV export | Native `.xlsx` generation | Use only if downstream stakeholders reject CSV/Sheets compatibility and explicitly require workbook features like multiple tabs or cell styling. |
+| `app/manifest.ts` + public icons | `next-pwa` / Serwist setup | Use only if the milestone expands to service-worker-managed offline assets, cache strategies, or push notification delivery. |
+| Fix `auth.users` metadata fallback in trusted server code | New `public.profiles` mirror table | Use only if user metadata stays inconsistent across providers and starts affecting more features than the leaderboard. |
 
-## Integration Notes
+## What NOT to Use
 
-### Sidebar Mobile Behavior (Already Built-in)
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| Heavy spreadsheet packages for v1.2 | Adds dependency weight and format complexity without clear milestone need | CSV with BOM and stable column mapping |
+| Full PWA plugin rollout for installability only | Pulls service-worker and cache invalidation work into a milestone that only needs install UX | Built-in Next.js manifest support plus targeted install UI |
+| Browser-only `navigator.onLine` badge as the whole status model | Can say "online" while sync is still failing or pending | Combine connectivity, sync queue, and last successful sync state |
 
-O componente `Sidebar` do shadcn (ja instalado em `sidebar.tsx`) **ja** renderiza um Sheet no mobile automaticamente:
-- Quando `useIsMobile()` retorna true, o sidebar vira um Sheet
-- `SidebarTrigger` renderiza um botao hamburguer
-- `openMobile`/`setOpenMobile` controlam o estado
-- Nao precisa implementar nada -- so usar o componente
+## Stack Patterns by Variant
 
-### Cookie Persistence
+**If the requirement stays "installable app only":**
+- Use `app/manifest.ts`, static icons in `public/`, and a small client install controller.
+- Because Next.js already supports manifest generation and install prompts do not require offline support.
 
-O `SidebarProvider` persiste o estado collapsed/expanded via cookie (`sidebar_state`, 7 dias). Isso significa que o estado sobrevive a navegacao e refresh. Ja esta implementado no componente.
+**If the requirement expands to offline asset caching later:**
+- Add a deliberate service-worker layer in a future milestone.
+- Because cache invalidation, update strategy, and browser support need separate design and verification.
 
-### Keyboard Shortcut
-
-`Ctrl+B` (ou `Cmd+B` no Mac) ja esta implementado no `SidebarProvider` para toggle. Padrao do componente shadcn.
-
-### Admin Section Gating
-
-Usar `Collapsible` dentro de um `SidebarGroup` para a secao admin. A visibilidade e controlada por role no client (ja existe logica similar no `header.tsx` com `isAdmin` state). No v1.1, mover essa logica para o AppSidebar unificado.
-
-### Touch Target Compliance
-
-TailwindCSS 4 utilities para garantir 44x44px:
-- Botoes: `min-h-11 min-w-11 p-2.5` (44px minimo)
-- SidebarMenuButton ja usa `h-8` (32px) -- precisa aumentar para `h-11` no mobile via `md:h-8`
-- Links de navegacao: `py-3` no mobile, `py-2` no desktop
+**If auth metadata is missing for some OAuth providers:**
+- Use a deterministic fallback chain (`full_name` -> `name` -> email prefix -> short id).
+- Because the leaderboard must stop showing the generic label for every non-current user.
 
 ## Version Compatibility
 
-| Package | Version | Compatible With | Notes |
-|---------|---------|-----------------|-------|
-| shadcn `sidebar.tsx` | v4 (shadcn ^4.1.0) | @base-ui/react ^1.3.0 | Sheet interno usa @base-ui/react Dialog |
-| vaul (Drawer) | ^1.1.2 | React 19 | Compativel, sem issues conhecidos |
-| TailwindCSS | 4.x | tw-animate-css ^1.4.0 | Animacoes funcionam com v4 |
-| useIsMobile hook | custom | Sidebar component | Breakpoint alinhado (768px = md) |
-
-## Installation
-
-```bash
-# NENHUMA instalacao necessaria.
-# Todos os componentes e dependencias ja estao presentes.
-
-# Verificacao:
-ls packages/ui/src/components/sidebar.tsx   # Sidebar suite (20KB)
-ls packages/ui/src/components/sheet.tsx      # Sheet (usado pelo Sidebar mobile)
-ls packages/ui/src/components/drawer.tsx     # Drawer (bottom sheet)
-ls packages/ui/src/components/collapsible.tsx # Collapsible (admin section)
-ls packages/ui/src/hooks/use-mobile.ts       # useIsMobile hook
-```
-
-## Lucide Icons Recomendados para Sidebar
-
-| Icon | Import | Uso |
-|------|--------|-----|
-| `Home` | `lucide-react` | Link Home |
-| `LayoutDashboard` | `lucide-react` | Dashboard (ja usado no admin) |
-| `Users` | `lucide-react` | Leads / Usuarios (ja usado) |
-| `ClipboardList` | `lucide-react` | Leads admin (ja usado) |
-| `PlusCircle` | `lucide-react` | Captura rapida |
-| `QrCode` | `lucide-react` | QR Scanner |
-| `Camera` | `lucide-react` | Foto de cartao |
-| `BarChart3` | `lucide-react` | Stats globais |
-| `Trophy` | `lucide-react` | Leaderboard |
-| `Shield` | `lucide-react` | Secao Admin (collapsible header) |
-| `ChevronDown` | `lucide-react` | Collapsible trigger |
-| `Settings` | `lucide-react` | Configuracoes (futuro) |
-| `LogOut` | `lucide-react` | Logout no footer |
+| Package A | Compatible With | Notes |
+|-----------|-----------------|-------|
+| `next@16.2.1` | App Router metadata files | Official docs cover `app/manifest.ts` for this version line. |
+| Chromium install prompt APIs | Manifest + installable criteria | `beforeinstallprompt` is non-standard and should be treated as Chromium-only behavior. |
+| Supabase Auth metadata | Server-side SQL access to `auth.users` | Suitable in trusted backend code; direct client exposure remains inappropriate. |
 
 ## Sources
 
-- Codebase analysis: `packages/ui/src/components/sidebar.tsx` (20KB, shadcn v4 Sidebar completo) -- HIGH confidence
-- Codebase analysis: `packages/ui/package.json` (todas dependencias verificadas) -- HIGH confidence
-- Codebase analysis: `apps/web/src/app/admin/layout.tsx` (SidebarProvider + AdminSidebar ja funcional) -- HIGH confidence
-- Codebase analysis: `apps/web/src/components/header.tsx` (topbar atual a ser substituido) -- HIGH confidence
-- Codebase analysis: `packages/ui/src/hooks/use-mobile.ts` (breakpoint 768px) -- HIGH confidence
-- TailwindCSS 4 default breakpoints: sm=640px, md=768px, lg=1024px, xl=1280px -- HIGH confidence
-- shadcn/ui Sidebar component: keyboard shortcut, cookie persistence, auto-mobile Sheet -- HIGH confidence (verified in source code)
+- Next.js docs: `manifest.json` metadata file reference — verified `app/manifest.ts` support for App Router
+- Next.js docs: PWA guide — verified installability can be added without offline support and that iOS home-screen UX needs explicit handling
+- MDN: `beforeinstallprompt` / install prompt guidance — verified Chromium-only and non-standard nature of the in-app prompt API
+- Microsoft support guidance for UTF-8 CSV in Excel — verified BOM-based compatibility expectations
+- Supabase docs: managing user data — verified metadata lives in `auth.users.raw_user_meta_data`
+- Current codebase: `apps/web/src/lib/sync/connectivity.ts`, `apps/web/src/lib/sync/engine.ts`, `packages/api/src/routers/leaderboard.ts`, `apps/web/src/lib/lead/export-csv.ts`
 
 ---
-*Stack research for: UI Refactor -- Sidebar Navigation + Mobile Responsiveness*
-*Researched: 2026-03-26*
+*Stack research for: offline-first lead collection milestone enhancements*
+*Researched: 2026-03-28*

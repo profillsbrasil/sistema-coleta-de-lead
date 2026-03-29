@@ -1,155 +1,137 @@
 # Project Research Summary
 
-**Project:** Dashboard Leads Profills — v1.1 UI Refactor & Mobile UX
-**Domain:** Sidebar navigation + full mobile responsiveness for Next.js App Router dashboard
-**Researched:** 2026-03-26
+**Project:** Dashboard Leads Profills
+**Domain:** Offline-first lead collection app milestone enhancements
+**Researched:** 2026-03-28
 **Confidence:** HIGH
 
 ## Executive Summary
 
-O v1.1 e uma refatoracao de layout e UX mobile — sem novas features de produto. A pesquisa confirma que **zero novas dependencias sao necessarias**: todos os componentes shadcn/ui (Sidebar suite 20KB, Sheet, Collapsible, Card, Table, Avatar, DropdownMenu), hooks (`useIsMobile`), e icones Lucide ja estao instalados. A `AdminSidebar` com `SidebarProvider` ja funciona em producao no layout admin — o trabalho e promover esse pattern para toda a app.
+This milestone does not need a stack expansion. The existing Next.js 16 App Router, Dexie-backed sync runtime, Supabase-backed server code, and browser APIs are already enough to deliver export, connectivity visibility, leaderboard identity fixes, and installability. The strongest recommendation is to expose more of the app's existing truth instead of adding parallel infrastructure: publish sync state from the current engine, reuse the existing export utility path, fix identity fallback server-side, and add install metadata with a browser-aware CTA.
 
-A mudanca mais importante e arquitetural: criar route groups `(public)` e `(app)` para separar paginas sem sidebar (login, home) de paginas com sidebar (todas as rotas autenticadas). Isso elimina rendering condicional, layout flash, e o problema de dois `SidebarProvider` aninhados. O `Header` topbar e deletado completamente — a navegacao migra para `AppSidebar` unificado com secao "Admin" expandivel por role.
-
-Os 7 pitfalls criticos estao todos mapeados a fases especificas: o problema mais comum (drawer mobile nao fecha apos navegacao, GitHub #5561/#6265) tem fix trivial de 5 linhas; o risco maior e a troca atomica root layout `grid->flex` que deve acontecer na mesma fase que a criacao do route groups.
-
----
+The main risks are scope drift and false confidence. "PWA" can easily turn into a service-worker rewrite, and a naive connectivity badge can still leave sellers unsure whether their data is safe. The milestone should therefore stay tight: export correctness, trustworthy sync status, readable leaderboard identities, and install UX that works on Chromium while degrading cleanly on iOS Safari.
 
 ## Key Findings
 
-### Stack — Zero Novas Dependencias
+### Recommended Stack
 
-**Todos os componentes necessarios ja estao em `packages/ui/src/components/`:**
-- `sidebar.tsx` (20KB) — SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarGroup, SidebarMenu, SidebarMenuButton, SidebarTrigger, SidebarInset, SidebarRail
-- `sheet.tsx` — usado internamente pelo Sidebar no mobile (Sheet overlay automatico)
-- `collapsible.tsx` — secao Admin expandivel
-- `card.tsx`, `badge.tsx` — card layout mobile para tabelas
-- `avatar.tsx`, `dropdown-menu.tsx` — user info no footer
-- `breadcrumb.tsx` — navegacao contextual mobile
+The existing stack is sufficient for v1.2. Next.js provides first-class manifest support, CSV export can stay on browser primitives, and Supabase auth metadata can be normalized in trusted backend code without a new profile table.
 
-**Hook `useIsMobile`** ja existe em `packages/ui/src/hooks/use-mobile.ts` (768px, alinhado com breakpoint `md`).
+**Core technologies:**
+- Next.js App Router: manifest metadata and installability surface
+- Existing browser APIs: CSV download and install prompt handling
+- Existing Dexie/sync runtime: trustworthy connectivity and sync state
+- Supabase Auth metadata: seller identity fallback for leaderboard rows
 
-**Sidebar mobile behavior e built-in:** o componente ja renderiza Sheet overlay no mobile automaticamente quando `useIsMobile()` retorna `true`. Hamburguer, swipe, e state management ja sao gerenciados.
+### Expected Features
 
-### Architecture — Route Groups + Sidebar Unificada
+The milestone's table stakes are straightforward and user-facing: export usable lead files, show trustworthy sync/connectivity status, display real seller names in ranking, and support installability on mobile.
 
-**Layout atual (ANTES):**
-- Root layout tem `<Header />` topbar + `grid-rows-[auto_1fr]`
-- Admin tem layout proprio com `SidebarProvider` + `AdminSidebar`
-- Vendedor usa Header topbar (client-side role check via `useEffect`)
-- Auth guard duplicado em cada pagina individualmente
+**Must have (table stakes):**
+- Export lead data in a scope users can trust
+- Connectivity and sync status in the authenticated shell
+- Real seller names with deterministic fallback
+- Install metadata plus browser-aware install CTA/guidance
 
-**Layout recomendado (DEPOIS):**
-```
-app/
-├── (public)/layout.tsx    — sem sidebar (login, home)
-├── (app)/layout.tsx       — auth guard + SidebarProvider + AppSidebar + SidebarInset
-│   ├── dashboard/
-│   ├── leads/
-│   └── admin/             — sem admin/layout.tsx (removido)
-└── layout.tsx             — apenas html/body/Providers
-```
+**Should have (competitive):**
+- Filter-aware export scope
+- Sync freshness or pending-change feedback
+- Contextual install messaging tied to field usage
 
-**Novos componentes a criar (4):**
-- `app-sidebar.tsx` — sidebar unificada com grupos Vendedor + Admin (collapsible, role-gated)
-- `sidebar-user-menu.tsx` — avatar + nome + dropdown logout no footer
-- `app-topbar.tsx` — SidebarTrigger + breadcrumb no topo do SidebarInset
-- `app/(public)/layout.tsx` e `app/(app)/layout.tsx`
+**Defer (v2+):**
+- Native `.xlsx` generation
+- Service-worker-led offline asset caching
+- Push notifications
 
-**Componentes a deletar (3):**
-- `components/header.tsx` — substituido pelo AppSidebar
-- `components/admin-sidebar.tsx` — absorcao no AppSidebar unificado
-- `app/admin/layout.tsx` — substituido pelo `(app)/layout.tsx`
+### Architecture Approach
 
-### Features — Prioridades
+Treat each capability as a thin layer over existing boundaries: export remains a shared lead-domain utility, sync visibility is derived from the current runtime, leaderboard names are normalized in the server router before caching, and install UX is a small client-side controller backed by Next.js manifest metadata.
 
-**P1 (deve shipar no v1.1):**
-1. AppSidebar unificada substituindo Header (LAYOUT)
-2. Route groups (public)/(app) atomicamente (LAYOUT)
-3. Mobile drawer com hamburguer (LAYOUT — ja built-in no shadcn Sidebar)
-4. Secao Admin collapsible na sidebar por role (LAYOUT)
-5. UserMenu + ModeToggle para sidebar footer (LAYOUT)
-6. Responsive admin leads table — card layout mobile (RESP)
-7. Responsive admin users table — card layout mobile (RESP)
-8. Lead form full-width mobile (RESP)
-9. Touch targets 44x44px em todos elementos interativos (MOBILE)
-10. Drawer fecha ao navegar no mobile — `usePathname` fix (MOBILE)
-
-**P2 (polish — adicionar apos estrutura estavel):**
-- Dashboard stat cards grid responsivo (1→2→4 cols)
-- Charts responsivos (ResponsiveContainer + resize apos sidebar toggle)
-- Breadcrumb no content header
-- User info (avatar + nome) no sidebar footer
-- Polish visual com impeccable skills
+**Major components:**
+1. Export utility + screen actions — shared file generation and role-scoped entry points
+2. Sync status model — read-only UI state derived from the existing engine
+3. Leaderboard name resolver — fallback mapping in the backend router
+4. Install controller — CTA visibility, standalone detection, and iOS guidance
 
 ### Critical Pitfalls
 
-| Pitfall | Fase | Fix |
-|---------|------|-----|
-| Nested SidebarProvider conflita admin layout | Fase 8 | Single SidebarProvider em (app)/layout, remover do admin layout |
-| Root layout grid→flex causa CLS | Fase 8 | Swap atomico — route groups + remove Header na mesma fase |
-| Drawer mobile nao fecha apos navigacao | Fase 9 | `useEffect` com `usePathname()` + `setOpenMobile(false)` |
-| iOS Safari 100dvh gap no Sheet | Fase 9 | Usar `100svh` ou `inset: 0` no Sheet |
-| iOS Safari `fixed` + virtual keyboard | Fase 10 | FAB: `sticky` em vez de `fixed`; testar no iPhone fisico |
-| Recharts nao redimensiona apos sidebar toggle | Fase 11 | `ResponsiveContainer` + listener `transitionend` |
-| Table→card: action buttons perdidos | Fase 10 | `DropdownMenu` 3-pontos para acoes no mobile; `e.stopPropagation()` |
-
----
+1. **Partial exports** — avoid exporting only rendered rows or one admin page
+2. **Misleading connectivity UI** — avoid equating `navigator.onLine` with successful sync
+3. **Broken install CTA** — avoid assuming `beforeinstallprompt` works on all mobile browsers
+4. **Weak identity fallback** — avoid relying on one auth metadata key
 
 ## Implications for Roadmap
 
-### Fase 8: Layout Foundation (route groups + sidebar shell)
-**Atomico e nao-negociavel.** Cria route groups, move paginas publicas para `(public)`, cria `(app)/layout.tsx` com `SidebarProvider` + `AppSidebar` + `SidebarInset`, deleta `Header` e `AdminSidebar`, remove `SidebarProvider` do admin layout.
+Based on research, suggested phase structure:
 
-**Pitfalls endereçados:** Nested SidebarProvider, root layout grid→flex CLS.
-**Deliverable:** App funcional com sidebar em todas as rotas autenticadas; login sem sidebar.
+### Phase 12: Export Workflows
+**Rationale:** Highest immediate operational value and there is already clear codebase momentum around CSV export.
+**Delivers:** Reliable vendedor/admin export actions with explicit scope rules.
+**Addresses:** Export table stakes and the partial-export pitfall.
+**Avoids:** Shipping a misleading "export" button that only reflects loaded rows.
 
-### Fase 9: Sidebar Content + Mobile
-**Conteudo da sidebar.** Nav items com icones e active state, secao Admin collapsible por role, UserMenu no footer, fix do drawer-nao-fecha, verificacao Safari 100dvh.
+### Phase 13: Sync Visibility
+**Rationale:** Reinforces the app's core value by turning existing offline/sync machinery into a trustworthy shell signal.
+**Delivers:** Connectivity/sync badge or status surface using real runtime state.
+**Uses:** Existing connectivity detector, sync queue, and sync cycle.
+**Implements:** The sync status read model pattern.
 
-**Pitfalls endereçados:** Drawer nao fecha, Safari 100dvh gap.
-**Deliverable:** Sidebar totalmente funcional com navegacao, roles, mobile drawer correto.
+### Phase 14: Leaderboard Identity
+**Rationale:** Isolated backend/data fix with clear user-visible value and low dependency surface.
+**Delivers:** Readable ranking identities with deterministic fallback.
+**Implements:** Server-side identity normalization before cache population.
 
-### Fase 10: Responsive Pages
-**Tabelas, formularios, touch targets.** Admin leads table → card mobile, admin users table → card mobile, lead form full-width mobile, touch targets 44px audit, FAB reposicionamento, IntersectionObserver com novo scroll container.
+### Phase 15: PWA Installability
+**Rationale:** Cross-cutting but still bounded once the scope is limited to metadata and install UX.
+**Delivers:** `app/manifest.ts`, icons, install CTA on supported browsers, and iOS guidance.
+**Avoids:** Service-worker and push scope creep.
 
-**Pitfalls endereçados:** iOS fixed positioning, table→card actions, IntersectionObserver sentinel.
-**Deliverable:** Todas as paginas 100% usaveis em 320px.
+### Phase Ordering Rationale
 
-### Fase 11: Dashboard + Visual Polish
-**Charts + polish.** ResponsiveContainer em todos os charts, resize apos sidebar toggle, breadcrumb, user footer, stat cards grid responsivo, polish com impeccable skills (arrange, adapt, polish).
+- Export comes first because it is the clearest operator-facing value and already has implementation touchpoints.
+- Sync visibility comes before installability because trust in saved data matters more than pinning the app.
+- Leaderboard identity is isolated and does not need to block export or sync UI.
+- PWA work comes last because it requires real-browser verification and the strongest scope discipline.
 
-**Pitfalls endereçados:** Recharts resize.
-**Deliverable:** Dashboard responsivo, visual polish completo, dark mode verificado.
+### Research Flags
 
----
+Phases likely needing deeper research during planning:
+- **Phase 15:** browser-specific install behavior and verification matrix
+
+Phases with standard patterns (skip research-phase):
+- **Phase 12:** existing browser CSV patterns plus current codebase WIP
+- **Phase 13:** derived client status model over known runtime
+- **Phase 14:** straightforward server fallback logic
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack (zero deps) | HIGH | Verificado diretamente nos arquivos do projeto |
-| Architecture (route groups) | HIGH | Pattern Next.js padrão, already working in admin |
-| Features (prioridades) | HIGH | Baseado em componentes existentes e complexidade verificada |
-| Pitfalls | HIGH | Verificado contra codebase real, GitHub issues, iOS Safari docs |
-| Build order | HIGH | Dependências rastreadas no código |
+| Stack | HIGH | Official docs and current code agree that no new runtime stack is required |
+| Features | HIGH | Scope already exists in PROJECT.md and aligns with current codebase gaps |
+| Architecture | HIGH | Integration points are already visible in the app shell, sync runtime, and leaderboard router |
+| Pitfalls | HIGH | Risks are concrete and tied to current implementation patterns |
 
-### Open Questions
+**Overall confidence:** HIGH
 
-- `/todos` page: mover para `(public)` ou `(app)`? (Atualmente sem auth guard)
-- `/auth/callback`: verificar que a rota funciona após reorganização dos route groups
-- Leaderboard no mobile: horizontal scroll (comparativo) vs card-por-linha — recomendado: horizontal scroll com colunas essenciais
+### Gaps to Address
 
----
+- Install CTA placement should be chosen deliberately because the public home route currently redirects immediately.
+- Export scope rules should be made explicit for admin pagination and vendedor filtering before implementation starts.
+- Target-browser install criteria should be verified early; if Chromium testing still requires a minimal service worker, keep it hand-written and narrowly scoped.
 
 ## Sources
 
-- Codebase: `packages/ui/src/components/sidebar.tsx`, `admin/layout.tsx`, `components/header.tsx`, `components/admin-sidebar.tsx`, `packages/ui/package.json`
-- shadcn/ui GitHub issues: #5561, #6265, #5545, #7808 (sidebar mobile bugs)
-- iOS 26 Safari viewport/dvh: Apple Developer Forums thread #803987
-- WCAG 2.5.5: Target size requirements (44x44px minimum)
-- Next.js route groups: official docs pattern
+### Primary (HIGH confidence)
+- Next.js docs: `manifest.json` metadata file reference
+- Next.js docs: PWA guide
+- MDN: `beforeinstallprompt` and install prompt guidance
+- Supabase docs: managing user data / auth metadata
+- Current codebase modules for export, sync, app shell, and leaderboard
+
+### Secondary (MEDIUM confidence)
+- Existing milestone context in `.planning/PROJECT.md` and archived milestone docs
 
 ---
-*Research completed: 2026-03-26*
-*Ready for requirements: yes*
+*Research completed: 2026-03-28*
+*Ready for roadmap: yes*
