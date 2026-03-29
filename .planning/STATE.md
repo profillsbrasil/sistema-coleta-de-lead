@@ -1,41 +1,42 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: UI Refactor & Mobile UX
-status: complete
-stopped_at: Milestone v1.1 complete — archived to milestones/v1.1-ROADMAP.md
-last_updated: "2026-03-27T21:42:13.690Z"
-last_activity: 2026-03-27
+milestone: v1.2
+milestone_name: Export, Connectivity & PWA
+status: defining_requirements
+stopped_at: Defining milestone v1.2 requirements
+last_updated: "2026-03-29T00:46:52Z"
+last_activity: 2026-03-28
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-27)
+See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Planning next milestone (v1.2)
+**Current focus:** Milestone v1.2 requirements and roadmap
 
 ## Current Position
 
-Milestone: v1.1 COMPLETE — archived to .planning/milestones/
-Status: Between milestones — run /gsd:new-milestone to start v1.2
-Last activity: 2026-03-27
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-28 — Milestone v1.2 started
 
-Progress: [██████████] 100% (v1.1) — all 4 phases, 11 plans complete
+Progress: [----------] 0% (v1.2) — roadmap not created yet
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (v1.1)
+- Total plans completed: 0 (v1.2)
 - Average duration: -
 - Total execution time: 0 hours
 
