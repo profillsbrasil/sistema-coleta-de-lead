@@ -6,11 +6,14 @@ import z from "zod";
 
 import { adminProcedure, router } from "../../index";
 
+const adminLeadFilterSchema = z.object({
+	userId: z.string().uuid(),
+});
+
 export const adminLeadsRouter = router({
 	listByUser: adminProcedure
 		.input(
-			z.object({
-				userId: z.string().uuid(),
+			adminLeadFilterSchema.extend({
 				limit: z.number().min(1).max(100).default(20),
 				offset: z.number().min(0).default(0),
 			})
@@ -33,6 +36,21 @@ export const adminLeadsRouter = router({
 			return {
 				leads: rows,
 				total: countResult[0]?.count ?? 0,
+			};
+		}),
+
+	exportByFilters: adminProcedure
+		.input(adminLeadFilterSchema)
+		.query(async ({ input }) => {
+			const rows = await db
+				.select()
+				.from(leads)
+				.where(and(eq(leads.userId, input.userId), isNull(leads.deletedAt)))
+				.orderBy(sql`${leads.createdAt} DESC`);
+
+			return {
+				leads: rows,
+				total: rows.length,
 			};
 		}),
 
@@ -69,6 +87,15 @@ export const adminLeadsRouter = router({
 					segment: z.string().nullish(),
 					notes: z.string().nullish(),
 					interestTag: z.enum(["quente", "morno", "frio"]).optional(),
+					followUpStatus: z
+						.enum([
+							"pendente",
+							"contatado",
+							"em_negociacao",
+							"convertido",
+							"perdido",
+						])
+						.optional(),
 					photoUrl: z.string().nullish(),
 				}),
 			})
