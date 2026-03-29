@@ -30,6 +30,16 @@ Tech debt ativo:
 - Nyquist validation incompleta: 4 fases com `nyquist_compliant: false`
 - 11 itens de human verification visual pendentes (media queries, dark mode, chart resize em browser real)
 
+## Current Milestone: v1.2 Export, Connectivity & PWA
+
+**Goal:** Tornar o app mais confiavel e acionavel durante e apos o evento com exportacao de leads, visibilidade de conectividade/sync, identidade correta no leaderboard e instalacao como app.
+
+**Target features:**
+- Exportacao de leads em formato compativel com CSV/Excel
+- Indicador visual de conectividade e estado de sync
+- Leaderboard mostra nome real de todos os vendedores
+- PWA instalavel com prompt de instalacao no mobile
+
 ## Requirements
 
 ### Validated — v1.0
@@ -69,10 +79,10 @@ Tech debt ativo:
 
 ### Active — v1.2
 
-- [ ] Exportacao de leads para CSV/Excel (ENH-01)
-- [ ] Indicador visual de conectividade (ENH-02)
-- [ ] Leaderboard mostra nome real de todos os vendedores (JOIN a auth.users)
-- [ ] PWA com prompt de instalacao na home screen (PWA-01, PWA-02)
+- [ ] Exportacao de leads em formato compativel com CSV/Excel (ENH-01)
+- [ ] Indicador visual de conectividade e estado de sync (ENH-02)
+- [ ] Leaderboard mostra nome real de todos os vendedores (ENH-06)
+- [ ] PWA instalavel com manifest e prompt de instalacao no mobile (PWA-01, PWA-02)
 
 ### Backlog
 
@@ -129,16 +139,20 @@ Tech debt ativo:
 
 ## Evolution
 
-**After each phase transition** (via `/gsd:transition`):
-1. Requirements validated? → Move to Validated with phase reference
-2. New requirements emerged? → Add to Active
-3. Decisions to log? → Add to Key Decisions
+This document evolves at phase transitions and milestone boundaries.
 
-**After each milestone** (via `/gsd:complete-milestone`):
+**After each phase transition** (via `$gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `$gsd-complete-milestone`):
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after v1.1 milestone*
+*Last updated: 2026-03-28 after starting v1.2 milestone*
