@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@dashboard-leads-profills/env/server", () => ({
 	env: {
@@ -10,43 +10,111 @@ vi.mock("@dashboard-leads-profills/env/server", () => ({
 	},
 }));
 
-vi.mock("@dashboard-leads-profills/db", () => ({
-	db: {},
-}));
+interface AdminLeadRow {
+	createdAt: string;
+	localId: string;
+	name: string;
+}
 
-vi.mock("@dashboard-leads-profills/db/schema/leads", () => ({
-	leads: {},
-	interestTagEnum: {},
-}));
+async function loadAdminLeadsRouter(rows: AdminLeadRow[]) {
+	const limit = vi.fn();
+	const offset = vi.fn();
+	const orderBy = vi.fn(async () => rows);
+	const where = vi.fn(() => ({ orderBy, limit, offset }));
+	const from = vi.fn(() => ({ where }));
+	const select = vi.fn(() => ({ from }));
+
+	vi.doMock("@dashboard-leads-profills/db", () => ({
+		db: {
+			select,
+			update: vi.fn(),
+			execute: vi.fn(),
+		},
+	}));
+
+	vi.doMock("@dashboard-leads-profills/db/schema/leads", () => ({
+		leads: {
+			userId: "userId-column",
+			deletedAt: "deletedAt-column",
+			createdAt: "createdAt-column",
+			localId: "localId-column",
+			name: "name-column",
+		},
+		interestTagEnum: {},
+	}));
+
+	vi.doMock("drizzle-orm", () => ({
+		and: (...conditions: unknown[]) => ({ kind: "and", conditions }),
+		eq: (left: unknown, right: unknown) => ({ kind: "eq", left, right }),
+		isNull: (value: unknown) => ({ kind: "isNull", value }),
+		sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
+			kind: "sql",
+			text: strings.join("?"),
+			values,
+		}),
+	}));
+
+	const module = await import("../routers/admin/leads");
+
+	return {
+		adminLeadsRouter: module.adminLeadsRouter,
+		dbSpies: {
+			limit,
+			offset,
+			orderBy,
+			where,
+			from,
+			select,
+		},
+	};
+}
 
 describe("adminLeadsRouter", () => {
-	it("deve exportar adminLeadsRouter", async () => {
-		const { adminLeadsRouter } = await import("../routers/admin/leads");
-		expect(adminLeadsRouter).toBeDefined();
+	beforeEach(() => {
+		vi.resetModules();
+		vi.clearAllMocks();
 	});
 
-	it("deve ter procedure listByUser", async () => {
-		const { adminLeadsRouter } = await import("../routers/admin/leads");
+	it("exposes a dedicated exportByFilters procedure alongside listByUser", async () => {
+		const { adminLeadsRouter } = await loadAdminLeadsRouter([]);
+
+		expect(adminLeadsRouter.exportByFilters).toBeDefined();
 		expect(adminLeadsRouter.listByUser).toBeDefined();
 	});
 
-	it("deve ter procedure getById", async () => {
-		const { adminLeadsRouter } = await import("../routers/admin/leads");
-		expect(adminLeadsRouter.getById).toBeDefined();
-	});
+	it("returns all rows for the current admin filter object without pagination leakage", async () => {
+		const rows = [
+			{
+				localId: "lead-2",
+				name: "Lead 2",
+				createdAt: "2026-02-02T00:00:00.000Z",
+			},
+			{
+				localId: "lead-1",
+				name: "Lead 1",
+				createdAt: "2026-02-01T00:00:00.000Z",
+			},
+		];
 
-	it("deve ter procedure update", async () => {
-		const { adminLeadsRouter } = await import("../routers/admin/leads");
-		expect(adminLeadsRouter.update).toBeDefined();
-	});
+		const { adminLeadsRouter, dbSpies } = await loadAdminLeadsRouter(rows);
+		const caller = adminLeadsRouter.createCaller({
+			supabase: {} as never,
+			user: { sub: "admin-user" },
+			userRole: "admin",
+		});
 
-	it("deve ter procedure delete", async () => {
-		const { adminLeadsRouter } = await import("../routers/admin/leads");
-		expect(adminLeadsRouter.delete).toBeDefined();
-	});
+		const result = await caller.exportByFilters({
+			userId: "11111111-1111-1111-1111-111111111111",
+		});
 
-	it("deve ter procedure listVendors", async () => {
-		const { adminLeadsRouter } = await import("../routers/admin/leads");
-		expect(adminLeadsRouter.listVendors).toBeDefined();
+		expect(result).toEqual({
+			leads: rows,
+			total: 2,
+		});
+		expect(dbSpies.select).toHaveBeenCalledTimes(1);
+		expect(dbSpies.where).toHaveBeenCalledTimes(1);
+		expect(dbSpies.orderBy).toHaveBeenCalledTimes(1);
+		expect(dbSpies.limit).not.toHaveBeenCalled();
+		expect(dbSpies.offset).not.toHaveBeenCalled();
 	});
 });
