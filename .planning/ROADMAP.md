@@ -55,8 +55,8 @@
 **UI hint**: no
 
 Plans:
-- [ ] 12-01: Definir contrato de exportacao por escopo e separar datasets de exportacao dos datasets paginados/renderizados
-- [ ] 12-02: Hardening do CSV: encoding, sanitizacao, feedback de sucesso e testes de compatibilidade
+- [ ] 12-01-PLAN.md — Definir contrato de exportacao por escopo e separar datasets de exportacao dos datasets paginados/renderizados
+- [ ] 12-02-PLAN.md — Hardening do CSV: encoding, sanitizacao, feedback de sucesso e testes de compatibilidade
 
 ### Phase 13: Sync Visibility
 **Goal**: Tornar o estado offline-first observavel no shell sem bloquear captura, diferenciando conectividade, fila pendente, sync em andamento e ultimo sucesso
