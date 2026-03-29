@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	buildExportFilename,
-	generateCsvContent,
-} from "@/lib/lead/export-csv";
+import { buildExportFilename, generateCsvContent } from "@/lib/lead/export-csv";
 
 interface TestLead {
 	company: string | null;
@@ -113,7 +110,7 @@ describe("generateCsvContent", () => {
 		expect(csv).toContain("'-Acme");
 		expect(csv).toContain("'@Diretoria");
 		expect(csv).toContain("'\tSegmento sigiloso");
-		expect(csv).toContain("\"'\nComeca em nova linha\"");
+		expect(csv).toContain('"\'\nComeca em nova linha"');
 	});
 
 	it("handles null and empty fields gracefully", () => {

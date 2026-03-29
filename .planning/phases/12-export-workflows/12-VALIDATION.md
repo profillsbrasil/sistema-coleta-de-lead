@@ -2,7 +2,7 @@
 phase: 12
 slug: export-workflows
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-03-29
 ---
@@ -42,7 +42,7 @@ created: 2026-03-29
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
 | 12-01-01 | 01 | 1 | ENH-01 | unit | `bun run --cwd apps/web test src/lib/lead/export-scope.test.ts` | ✅ | ⬜ pending |
 | 12-01-02 | 01 | 1 | ENH-07 | router | `bun run --cwd packages/api test src/__tests__/admin-leads.test.ts` | ✅ | ⬜ pending |
-| 12-02-01 | 02 | 2 | ENH-01 | unit | `bun run --cwd apps/web test src/lib/lead/export-csv.test.ts` | ✅ | ⬜ pending |
+| 12-02-01 | 02 | 2 | ENH-01 | unit | `bun run --cwd apps/web test src/lib/lead/export-csv.test.ts` | ✅ | ✅ green |
 | 12-02-02 | 02 | 2 | ENH-01, ENH-07 | targeted integration | `bun run --cwd apps/web test src/lib/lead/export-csv.test.ts src/lib/lead/export-scope.test.ts && bun run --cwd packages/api test src/__tests__/admin-leads.test.ts` | ✅ | ⬜ pending |
 | 12-02-03 | 02 | 2 | ENH-01, ENH-07 | phase gate + manual | `bun run check && bun run check-types && bun run test` | ✅ | ⬜ pending |
 
@@ -53,7 +53,7 @@ created: 2026-03-29
 ## Wave 0 Requirements
 
 - [ ] `apps/web/src/lib/lead/export-scope.test.ts` — add seller full-scope export coverage independent of render `limit`
-- [ ] `apps/web/src/lib/lead/export-csv.test.ts` — extend with accented text, multiline notes, dangerous formula-leading cells, and filename helper coverage
+- [x] `apps/web/src/lib/lead/export-csv.test.ts` — extend with accented text, multiline notes, dangerous formula-leading cells, and filename helper coverage
 - [ ] `packages/api/src/__tests__/admin-leads.test.ts` — expand to assert dedicated export contract without pagination leakage
 - [ ] Manual QA checklist artifact — capture one malicious fixture and one accented fixture opened in Excel and Google Sheets
 
@@ -78,6 +78,6 @@ created: 2026-03-29
 - [ ] Feedback latency < 60s
 - [ ] `bun run check` passes
 - [ ] `bun run check-types` passes
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
