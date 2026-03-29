@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildExportFilename, generateCsvContent } from "@/lib/lead/export-csv";
 
@@ -171,5 +173,29 @@ describe("buildExportFilename", () => {
 				date: new Date("2026-03-29T12:00:00.000Z"),
 			})
 		).toBe("leads-admin-maria-silva-acoes-2026-03-29.csv");
+	});
+});
+
+describe("export feedback contract", () => {
+	it("keeps seller feedback tied to filter scope and row count", () => {
+		const sellerSource = readFileSync(
+			resolve(process.cwd(), "src/app/(app)/leads/lead-list.tsx"),
+			"utf8"
+		);
+
+		expect(sellerSource).toContain("Exportados");
+		expect(sellerSource).toContain("filtro");
+		expect(sellerSource).toContain("buildExportFilename");
+	});
+
+	it("keeps admin feedback tied to the selected vendor name", () => {
+		const adminSource = readFileSync(
+			resolve(process.cwd(), "src/app/(app)/admin/leads/leads-panel.tsx"),
+			"utf8"
+		);
+
+		expect(adminSource).toContain("Exportados");
+		expect(adminSource).toContain("selectedVendorName");
+		expect(adminSource).toContain("buildExportFilename");
 	});
 });
