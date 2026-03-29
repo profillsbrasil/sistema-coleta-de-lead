@@ -9,17 +9,24 @@ import { Download, Loader2, Search, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import FAB from "@/components/fab";
 import LeadCard from "@/components/lead-card";
 import TagFilter from "@/components/tag-filter";
 import type { Lead } from "@/lib/db/types";
-import { exportLeadsCsv } from "@/lib/lead/export-csv";
+import { buildExportFilename, exportLeadsCsv } from "@/lib/lead/export-csv";
 import { queryLeadExportScope } from "@/lib/lead/export-scope";
 import { type FilterTag, queryLeads } from "@/lib/lead/queries";
 
 const PAGE_SIZE = 20;
 const LEADS_NEW_HREF = "/leads/new" as unknown as "/";
+const SELLER_FILTER_LABELS: Record<FilterTag, string> = {
+	todos: "Todos",
+	quente: "Quente",
+	morno: "Morno",
+	frio: "Frio",
+};
 
 interface LeadListProps {
 	userId: string;
@@ -156,7 +163,25 @@ export default function LeadList({ userId }: LeadListProps) {
 				searchTerm,
 			});
 
-			exportLeadsCsv(result.leads);
+			const isSearching = searchTerm.trim() !== "";
+			const scopeLabel = isSearching ? "busca" : activeTag;
+			const scopeMessageLabel = SELLER_FILTER_LABELS[activeTag];
+			const filename = buildExportFilename({
+				scope: "seller",
+				scopeLabel,
+				date: new Date(),
+			});
+
+			exportLeadsCsv(result.leads, filename);
+
+			if (isSearching) {
+				toast.success(`Exportados ${result.total} leads da busca`);
+				return;
+			}
+
+			toast.success(
+				`Exportados ${result.total} leads do filtro ${scopeMessageLabel}`
+			);
 		} finally {
 			setIsExporting(false);
 		}

@@ -66,7 +66,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { StatCard } from "@/components/stat-card";
-import { exportLeadsCsv } from "@/lib/lead/export-csv";
+import { buildExportFilename, exportLeadsCsv } from "@/lib/lead/export-csv";
 import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
 import { trpc } from "@/utils/trpc";
 import { AdminLeadCard } from "./admin-lead-card";
@@ -167,7 +167,14 @@ export default function LeadsPanel() {
 				trpc.admin.leads.exportByFilters.queryOptions(adminLeadFilters)
 			);
 
-			exportLeadsCsv(result.leads);
+			const filename = buildExportFilename({
+				scope: "admin",
+				scopeLabel: selectedVendorName,
+				date: new Date(),
+			});
+
+			exportLeadsCsv(result.leads, filename);
+			toast.success(`Exportados ${result.total} leads de ${selectedVendorName}`);
 		} finally {
 			setIsExporting(false);
 		}
