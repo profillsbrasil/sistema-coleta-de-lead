@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Export, Connectivity & PWA
-status: planned
-stopped_at: Phase 12 plans verified
-last_updated: "2026-03-29T15:18:32.000Z"
+status: verifying
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-03-29T15:41:05.300Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 9
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+  percent: 11
 ---
 
 # Project State
@@ -21,31 +21,31 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Phase 12 execution
+**Current focus:** Phase 12 verification and Phase 13 readiness
 
 ## Current Position
 
 Milestone: v1.2 Export, Connectivity & PWA
 Phase: 12 Export Workflows
-Plan: 12-01, 12-02
-Status: Ready for /gsd-execute-phase 12
-Last activity: 2026-03-29 — Phase 12 plans verified
+Plan: 2 of 2 in current phase
+Status: Phase complete — ready for verification
+Last activity: 2026-03-29
 
-Progress: [----------] 0% (v1.2) — 0/4 phases, 0/9 plans complete
+Progress: Phase 12 complete — 1/4 phases and 2/9 v1.2 plans complete
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0 (v1.2)
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 2 (v1.2)
+- Average duration: 6min
+- Total execution time: 12min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 12 | 2 | 12min | 6min |
 
 ## Accumulated Context
 
@@ -59,6 +59,7 @@ Progress: [----------] 0% (v1.2) — 0/4 phases, 0/9 plans complete
 | Phase 10 P03 | 23min | 2 tasks | 4 files |
 | Phase 11 P01 | 1min | 2 tasks | 2 files |
 | Phase 11 P03 | 1 | 2 tasks | 5 files |
+| Phase 12 P01 | 4min | 3 tasks | 6 files |
 
 ### Decisions
 
@@ -89,6 +90,11 @@ Decisoes relevantes para v1.1:
 - [Phase 11]: flex flex-col gap-* substituiu space-y-* em todos arquivos restantes da fase (padrao consistente)
 - [Phase 11]: stats-charts barData usa var(--color-quente/morno/frio) via tagChartConfig theme — dark mode correto
 - [Phase 11]: lead-list e lead-detail delegam padding para layout.tsx — sem px-4 py-8 nem max-w-[480px] duplicados
+- [Phase 12]: Seller export now uses a dedicated Dexie helper so infinite-scroll pagination cannot truncate downloads.
+- [Phase 12]: Admin export uses a shared filter schema plus a separate exportByFilters procedure instead of widening listByUser.
+- [Phase 12]: Admin screen derives one named adminLeadFilters object from live UI state and reuses it for paginated and export queries.
+- [Phase 12-export-workflows]: Phase 12: filename generation stays centralized in the shared CSV utility, with seller/admin screens passing explicit scope labels.
+- [Phase 12-export-workflows]: Phase 12: seller and admin exports use toast feedback after download start instead of adding new inline export UI.
 
 ### Pending Todos
 
@@ -96,12 +102,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- Export atual ainda esta acoplado a arrays renderizados/parciais; Phase 12 precisa separar escopo de exportacao de paginacao/infinite scroll
 - CTA de instalacao nao pode depender da rota `/` porque a home publica redireciona imediatamente
 - Verificar cedo se browsers alvo exigem service worker minimo para install prompt; manter escopo estrito se isso surgir
+- Workspace lint gate (`bun run check`) segue bloqueado por nested Biome configs em `.claude/worktrees/*/biome.json`, fora do escopo do plano 12-02
 
 ## Session Continuity
 
-Last session: 2026-03-29T15:18:32.000Z
-Stopped at: Phase 12 plans verified
-Resume file: .planning/phases/12-export-workflows/12-01-PLAN.md
+Last session: 2026-03-29T15:41:05.298Z
+Stopped at: Completed 12-02-PLAN.md
+Resume file: None

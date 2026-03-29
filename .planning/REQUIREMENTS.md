@@ -10,8 +10,8 @@
 
 ### Exportacao de Leads
 
-- [ ] **ENH-01**: Vendedor pode exportar seus leads a partir de `/leads` em CSV UTF-8 compativel com Excel e Google Sheets
-- [ ] **ENH-07**: Admin pode exportar todos os leads que correspondem ao vendedor e filtros selecionados, nao apenas a pagina atualmente renderizada
+- [x] **ENH-01**: Vendedor pode exportar seus leads a partir de `/leads` em CSV UTF-8 compativel com Excel e Google Sheets
+- [x] **ENH-07**: Admin pode exportar todos os leads que correspondem ao vendedor e filtros selecionados, nao apenas a pagina atualmente renderizada
 
 ### Conectividade e Sync
 
@@ -51,8 +51,8 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENH-01 | Phase 12 | Pending |
-| ENH-07 | Phase 12 | Pending |
+| ENH-01 | Phase 12 | Complete |
+| ENH-07 | Phase 12 | Complete |
 | ENH-02 | Phase 13 | Pending |
 | ENH-08 | Phase 13 | Pending |
 | ENH-06 | Phase 14 | Pending |
