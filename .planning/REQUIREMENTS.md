@@ -51,21 +51,21 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENH-01 | TBD | Pending |
-| ENH-07 | TBD | Pending |
-| ENH-02 | TBD | Pending |
-| ENH-08 | TBD | Pending |
-| ENH-06 | TBD | Pending |
-| ENH-09 | TBD | Pending |
-| PWA-01 | TBD | Pending |
-| PWA-02 | TBD | Pending |
-| PWA-03 | TBD | Pending |
+| ENH-01 | Phase 12 | Pending |
+| ENH-07 | Phase 12 | Pending |
+| ENH-02 | Phase 13 | Pending |
+| ENH-08 | Phase 13 | Pending |
+| ENH-06 | Phase 14 | Pending |
+| ENH-09 | Phase 14 | Pending |
+| PWA-01 | Phase 15 | Pending |
+| PWA-02 | Phase 15 | Pending |
+| PWA-03 | Phase 15 | Pending |
 
 **Coverage:**
 - v1.2 requirements: 9 total
-- Mapped to phases: 0
-- Unmapped: 9
+- Mapped to phases: 9
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-28*
-*Last updated: 2026-03-28 after initial milestone definition*
+*Last updated: 2026-03-28 after roadmap creation*

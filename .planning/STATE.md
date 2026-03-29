@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Export, Connectivity & PWA
-status: defining_requirements
-stopped_at: Defining milestone v1.2 requirements
-last_updated: "2026-03-29T00:46:52Z"
+status: roadmap_ready
+stopped_at: Roadmap created for milestone v1.2
+last_updated: "2026-03-29T00:58:53Z"
 last_activity: 2026-03-28
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
-  total_plans: 0
+  total_plans: 9
   completed_plans: 0
   percent: 0
 ---
@@ -21,16 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Milestone v1.2 requirements and roadmap
+**Current focus:** Phase 12 planning
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Milestone: v1.2 Export, Connectivity & PWA
+Phase: 12 Export Workflows
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-28 — Milestone v1.2 started
+Status: Ready for /gsd-discuss-phase 12
+Last activity: 2026-03-28 — Roadmap created for milestone v1.2
 
-Progress: [----------] 0% (v1.2) — roadmap not created yet
+Progress: [----------] 0% (v1.2) — 0/4 phases, 0/9 plans complete
 
 ## Performance Metrics
 
@@ -95,12 +96,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 8 e atomica: route groups + remocao do Header devem acontecer na mesma fase para evitar CLS
-- iOS Safari: testar drawer em device fisico (simulador e insuficiente para viewport bugs)
-- /todos page: definir se vai para (public) ou (app) durante Phase 8
+- Export atual ainda esta acoplado a arrays renderizados/parciais; Phase 12 precisa separar escopo de exportacao de paginacao/infinite scroll
+- CTA de instalacao nao pode depender da rota `/` porque a home publica redireciona imediatamente
+- Verificar cedo se browsers alvo exigem service worker minimo para install prompt; manter escopo estrito se isso surgir
 
 ## Session Continuity
 
-Last session: 2026-03-27T20:49:31.698Z
-Stopped at: Completed 11-03-PLAN.md
+Last session: 2026-03-29T00:58:53Z
+Stopped at: Roadmap created for milestone v1.2
 Resume file: None
