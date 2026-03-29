@@ -35,7 +35,7 @@
 
 **Milestone Goal:** Tornar o app mais confiavel e acionavel durante e apos o evento com exportacao de leads, visibilidade de conectividade/sync, identidade correta no leaderboard e instalacao como app.
 
-- [ ] **Phase 12: Export Workflows** - Exportacao completa, segura e compativel com planilhas
+- [x] **Phase 12: Export Workflows** - Exportacao completa, segura e compativel com planilhas (completed 2026-03-29)
 - [ ] **Phase 13: Sync Visibility** - Estado de conectividade e sync confiavel no shell autenticado
 - [ ] **Phase 14: Leaderboard Identity Normalization** - Nome legivel e consistente em ranking e superficies admin
 - [ ] **Phase 15: PWA Installability** - Manifest, icones e fluxo de instalacao por plataforma
@@ -55,8 +55,8 @@
 **UI hint**: no
 
 Plans:
-- [ ] 12-01-PLAN.md — Definir contrato de exportacao por escopo e separar datasets de exportacao dos datasets paginados/renderizados
-- [ ] 12-02-PLAN.md — Hardening do CSV: encoding, sanitizacao, feedback de sucesso e testes de compatibilidade
+- [x] 12-01-PLAN.md — Definir contrato de exportacao por escopo e separar datasets de exportacao dos datasets paginados/renderizados
+- [x] 12-02-PLAN.md — Hardening do CSV: encoding, sanitizacao, feedback de sucesso e testes de compatibilidade
 
 ### Phase 13: Sync Visibility
 **Goal**: Tornar o estado offline-first observavel no shell sem bloquear captura, diferenciando conectividade, fila pendente, sync em andamento e ultimo sucesso
@@ -122,7 +122,7 @@ Plans:
 | 9. Sidebar Content + Mobile UX | v1.1 | 2/2 | Complete | 2026-03-26 |
 | 10. Responsive Pages | v1.1 | 3/3 | Complete | 2026-03-27 |
 | 11. Dashboard + Visual Polish | v1.1 | 3/3 | Complete | 2026-03-27 |
-| 12. Export Workflows | v1.2 | 0/2 | Not started | - |
+| 12. Export Workflows | v1.2 | 2/2 | Complete   | 2026-03-29 |
 | 13. Sync Visibility | v1.2 | 0/2 | Not started | - |
 | 14. Leaderboard Identity Normalization | v1.2 | 0/2 | Not started | - |
 | 15. PWA Installability | v1.2 | 0/3 | Not started | - |
