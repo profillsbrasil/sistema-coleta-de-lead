@@ -43,7 +43,7 @@ created: 2026-03-29
 | 12-01-01 | 01 | 1 | ENH-01 | unit | `bun run --cwd apps/web test src/lib/lead/export-scope.test.ts` | ✅ | ⬜ pending |
 | 12-01-02 | 01 | 1 | ENH-07 | router | `bun run --cwd packages/api test src/__tests__/admin-leads.test.ts` | ✅ | ⬜ pending |
 | 12-02-01 | 02 | 2 | ENH-01 | unit | `bun run --cwd apps/web test src/lib/lead/export-csv.test.ts` | ✅ | ✅ green |
-| 12-02-02 | 02 | 2 | ENH-01, ENH-07 | targeted integration | `bun run --cwd apps/web test src/lib/lead/export-csv.test.ts src/lib/lead/export-scope.test.ts && bun run --cwd packages/api test src/__tests__/admin-leads.test.ts` | ✅ | ⬜ pending |
+| 12-02-02 | 02 | 2 | ENH-01, ENH-07 | targeted integration | `bun run --cwd apps/web test src/lib/lead/export-csv.test.ts src/lib/lead/export-scope.test.ts && bun run --cwd packages/api test src/__tests__/admin-leads.test.ts` | ✅ | ✅ green |
 | 12-02-03 | 02 | 2 | ENH-01, ENH-07 | phase gate + manual | `bun run check && bun run check-types && bun run test` | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
