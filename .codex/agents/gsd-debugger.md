@@ -429,7 +429,7 @@ git bisect bad              # or good, based on testing
 **Example:** Stale hook warning persists after update
 ```
 Check code says:  hooksDir = path.join(configDir, 'hooks')
-                  configDir = ~/.claude
+                  configDir = /home/othavio/Work/sistema-coleta-de-lead/.codex
                   → checks /home/othavio/Work/sistema-coleta-de-lead/.codex/hooks/
 
 Installer says:   hooksDest = path.join(targetDir, 'hooks')

@@ -62,7 +62,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { StatCard } from "@/components/stat-card";
@@ -98,6 +98,7 @@ export default function LeadsPanel() {
 	const [page, setPage] = useState(1);
 	const [deletingLeadId, setDeletingLeadId] = useState<string | null>(null);
 	const [isExporting, setIsExporting] = useState(false);
+	const isExportingRef = useRef(false);
 
 	const queryClient = useQueryClient();
 	const adminLeadFilters = selectedVendor ? { userId: selectedVendor } : null;
@@ -156,10 +157,11 @@ export default function LeadsPanel() {
 	}
 
 	async function handleExport() {
-		if (!adminLeadFilters) {
+		if (!adminLeadFilters || isExportingRef.current) {
 			return;
 		}
 
+		isExportingRef.current = true;
 		setIsExporting(true);
 
 		try {
@@ -176,6 +178,7 @@ export default function LeadsPanel() {
 			exportLeadsCsv(result.leads, filename);
 			toast.success(`Exportados ${result.total} leads de ${selectedVendorName}`);
 		} finally {
+			isExportingRef.current = false;
 			setIsExporting(false);
 		}
 	}
@@ -267,6 +270,7 @@ export default function LeadsPanel() {
 								void handleExport();
 							}}
 							size="sm"
+							type="button"
 							variant="outline"
 						>
 							<Download className="size-4" />

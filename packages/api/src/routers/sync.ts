@@ -29,6 +29,7 @@ const ALLOWED_LEAD_FIELDS = new Set([
 	"segment",
 	"notes",
 	"interestTag",
+	"followUpStatus",
 	"photoUrl",
 ]);
 
@@ -70,6 +71,13 @@ export const syncRouter = router({
 								position: (fields.position as string) ?? null,
 								segment: (fields.segment as string) ?? null,
 								notes: (fields.notes as string) ?? null,
+								followUpStatus:
+									(fields.followUpStatus as string as
+										| "pendente"
+										| "contatado"
+										| "em_negociacao"
+										| "convertido"
+										| "perdido") ?? "pendente",
 								photoUrl: (fields.photoUrl as string) ?? null,
 							})
 							.onConflictDoUpdate({

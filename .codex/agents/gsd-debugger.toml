@@ -421,11 +421,11 @@ git bisect bad              # or good, based on testing
 **Example:** Stale hook warning persists after update
 ```
 Check code says:  hooksDir = path.join(configDir, 'hooks')
-                  configDir = ~/.claude
-                  → checks ~/.claude/hooks/
+                  configDir = /home/othavio/Work/sistema-coleta-de-lead/.codex
+                  → checks /home/othavio/Work/sistema-coleta-de-lead/.codex/hooks/
 
 Installer says:   hooksDest = path.join(targetDir, 'hooks')
-                  targetDir = ~/.claude/get-shit-done
+                  targetDir = /home/othavio/Work/sistema-coleta-de-lead/.codex/get-shit-done
                   → writes to /home/othavio/Work/sistema-coleta-de-lead/.codex/get-shit-done/hooks/
 
 MISMATCH: Checker looks in wrong directory → hooks "not found" → reported as stale

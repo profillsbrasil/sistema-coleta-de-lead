@@ -1,8 +1,16 @@
+export type FollowUpStatus =
+	| "pendente"
+	| "contatado"
+	| "em_negociacao"
+	| "convertido"
+	| "perdido";
+
 export interface Lead {
 	company: string | null;
 	createdAt: string;
 	deletedAt: string | null;
 	email: string | null;
+	followUpStatus: FollowUpStatus;
 	interestTag: "quente" | "morno" | "frio";
 	localId: string;
 	name: string;
