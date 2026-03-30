@@ -1,5 +1,6 @@
 "use client";
 
+import { buttonVariants } from "@dashboard-leads-profills/ui/components/button";
 import { Card } from "@dashboard-leads-profills/ui/components/card";
 import {
 	DropdownMenu,
@@ -9,8 +10,44 @@ import {
 	DropdownMenuTrigger,
 } from "@dashboard-leads-profills/ui/components/dropdown-menu";
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
-import { MoreVertical, Pencil, Trash2 } from "lucide-react";
+import {
+	CheckCircle2,
+	Handshake,
+	MessageCircle,
+	MoreVertical,
+	Pencil,
+	PhoneCall,
+	Trash2,
+	XCircle,
+} from "lucide-react";
 import Link from "next/link";
+import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
+
+const FOLLOW_UP_CONFIG: Record<
+	string,
+	{ icon: typeof PhoneCall; label: string; className: string }
+> = {
+	contatado: {
+		icon: PhoneCall,
+		label: "Contatado",
+		className: "text-[oklch(0.45_0.15_240)] dark:text-[oklch(0.85_0.1_240)]",
+	},
+	em_negociacao: {
+		icon: Handshake,
+		label: "Negociando",
+		className: "text-[oklch(0.5_0.13_85)] dark:text-[oklch(0.85_0.1_85)]",
+	},
+	convertido: {
+		icon: CheckCircle2,
+		label: "Convertido",
+		className: "text-[oklch(0.45_0.15_145)] dark:text-[oklch(0.85_0.1_145)]",
+	},
+	perdido: {
+		icon: XCircle,
+		label: "Perdido",
+		className: "text-[oklch(0.45_0.18_17)] dark:text-[oklch(0.85_0.12_17)]",
+	},
+};
 
 const TAG_CONFIG: Record<string, { label: string; className: string }> = {
 	quente: {
@@ -37,6 +74,7 @@ interface AdminLeadCardProps {
 		phone: string | null;
 		email: string | null;
 		interestTag: string;
+		followUpStatus?: string;
 		segment: string | null;
 		createdAt: string | Date;
 	};
@@ -50,6 +88,10 @@ export function AdminLeadCard({
 	onDelete,
 }: AdminLeadCardProps) {
 	const tagConfig = TAG_CONFIG[lead.interestTag] ?? TAG_CONFIG.morno;
+	const followUpConfig =
+		lead.followUpStatus && lead.followUpStatus !== "pendente"
+			? FOLLOW_UP_CONFIG[lead.followUpStatus]
+			: null;
 
 	return (
 		<Card className="p-4">
@@ -65,12 +107,38 @@ export function AdminLeadCard({
 						>
 							{tagConfig.label}
 						</span>
+						{followUpConfig ? (
+							<span
+								className={cn(
+									"inline-flex shrink-0 items-center gap-0.5 text-[0.65rem] leading-none",
+									followUpConfig.className
+								)}
+							>
+								<followUpConfig.icon className="size-3" />
+								{followUpConfig.label}
+							</span>
+						) : null}
 					</div>
 					<span className="text-muted-foreground text-sm">
 						Vendedor: {vendorName}
 					</span>
-					<span className="text-muted-foreground text-sm">
-						{lead.phone ?? lead.email ?? "-"}
+					<span className="flex items-center gap-1 text-muted-foreground text-sm">
+						<span className="truncate">
+							{lead.phone ? formatPhone(lead.phone) : (lead.email ?? "-")}
+						</span>
+						{lead.phone ? (
+							<a
+								aria-label="Abrir conversa no WhatsApp"
+								className={cn(
+									buttonVariants({ variant: "ghost", size: "icon-sm" })
+								)}
+								href={`https://wa.me/55${unmaskPhone(lead.phone)}`}
+								rel="noopener noreferrer"
+								target="_blank"
+							>
+								<MessageCircle className="size-4" />
+							</a>
+						) : null}
 					</span>
 				</div>
 				<DropdownMenu>

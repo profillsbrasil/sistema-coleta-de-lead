@@ -10,6 +10,7 @@ import {
 } from "@dashboard-leads-profills/ui/components/breadcrumb";
 import { SidebarTrigger } from "@dashboard-leads-profills/ui/components/sidebar";
 import { usePathname } from "next/navigation";
+import { Fragment } from "react";
 
 const ROUTE_LABELS: Record<string, string> = {
 	dashboard: "Dashboard",
@@ -45,16 +46,16 @@ export function AppTopbar() {
 			<Breadcrumb>
 				<BreadcrumbList>
 					{segments.map((seg) => (
-						<BreadcrumbItem key={seg.href}>
-							{seg.isLast ? (
-								<BreadcrumbPage>{seg.label}</BreadcrumbPage>
-							) : (
-								<>
+						<Fragment key={seg.href}>
+							<BreadcrumbItem>
+								{seg.isLast ? (
+									<BreadcrumbPage>{seg.label}</BreadcrumbPage>
+								) : (
 									<BreadcrumbLink href={seg.href}>{seg.label}</BreadcrumbLink>
-									<BreadcrumbSeparator />
-								</>
-							)}
-						</BreadcrumbItem>
+								)}
+							</BreadcrumbItem>
+							{!seg.isLast && <BreadcrumbSeparator />}
+						</Fragment>
 					))}
 				</BreadcrumbList>
 			</Breadcrumb>

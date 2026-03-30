@@ -112,6 +112,7 @@ export default function LeadList({ userId }: LeadListProps) {
 	const [searchTerm, setSearchTerm] = useState("");
 	const [limit, setLimit] = useState(PAGE_SIZE);
 	const [isExporting, setIsExporting] = useState(false);
+	const isExportingRef = useRef(false);
 	const sentinelRef = useRef<HTMLDivElement>(null);
 
 	const leads = useLiveQuery(
@@ -154,6 +155,11 @@ export default function LeadList({ userId }: LeadListProps) {
 	);
 
 	const handleExport = useCallback(async () => {
+		if (isExportingRef.current) {
+			return;
+		}
+
+		isExportingRef.current = true;
 		setIsExporting(true);
 
 		try {
@@ -183,6 +189,7 @@ export default function LeadList({ userId }: LeadListProps) {
 				`Exportados ${result.total} leads do filtro ${scopeMessageLabel}`
 			);
 		} finally {
+			isExportingRef.current = false;
 			setIsExporting(false);
 		}
 	}, [activeTag, searchTerm, userId]);
@@ -260,6 +267,7 @@ export default function LeadList({ userId }: LeadListProps) {
 								void handleExport();
 							}}
 							size="sm"
+							type="button"
 							variant="outline"
 						>
 							<Download className="size-4" />

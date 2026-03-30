@@ -7,24 +7,21 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@dashboard-leads-profills/ui/components/card";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@dashboard-leads-profills/ui/components/collapsible";
 import { Input } from "@dashboard-leads-profills/ui/components/input";
 import { Label } from "@dashboard-leads-profills/ui/components/label";
 import { Textarea } from "@dashboard-leads-profills/ui/components/textarea";
-import { ArrowLeft, ChevronDown, Loader2, QrCode } from "lucide-react";
+import { ArrowLeft, Loader2, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { Lead } from "@/lib/db/types";
+import type { FollowUpStatus, Lead } from "@/lib/db/types";
 import { saveLead } from "@/lib/lead/save-lead";
 import { updateLead } from "@/lib/lead/update-lead";
 import { type LeadFormData, leadFormSchema } from "@/lib/lead/validation";
+import { formatPhone, maskPhoneInput, unmaskPhone } from "@/lib/masks/phone";
 import { createClient } from "@/lib/supabase/client";
 
+import FollowUpSelector from "./follow-up-selector";
 import PhotoCapture from "./photo-capture";
 import QRScanner from "./qr-scanner";
 import TagSelector from "./tag-selector";
@@ -62,10 +59,13 @@ export default function LeadForm({
 	const isEditMode = !!lead;
 
 	const [name, setName] = useState(lead?.name ?? "");
-	const [phone, setPhone] = useState(lead?.phone ?? "");
+	const [phone, setPhone] = useState(formatPhone(lead?.phone ?? ""));
 	const [email, setEmail] = useState(lead?.email ?? "");
 	const [interestTag, setInterestTag] = useState<InterestTag>(
 		lead?.interestTag ?? "morno"
+	);
+	const [followUpStatus, setFollowUpStatus] = useState<FollowUpStatus>(
+		lead?.followUpStatus ?? "pendente"
 	);
 	const [company, setCompany] = useState(lead?.company ?? "");
 	const [position, setPosition] = useState(lead?.position ?? "");
@@ -74,15 +74,6 @@ export default function LeadForm({
 	const [errors, setErrors] = useState<FormErrors>({});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const hasDetails = !!(
-		lead?.company ||
-		lead?.position ||
-		lead?.segment ||
-		lead?.notes
-	);
-	const [showDetails, setShowDetails] = useState(
-		isEditMode ? hasDetails : false
-	);
 	const [showQRScanner, setShowQRScanner] = useState(false);
 	const [photo, setPhoto] = useState<Blob | null>(lead?.photo ?? null);
 	const [photoChanged, setPhotoChanged] = useState(false);
@@ -127,9 +118,10 @@ export default function LeadForm({
 
 		const result = leadFormSchema.safeParse({
 			name,
-			phone,
+			phone: unmaskPhone(phone),
 			email,
 			interestTag,
+			followUpStatus,
 			company,
 			position,
 			segment,
@@ -231,6 +223,24 @@ export default function LeadForm({
 						</div>
 
 						<div className="flex flex-col gap-2">
+							<Label>Interesse *</Label>
+							<TagSelector
+								disabled={isSubmitting}
+								onChange={setInterestTag}
+								value={interestTag}
+							/>
+						</div>
+
+						<div className="flex flex-col gap-2 md:col-span-2">
+							<Label>Follow-up</Label>
+							<FollowUpSelector
+								disabled={isSubmitting}
+								onChange={setFollowUpStatus}
+								value={followUpStatus}
+							/>
+						</div>
+
+						<div className="flex flex-col gap-2">
 							<Label htmlFor="lead-phone">Telefone</Label>
 							<div className="flex gap-2">
 								<Input
@@ -239,8 +249,8 @@ export default function LeadForm({
 									className="flex-1"
 									disabled={isSubmitting}
 									id="lead-phone"
-									onChange={(e) => setPhone(e.target.value)}
-									placeholder="Telefone com DDD"
+									onChange={(e) => setPhone(maskPhoneInput(e.target.value))}
+									placeholder="(51) 99647-4579"
 									ref={phoneRef}
 									type="tel"
 									value={phone}
@@ -294,11 +304,38 @@ export default function LeadForm({
 						</div>
 
 						<div className="flex flex-col gap-2">
-							<Label>Interesse *</Label>
-							<TagSelector
+							<Label htmlFor="lead-company">Empresa</Label>
+							<Input
 								disabled={isSubmitting}
-								onChange={setInterestTag}
-								value={interestTag}
+								id="lead-company"
+								onChange={(e) => setCompany(e.target.value)}
+								placeholder="Empresa"
+								type="text"
+								value={company}
+							/>
+						</div>
+
+						<div className="flex flex-col gap-2">
+							<Label htmlFor="lead-position">Cargo</Label>
+							<Input
+								disabled={isSubmitting}
+								id="lead-position"
+								onChange={(e) => setPosition(e.target.value)}
+								placeholder="Cargo"
+								type="text"
+								value={position}
+							/>
+						</div>
+
+						<div className="flex flex-col gap-2">
+							<Label htmlFor="lead-segment">Segmento</Label>
+							<Input
+								disabled={isSubmitting}
+								id="lead-segment"
+								onChange={(e) => setSegment(e.target.value)}
+								placeholder="Segmento de atuacao"
+								type="text"
+								value={segment}
 							/>
 						</div>
 
@@ -319,72 +356,16 @@ export default function LeadForm({
 							</div>
 						)}
 
-						<Collapsible
-							className="md:col-span-2"
-							onOpenChange={setShowDetails}
-							open={showDetails}
-						>
-							<CollapsibleTrigger
-								className="inline-flex w-full items-center justify-between rounded-lg px-2.5 py-2 font-medium text-sm hover:bg-muted"
+						<div className="flex flex-col gap-2 md:col-span-2">
+							<Label htmlFor="lead-notes">Notas</Label>
+							<Textarea
 								disabled={isSubmitting}
-								type="button"
-							>
-								Mais detalhes
-								<ChevronDown
-									className={`size-4 transition-transform ${showDetails ? "rotate-180" : ""}`}
-								/>
-							</CollapsibleTrigger>
-							<CollapsibleContent>
-								<div className="grid grid-cols-1 gap-4 pt-4 md:grid-cols-2">
-									<div className="flex flex-col gap-2">
-										<Label htmlFor="lead-company">Empresa</Label>
-										<Input
-											disabled={isSubmitting}
-											id="lead-company"
-											onChange={(e) => setCompany(e.target.value)}
-											placeholder="Empresa"
-											type="text"
-											value={company}
-										/>
-									</div>
-
-									<div className="flex flex-col gap-2">
-										<Label htmlFor="lead-position">Cargo</Label>
-										<Input
-											disabled={isSubmitting}
-											id="lead-position"
-											onChange={(e) => setPosition(e.target.value)}
-											placeholder="Cargo"
-											type="text"
-											value={position}
-										/>
-									</div>
-
-									<div className="flex flex-col gap-2">
-										<Label htmlFor="lead-segment">Segmento</Label>
-										<Input
-											disabled={isSubmitting}
-											id="lead-segment"
-											onChange={(e) => setSegment(e.target.value)}
-											placeholder="Segmento de atuacao"
-											type="text"
-											value={segment}
-										/>
-									</div>
-
-									<div className="flex flex-col gap-2 md:col-span-2">
-										<Label htmlFor="lead-notes">Notas</Label>
-										<Textarea
-											disabled={isSubmitting}
-											id="lead-notes"
-											onChange={(e) => setNotes(e.target.value)}
-											placeholder="Observacoes sobre o contato..."
-											value={notes}
-										/>
-									</div>
-								</div>
-							</CollapsibleContent>
-						</Collapsible>
+								id="lead-notes"
+								onChange={(e) => setNotes(e.target.value)}
+								placeholder="Observacoes sobre o contato..."
+								value={notes}
+							/>
+						</div>
 
 						<Button
 							aria-busy={isSubmitting}
@@ -417,7 +398,7 @@ export default function LeadForm({
 				<QRScanner
 					onClose={() => setShowQRScanner(false)}
 					onScan={(scannedPhone) => {
-						setPhone(scannedPhone);
+						setPhone(maskPhoneInput(scannedPhone));
 						setShowQRScanner(false);
 					}}
 					open={showQRScanner}

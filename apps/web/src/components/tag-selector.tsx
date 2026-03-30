@@ -1,6 +1,12 @@
 "use client";
 
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
+import type { LucideIcon } from "lucide-react";
+import {
+	Thermometer,
+	ThermometerSnowflake,
+	ThermometerSun,
+} from "lucide-react";
 
 type InterestTag = "quente" | "morno" | "frio";
 
@@ -10,23 +16,29 @@ interface TagSelectorProps {
 	value: InterestTag;
 }
 
-const TAG_CONFIG = {
+const TAG_CONFIG: Record<
+	InterestTag,
+	{ icon: LucideIcon; label: string; selectedClass: string }
+> = {
 	quente: {
+		icon: ThermometerSun,
 		label: "Quente",
 		selectedClass:
 			"bg-[oklch(0.936_0.032_17)] text-[oklch(0.45_0.18_17)] dark:bg-[oklch(0.3_0.06_17)] dark:text-[oklch(0.85_0.12_17)]",
 	},
 	morno: {
+		icon: Thermometer,
 		label: "Morno",
 		selectedClass:
 			"bg-[oklch(0.945_0.04_85)] text-[oklch(0.5_0.13_85)] dark:bg-[oklch(0.3_0.06_85)] dark:text-[oklch(0.85_0.1_85)]",
 	},
 	frio: {
+		icon: ThermometerSnowflake,
 		label: "Frio",
 		selectedClass:
 			"bg-[oklch(0.94_0.03_240)] text-[oklch(0.45_0.15_240)] dark:bg-[oklch(0.3_0.05_240)] dark:text-[oklch(0.85_0.1_240)]",
 	},
-} as const;
+};
 
 const TAGS: InterestTag[] = ["quente", "morno", "frio"];
 
@@ -57,6 +69,7 @@ export default function TagSelector({
 						role="radio"
 						type="button"
 					>
+						<config.icon className="size-3.5" />
 						{config.label}
 					</button>
 				);

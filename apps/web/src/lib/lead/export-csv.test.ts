@@ -186,6 +186,8 @@ describe("export feedback contract", () => {
 		expect(sellerSource).toContain("Exportados");
 		expect(sellerSource).toContain("filtro");
 		expect(sellerSource).toContain("buildExportFilename");
+		expect(sellerSource).toContain("isExportingRef.current");
+		expect(sellerSource).toContain('type="button"');
 	});
 
 	it("keeps admin feedback tied to the selected vendor name", () => {
@@ -197,5 +199,7 @@ describe("export feedback contract", () => {
 		expect(adminSource).toContain("Exportados");
 		expect(adminSource).toContain("selectedVendorName");
 		expect(adminSource).toContain("buildExportFilename");
+		expect(adminSource).toContain("isExportingRef.current");
+		expect(adminSource).toContain('type="button"');
 	});
 });

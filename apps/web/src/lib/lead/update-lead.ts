@@ -21,6 +21,7 @@ export async function updateLead(
 		segment: emptyToNull(data.segment),
 		notes: emptyToNull(data.notes),
 		interestTag: data.interestTag,
+		followUpStatus: data.followUpStatus,
 		updatedAt: now,
 		syncStatus: "pending" as const,
 	};
@@ -43,6 +44,7 @@ export async function updateLead(
 			segment: emptyToNull(data.segment),
 			notes: emptyToNull(data.notes),
 			interestTag: data.interestTag,
+			followUpStatus: data.followUpStatus,
 		}),
 		retryCount: 0,
 		timestamp: now,
