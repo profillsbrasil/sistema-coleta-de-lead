@@ -7,7 +7,6 @@ interface TestLead {
 	company: string | null;
 	createdAt: string;
 	email: string | null;
-	followUpStatus?: string | null;
 	interestTag: "quente" | "morno" | "frio";
 	name: string;
 	notes: string | null;
@@ -25,7 +24,6 @@ function makeLead(overrides: Partial<TestLead> = {}): TestLead {
 		position: "Gerente",
 		segment: "Tecnologia",
 		interestTag: "quente",
-		followUpStatus: "pendente",
 		notes: "Interessado no produto X",
 		createdAt: "2025-06-15T14:30:00.000Z",
 		...overrides,
@@ -38,7 +36,7 @@ describe("generateCsvContent", () => {
 
 		expect(csv.startsWith("\uFEFF")).toBe(true);
 		expect(csv.split("\n")[0]).toBe(
-			"\uFEFFNome,Telefone,Email,Empresa,Cargo,Segmento,Interesse,Follow-up,Notas,Data de Criação"
+			"\uFEFFNome,Telefone,Email,Empresa,Cargo,Segmento,Interesse,Notas,Data de Criação"
 		);
 	});
 
@@ -61,14 +59,12 @@ describe("generateCsvContent", () => {
 		const csv = generateCsvContent([
 			makeLead({
 				company: "Ações Integradas",
-				followUpStatus: "em_negociacao",
 				notes: "Negociação em andamento\nRetornar amanhã",
 				segment: "Tecnologia",
 			}),
 		]);
 
 		expect(csv).toContain("Ações Integradas");
-		expect(csv).toContain("Em Negociação");
 		expect(csv).toContain('"Negociação em andamento\nRetornar amanhã"');
 	});
 
@@ -129,13 +125,13 @@ describe("generateCsvContent", () => {
 		const dataLine = csv.split("\n")[1] ?? "";
 		// Null fields should produce empty strings between commas
 		const fields = dataLine.split(",");
-		// phone (1), email (2), company (3), position (4), segment (5), follow-up (7=Pendente), notes (8) should be empty
+		// phone (1), email (2), company (3), position (4), segment (5), notes (7) should be empty
 		expect(fields[1]).toBe("");
 		expect(fields[2]).toBe("");
 		expect(fields[3]).toBe("");
 		expect(fields[4]).toBe("");
 		expect(fields[5]).toBe("");
-		expect(fields[8]).toBe("");
+		expect(fields[7]).toBe("");
 	});
 
 	it("generates complete row with all fields", () => {

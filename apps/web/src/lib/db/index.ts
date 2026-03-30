@@ -45,5 +45,21 @@ db.version(4)
 			})
 	);
 
+db.version(5)
+	.stores({
+		leads:
+			"localId, serverId, userId, interestTag, syncStatus, createdAt, updatedAt",
+		syncQueue: "++id, localId, operation, timestamp",
+		leaderboardCache: "userId, rank",
+	})
+	.upgrade((tx) =>
+		tx
+			.table("leads")
+			.toCollection()
+			.modify((lead) => {
+				lead.followUpStatus = undefined;
+			})
+	);
+
 export type { Lead, LeaderboardEntry, SyncQueueItem };
 export { db };

@@ -17,7 +17,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import type { PersonalStats } from "@/lib/lead/stats";
 import { trpc } from "@/utils/trpc";
-import FunnelTab from "./funnel-tab";
 import LeaderboardTab from "./leaderboard-tab";
 import PersonalDashboard from "./personal-dashboard";
 
@@ -63,7 +62,6 @@ export default function Dashboard({ userId, isAdmin }: DashboardProps) {
 			<div className="flex items-center justify-between gap-4">
 				<TabsList>
 					<TabsTrigger value="dashboard">Meu Dashboard</TabsTrigger>
-					<TabsTrigger value="funil">Funil</TabsTrigger>
 					<TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
 				</TabsList>
 				{isAdmin && vendorsQuery.data ? (
@@ -92,9 +90,6 @@ export default function Dashboard({ userId, isAdmin }: DashboardProps) {
 					overrideStats={adminVendorStats}
 					userId={effectiveUserId}
 				/>
-			</TabsContent>
-			<TabsContent className="mt-4" value="funil">
-				<FunnelTab />
 			</TabsContent>
 			<TabsContent className="mt-4" value="leaderboard">
 				<LeaderboardTab userId={userId} />

@@ -17,7 +17,6 @@ function makeLead(overrides: Partial<Lead>): Lead {
 		segment: null,
 		notes: null,
 		interestTag: "morno",
-		followUpStatus: "pendente",
 		photo: null,
 		createdAt: "2026-01-01T00:00:00.000Z",
 		updatedAt: "2026-01-01T00:00:00.000Z",
