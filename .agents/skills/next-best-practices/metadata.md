@@ -86,7 +86,7 @@ Place these files in `app/` directory (or route segments):
 
 | File                            | Purpose                                       |
 | ------------------------------- | --------------------------------------------- |
-| `favicon.ico`                   | Favicon                                       |
+| `icon.png`                      | Favicon                                       |
 | `icon.png` / `icon.svg`         | App icon                                      |
 | `apple-icon.png`                | Apple app icon                                |
 | `opengraph-image.png`           | OG image                                      |
@@ -101,7 +101,7 @@ For most sites, **static metadata files provide excellent SEO coverage**:
 
 ```
 app/
-├── favicon.ico
+├── icon.png
 ├── opengraph-image.png     # Works for both OG and Twitter
 ├── sitemap.ts
 ├── robots.ts

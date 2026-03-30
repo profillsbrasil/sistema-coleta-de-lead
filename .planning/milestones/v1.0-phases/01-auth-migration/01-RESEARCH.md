@@ -37,15 +37,15 @@ None -- discussion stayed within phase scope
 <phase_requirements>
 ## Phase Requirements
 
-| ID | Description | Research Support |
-|----|-------------|------------------|
-| AUTH-01 | Migrar de Better-Auth para Supabase Auth | Core da pesquisa: @supabase/ssr + @supabase/supabase-js substituem better-auth; proxy.ts substitui route handler; Supabase Auth gerencia sessoes via cookies |
-| AUTH-02 | User pode fazer login via Google OAuth | signInWithOAuth({ provider: 'google' }) com PKCE flow + callback route; requer config no Google Cloud Console + Supabase Dashboard |
-| AUTH-03 | User pode fazer login via Facebook OAuth | signInWithOAuth({ provider: 'facebook' }) com PKCE flow; requer config no Facebook Developers + Supabase Dashboard |
-| AUTH-04 | User pode fazer login via LinkedIn OAuth | signInWithOAuth({ provider: 'linkedin_oidc' }) -- provider antigo 'linkedin' deprecado; requer config no LinkedIn Developers + Supabase Dashboard |
-| AUTH-05 | Sessao persiste apos refresh do browser | Cookie-based sessions via @supabase/ssr; proxy.ts faz refresh automatico de tokens expirados via getClaims(); PKCE flow usa HTTP-only cookies |
-| AUTH-06 | User tem role (admin ou vendedor) armazenado no perfil | Tabela public.user_roles + Custom Access Token Hook injeta role no JWT; getClaims() retorna user_role; acessivel no client e server |
-| AUTH-07 | Rotas de admin sao protegidas -- vendedor nao acessa | Tres camadas: proxy.ts redireciona nao-autenticados, tRPC adminProcedure checa role do JWT, RLS policies no banco (futuro) |
+| ID      | Description                                            | Research Support                                                                                                                                             |
+| ------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| AUTH-01 | Migrar de Better-Auth para Supabase Auth               | Core da pesquisa: @supabase/ssr + @supabase/supabase-js substituem better-auth; proxy.ts substitui route handler; Supabase Auth gerencia sessoes via cookies |
+| AUTH-02 | User pode fazer login via Google OAuth                 | signInWithOAuth({ provider: 'google' }) com PKCE flow + callback route; requer config no Google Cloud Console + Supabase Dashboard                           |
+| AUTH-03 | User pode fazer login via Facebook OAuth               | signInWithOAuth({ provider: 'facebook' }) com PKCE flow; requer config no Facebook Developers + Supabase Dashboard                                           |
+| AUTH-04 | User pode fazer login via LinkedIn OAuth               | signInWithOAuth({ provider: 'linkedin_oidc' }) -- provider antigo 'linkedin' deprecado; requer config no LinkedIn Developers + Supabase Dashboard            |
+| AUTH-05 | Sessao persiste apos refresh do browser                | Cookie-based sessions via @supabase/ssr; proxy.ts faz refresh automatico de tokens expirados via getClaims(); PKCE flow usa HTTP-only cookies                |
+| AUTH-06 | User tem role (admin ou vendedor) armazenado no perfil | Tabela public.user_roles + Custom Access Token Hook injeta role no JWT; getClaims() retorna user_role; acessivel no client e server                          |
+| AUTH-07 | Rotas de admin sao protegidas -- vendedor nao acessa   | Tres camadas: proxy.ts redireciona nao-autenticados, tRPC adminProcedure checa role do JWT, RLS policies no banco (futuro)                                   |
 </phase_requirements>
 
 ## Project Constraints (from CLAUDE.md)
@@ -64,22 +64,22 @@ None -- discussion stayed within phase scope
 ## Standard Stack
 
 ### Core
-| Library | Version | Purpose | Why Standard |
-|---------|---------|---------|--------------|
-| @supabase/supabase-js | 2.100.0 | Supabase client (Auth, DB, Storage) | Official SDK, mantem sessao, PKCE flow |
-| @supabase/ssr | 0.9.0 | SSR cookie handling para Supabase | Official SSR adapter, createBrowserClient + createServerClient |
+| Library               | Version | Purpose                             | Why Standard                                                   |
+| --------------------- | ------- | ----------------------------------- | -------------------------------------------------------------- |
+| @supabase/supabase-js | 2.100.0 | Supabase client (Auth, DB, Storage) | Official SDK, mantem sessao, PKCE flow                         |
+| @supabase/ssr         | 0.9.0   | SSR cookie handling para Supabase   | Official SSR adapter, createBrowserClient + createServerClient |
 
 ### Supporting
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
+| Library                       | Version | Purpose                        | When to Use                          |
+| ----------------------------- | ------- | ------------------------------ | ------------------------------------ |
 | @supabase/supabase-js (types) | 2.100.0 | Tipos de User, Session, Claims | Ao tipar contexto tRPC e componentes |
 
 ### Alternatives Considered
-| Instead of | Could Use | Tradeoff |
-|------------|-----------|----------|
-| Tabela user_roles | app_metadata no auth.users | app_metadata e mais simples mas: nao pode ser modificado pelo admin sem service_role key; Custom Access Token Hook com tabela separada e o padrao oficial de RBAC da Supabase |
-| proxy.ts redirect | Layout-level check em RSC | proxy.ts e mais eficiente (roda antes do RSC) e e o padrao oficial do Next.js 16; layout check nao pode redirecionar antes de renderizar |
-| getClaims() | getUser() | getClaims() valida JWT localmente (cached JWKS, rapido); getUser() faz request ao Auth server (mais seguro mas lento); proxy usa getClaims() conforme official example; para operacoes criticas usar getUser() |
+| Instead of        | Could Use                  | Tradeoff                                                                                                                                                                                                       |
+| ----------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tabela user_roles | app_metadata no auth.users | app_metadata e mais simples mas: nao pode ser modificado pelo admin sem service_role key; Custom Access Token Hook com tabela separada e o padrao oficial de RBAC da Supabase                                  |
+| proxy.ts redirect | Layout-level check em RSC  | proxy.ts e mais eficiente (roda antes do RSC) e e o padrao oficial do Next.js 16; layout check nao pode redirecionar antes de renderizar                                                                       |
+| getClaims()       | getUser()                  | getClaims() valida JWT localmente (cached JWKS, rapido); getUser() faz request ao Auth server (mais seguro mas lento); proxy usa getClaims() conforme official example; para operacoes criticas usar getUser() |
 
 **Installation:**
 ```bash
@@ -195,7 +195,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|icon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 }
 ```
@@ -475,13 +475,13 @@ Porem, a utility de proxy (`updateSession`) e o callback handler vivem em `apps/
 
 ### Env Vars: Migrar para SUPABASE_URL + ANON_KEY (RECOMENDADO)
 
-| Remove | Add | Scope |
-|--------|-----|-------|
-| `BETTER_AUTH_SECRET` | -- | Nao precisa equivalente (Supabase gerencia) |
-| `BETTER_AUTH_URL` | -- | Nao precisa (Supabase gerencia redirect) |
-| -- | `NEXT_PUBLIC_SUPABASE_URL` | Client + Server (public) |
-| -- | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + Server (public) |
-| `CORS_ORIGIN` | -- | Supabase Dashboard gerencia CORS |
+| Remove               | Add                             | Scope                                       |
+| -------------------- | ------------------------------- | ------------------------------------------- |
+| `BETTER_AUTH_SECRET` | --                              | Nao precisa equivalente (Supabase gerencia) |
+| `BETTER_AUTH_URL`    | --                              | Nao precisa (Supabase gerencia redirect)    |
+| --                   | `NEXT_PUBLIC_SUPABASE_URL`      | Client + Server (public)                    |
+| --                   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client + Server (public)                    |
+| `CORS_ORIGIN`        | --                              | Supabase Dashboard gerencia CORS            |
 
 Manter `DATABASE_URL` (ja aponta para Supabase Postgres). `NEXT_PUBLIC_*` vars sao expostas ao browser -- isso e intencional e seguro para URL e Anon Key (anon key so tem permissoes via RLS).
 
@@ -491,13 +491,13 @@ Supabase Auth usa schema `auth` (gerenciado automaticamente). As tabelas Better-
 
 ## Don't Hand-Roll
 
-| Problem | Don't Build | Use Instead | Why |
-|---------|-------------|-------------|-----|
-| Cookie-based session management | Custom cookie handling | @supabase/ssr createServerClient | Gerencia chunked cookies, refresh tokens, PKCE flow automaticamente |
-| JWT validation | Manual JWT decode/verify | supabase.auth.getClaims() | Usa JWKS cache, valida signature, retorna claims tipados |
-| OAuth PKCE flow | Manual code exchange | supabase.auth.exchangeCodeForSession() | Gerencia code verifier, state, nonce automaticamente |
-| Session refresh em SSR | Manual token refresh | proxy.ts + updateSession | Padrao oficial, refresh antes de RSC render |
-| Role injection no JWT | Custom JWT middleware | Custom Access Token Hook (Postgres) | Executa no Supabase Auth server, sem latencia adicional |
+| Problem                         | Don't Build              | Use Instead                            | Why                                                                 |
+| ------------------------------- | ------------------------ | -------------------------------------- | ------------------------------------------------------------------- |
+| Cookie-based session management | Custom cookie handling   | @supabase/ssr createServerClient       | Gerencia chunked cookies, refresh tokens, PKCE flow automaticamente |
+| JWT validation                  | Manual JWT decode/verify | supabase.auth.getClaims()              | Usa JWKS cache, valida signature, retorna claims tipados            |
+| OAuth PKCE flow                 | Manual code exchange     | supabase.auth.exchangeCodeForSession() | Gerencia code verifier, state, nonce automaticamente                |
+| Session refresh em SSR          | Manual token refresh     | proxy.ts + updateSession               | Padrao oficial, refresh antes de RSC render                         |
+| Role injection no JWT           | Custom JWT middleware    | Custom Access Token Hook (Postgres)    | Executa no Supabase Auth server, sem latencia adicional             |
 
 **Key insight:** Supabase Auth gerencia todo o ciclo de autenticacao (tokens, cookies, refresh, PKCE). O unico codigo custom necessario e: (1) utilities de criacao de client, (2) proxy.ts para refresh, (3) callback handler para code exchange, (4) tabela + hook para roles.
 
@@ -644,14 +644,14 @@ export default function UserMenu() {
 
 ## State of the Art
 
-| Old Approach | Current Approach | When Changed | Impact |
-|--------------|------------------|--------------|--------|
-| @supabase/auth-helpers-nextjs | @supabase/ssr | 2024 | Deprecated; ssr unifica todos frameworks |
-| middleware.ts | proxy.ts | Next.js 16 (2026-02) | Renomeado; funcao exportada = `proxy` nao `middleware` |
-| getSession() server-side | getClaims() / getUser() | supabase-js 2.x + asymmetric keys (2025-05) | getSession() nao valida JWT; getClaims() usa JWKS |
-| SUPABASE_ANON_KEY | SUPABASE_PUBLISHABLE_KEY | 2025-11 (new projects) | Rename gradual; ambos funcionam; anon key continua valido para projetos existentes |
-| provider: 'linkedin' | provider: 'linkedin_oidc' | 2024-01 | LinkedIn deprecou OAuth 2.0 básico; Supabase usa OIDC |
-| better-auth (este projeto) | Supabase Auth | N/A (migracao por decisao do projeto) | Supabase Auth e gerenciado; menos codigo custom |
+| Old Approach                  | Current Approach          | When Changed                                | Impact                                                                             |
+| ----------------------------- | ------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------- |
+| @supabase/auth-helpers-nextjs | @supabase/ssr             | 2024                                        | Deprecated; ssr unifica todos frameworks                                           |
+| middleware.ts                 | proxy.ts                  | Next.js 16 (2026-02)                        | Renomeado; funcao exportada = `proxy` nao `middleware`                             |
+| getSession() server-side      | getClaims() / getUser()   | supabase-js 2.x + asymmetric keys (2025-05) | getSession() nao valida JWT; getClaims() usa JWKS                                  |
+| SUPABASE_ANON_KEY             | SUPABASE_PUBLISHABLE_KEY  | 2025-11 (new projects)                      | Rename gradual; ambos funcionam; anon key continua valido para projetos existentes |
+| provider: 'linkedin'          | provider: 'linkedin_oidc' | 2024-01                                     | LinkedIn deprecou OAuth 2.0 básico; Supabase usa OIDC                              |
+| better-auth (este projeto)    | Supabase Auth             | N/A (migracao por decisao do projeto)       | Supabase Auth e gerenciado; menos codigo custom                                    |
 
 **Deprecated/outdated:**
 - `@supabase/auth-helpers-nextjs`: substituido por `@supabase/ssr`
@@ -678,15 +678,15 @@ export default function UserMenu() {
 
 ## Environment Availability
 
-| Dependency | Required By | Available | Version | Fallback |
-|------------|------------|-----------|---------|----------|
-| Bun | Package manager + runtime | Verificar | 1.3.x esperado | -- (obrigatorio) |
-| Node.js | Next.js runtime | Verificar | 22+ esperado | -- (obrigatorio) |
-| PostgreSQL (Supabase) | Auth + Data | Sim (via DATABASE_URL) | -- | -- |
-| Supabase Project | Auth providers, Dashboard | Sim (ja tem DATABASE_URL) | -- | -- |
-| Google Cloud Console | Google OAuth provider | Manual | -- | Configurar manualmente |
-| Facebook Developers | Facebook OAuth provider | Manual | -- | Configurar manualmente |
-| LinkedIn Developers | LinkedIn OAuth provider | Manual | -- | Configurar manualmente |
+| Dependency            | Required By               | Available                 | Version        | Fallback               |
+| --------------------- | ------------------------- | ------------------------- | -------------- | ---------------------- |
+| Bun                   | Package manager + runtime | Verificar                 | 1.3.x esperado | -- (obrigatorio)       |
+| Node.js               | Next.js runtime           | Verificar                 | 22+ esperado   | -- (obrigatorio)       |
+| PostgreSQL (Supabase) | Auth + Data               | Sim (via DATABASE_URL)    | --             | --                     |
+| Supabase Project      | Auth providers, Dashboard | Sim (ja tem DATABASE_URL) | --             | --                     |
+| Google Cloud Console  | Google OAuth provider     | Manual                    | --             | Configurar manualmente |
+| Facebook Developers   | Facebook OAuth provider   | Manual                    | --             | Configurar manualmente |
+| LinkedIn Developers   | LinkedIn OAuth provider   | Manual                    | --             | Configurar manualmente |
 
 **Missing dependencies with no fallback:**
 - OAuth provider configs no Supabase Dashboard (manual setup necessario)
@@ -697,23 +697,23 @@ export default function UserMenu() {
 ## Validation Architecture
 
 ### Test Framework
-| Property | Value |
-|----------|-------|
-| Framework | Vitest 3.2.1 |
-| Config file | `vitest.workspace.ts` (root), `packages/api/vitest.config.ts`, `packages/env/vitest.config.ts` |
-| Quick run command | `bun run test` |
-| Full suite command | `bun run test` |
+| Property           | Value                                                                                          |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| Framework          | Vitest 3.2.1                                                                                   |
+| Config file        | `vitest.workspace.ts` (root), `packages/api/vitest.config.ts`, `packages/env/vitest.config.ts` |
+| Quick run command  | `bun run test`                                                                                 |
+| Full suite command | `bun run test`                                                                                 |
 
 ### Phase Requirements -> Test Map
-| Req ID | Behavior | Test Type | Automated Command | File Exists? |
-|--------|----------|-----------|-------------------|-------------|
-| AUTH-01 | Supabase client cria corretamente com env vars | unit | `bun vitest run packages/env/src --reporter=verbose` | N/A Wave 0 |
-| AUTH-02 | signInWithOAuth gera URL para Google | unit (mock) | `bun vitest run packages/api/src --reporter=verbose` | N/A Wave 0 |
-| AUTH-03 | signInWithOAuth gera URL para Facebook | unit (mock) | `bun vitest run packages/api/src --reporter=verbose` | N/A Wave 0 |
-| AUTH-04 | signInWithOAuth gera URL para LinkedIn OIDC | unit (mock) | `bun vitest run packages/api/src --reporter=verbose` | N/A Wave 0 |
-| AUTH-05 | Sessao persiste (proxy refresh) | manual-only | Manual: login, fechar browser, reabrir | -- |
-| AUTH-06 | user_role presente no JWT claims | unit | `bun vitest run packages/api/src --reporter=verbose` | N/A Wave 0 |
-| AUTH-07 | adminProcedure bloqueia vendedor | unit | `bun vitest run packages/api/src --reporter=verbose` | N/A Wave 0 |
+| Req ID  | Behavior                                       | Test Type   | Automated Command                                    | File Exists? |
+| ------- | ---------------------------------------------- | ----------- | ---------------------------------------------------- | ------------ |
+| AUTH-01 | Supabase client cria corretamente com env vars | unit        | `bun vitest run packages/env/src --reporter=verbose` | N/A Wave 0   |
+| AUTH-02 | signInWithOAuth gera URL para Google           | unit (mock) | `bun vitest run packages/api/src --reporter=verbose` | N/A Wave 0   |
+| AUTH-03 | signInWithOAuth gera URL para Facebook         | unit (mock) | `bun vitest run packages/api/src --reporter=verbose` | N/A Wave 0   |
+| AUTH-04 | signInWithOAuth gera URL para LinkedIn OIDC    | unit (mock) | `bun vitest run packages/api/src --reporter=verbose` | N/A Wave 0   |
+| AUTH-05 | Sessao persiste (proxy refresh)                | manual-only | Manual: login, fechar browser, reabrir               | --           |
+| AUTH-06 | user_role presente no JWT claims               | unit        | `bun vitest run packages/api/src --reporter=verbose` | N/A Wave 0   |
+| AUTH-07 | adminProcedure bloqueia vendedor               | unit        | `bun vitest run packages/api/src --reporter=verbose` | N/A Wave 0   |
 
 ### Sampling Rate
 - **Per task commit:** `bun run test`
