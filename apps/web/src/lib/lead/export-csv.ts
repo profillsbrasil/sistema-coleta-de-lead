@@ -4,7 +4,6 @@ interface ExportableLead {
 	company: string | null;
 	createdAt: string | Date;
 	email: string | null;
-	followUpStatus?: string | null;
 	interestTag: "quente" | "morno" | "frio";
 	name: string;
 	notes: string | null;
@@ -25,16 +24,8 @@ const TAG_LABELS: Record<string, string> = {
 	frio: "Frio",
 };
 
-const FOLLOW_UP_LABELS: Record<string, string> = {
-	pendente: "Pendente",
-	contatado: "Contatado",
-	em_negociacao: "Em Negociação",
-	convertido: "Convertido",
-	perdido: "Perdido",
-};
-
 const CSV_HEADER =
-	"Nome,Telefone,Email,Empresa,Cargo,Segmento,Interesse,Follow-up,Notas,Data de Criação";
+	"Nome,Telefone,Email,Empresa,Cargo,Segmento,Interesse,Notas,Data de Criação";
 
 const DIACRITICS_REGEX = /[\u0300-\u036f]/g;
 const NON_SLUG_CHARACTERS_REGEX = /[^a-z0-9]+/g;
@@ -89,9 +80,6 @@ function serializeLeadRow(lead: ExportableLead): string {
 		lead.position ?? "",
 		lead.segment ?? "",
 		TAG_LABELS[lead.interestTag] ?? lead.interestTag,
-		lead.followUpStatus
-			? (FOLLOW_UP_LABELS[lead.followUpStatus] ?? lead.followUpStatus)
-			: "Pendente",
 		lead.notes ?? "",
 		formatDate(lead.createdAt),
 	];

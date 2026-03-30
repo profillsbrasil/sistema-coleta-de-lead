@@ -87,15 +87,6 @@ export const adminLeadsRouter = router({
 					segment: z.string().nullish(),
 					notes: z.string().nullish(),
 					interestTag: z.enum(["quente", "morno", "frio"]).optional(),
-					followUpStatus: z
-						.enum([
-							"pendente",
-							"contatado",
-							"em_negociacao",
-							"convertido",
-							"perdido",
-						])
-						.optional(),
 					photoUrl: z.string().nullish(),
 				}),
 			})

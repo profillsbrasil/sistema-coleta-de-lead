@@ -14,14 +14,13 @@ import { ArrowLeft, Loader2, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { FollowUpStatus, Lead } from "@/lib/db/types";
+import type { Lead } from "@/lib/db/types";
 import { saveLead } from "@/lib/lead/save-lead";
 import { updateLead } from "@/lib/lead/update-lead";
 import { type LeadFormData, leadFormSchema } from "@/lib/lead/validation";
 import { formatPhone, maskPhoneInput, unmaskPhone } from "@/lib/masks/phone";
 import { createClient } from "@/lib/supabase/client";
 
-import FollowUpSelector from "./follow-up-selector";
 import PhotoCapture from "./photo-capture";
 import QRScanner from "./qr-scanner";
 import TagSelector from "./tag-selector";
@@ -63,9 +62,6 @@ export default function LeadForm({
 	const [email, setEmail] = useState(lead?.email ?? "");
 	const [interestTag, setInterestTag] = useState<InterestTag>(
 		lead?.interestTag ?? "morno"
-	);
-	const [followUpStatus, setFollowUpStatus] = useState<FollowUpStatus>(
-		lead?.followUpStatus ?? "pendente"
 	);
 	const [company, setCompany] = useState(lead?.company ?? "");
 	const [position, setPosition] = useState(lead?.position ?? "");
@@ -121,7 +117,6 @@ export default function LeadForm({
 			phone: unmaskPhone(phone),
 			email,
 			interestTag,
-			followUpStatus,
 			company,
 			position,
 			segment,
@@ -228,15 +223,6 @@ export default function LeadForm({
 								disabled={isSubmitting}
 								onChange={setInterestTag}
 								value={interestTag}
-							/>
-						</div>
-
-						<div className="flex flex-col gap-2 md:col-span-2">
-							<Label>Follow-up</Label>
-							<FollowUpSelector
-								disabled={isSubmitting}
-								onChange={setFollowUpStatus}
-								value={followUpStatus}
 							/>
 						</div>
 

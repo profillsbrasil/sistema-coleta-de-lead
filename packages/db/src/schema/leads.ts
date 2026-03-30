@@ -14,14 +14,6 @@ export const interestTagEnum = pgEnum("interest_tag", [
 	"frio",
 ]);
 
-export const followUpStatusEnum = pgEnum("follow_up_status", [
-	"pendente",
-	"contatado",
-	"em_negociacao",
-	"convertido",
-	"perdido",
-]);
-
 export const leads = pgTable(
 	"leads",
 	{
@@ -36,9 +28,6 @@ export const leads = pgTable(
 		segment: text("segment"),
 		notes: text("notes"),
 		interestTag: interestTagEnum("interest_tag").notNull(),
-		followUpStatus: followUpStatusEnum("follow_up_status")
-			.notNull()
-			.default("pendente"),
 		photoUrl: text("photo_url"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
