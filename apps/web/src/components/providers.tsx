@@ -3,27 +3,11 @@
 import { Toaster } from "@dashboard-leads-profills/ui/components/sonner";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useEffect } from "react";
 
 import { queryClient } from "@/utils/trpc";
 
+import { SyncStatusProvider } from "./sync-status-provider";
 import { ThemeProvider } from "./theme-provider";
-
-function SyncInitializer() {
-	useEffect(() => {
-		let cleanup: (() => void) | undefined;
-
-		async function init() {
-			const { startSync } = await import("@/lib/sync/engine");
-			cleanup = startSync();
-		}
-
-		init();
-		return () => cleanup?.();
-	}, []);
-
-	return null;
-}
 
 export default function Providers({ children }: { children: React.ReactNode }) {
 	return (
@@ -34,8 +18,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 			enableSystem
 		>
 			<QueryClientProvider client={queryClient}>
-				{children}
-				<SyncInitializer />
+				<SyncStatusProvider>{children}</SyncStatusProvider>
 				<ReactQueryDevtools />
 			</QueryClientProvider>
 			<Toaster richColors />
