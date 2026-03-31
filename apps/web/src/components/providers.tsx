@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { queryClient } from "@/utils/trpc";
 
+import { ServiceWorkerRegistrar } from "./service-worker-registrar";
 import { SyncStatusProvider } from "./sync-status-provider";
 import { ThemeProvider } from "./theme-provider";
 
@@ -22,6 +23,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 				<ReactQueryDevtools />
 			</QueryClientProvider>
 			<Toaster richColors />
+			<ServiceWorkerRegistrar />
 		</ThemeProvider>
 	);
 }

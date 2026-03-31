@@ -4,7 +4,9 @@ import { useEffect } from "react";
 
 export function ServiceWorkerRegistrar() {
 	useEffect(() => {
-		if (!("serviceWorker" in navigator)) return;
+		if (!("serviceWorker" in navigator)) {
+			return;
+		}
 
 		import("workbox-window").then(({ Workbox }) => {
 			const wb = new Workbox("/sw.js");
