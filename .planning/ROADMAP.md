@@ -36,7 +36,7 @@
 **Milestone Goal:** Tornar o app mais confiavel e acionavel durante e apos o evento com exportacao de leads, visibilidade de conectividade/sync e identidade correta no leaderboard.
 
 - [x] **Phase 12: Export Workflows** - Exportacao completa, segura e compativel com planilhas (completed 2026-03-29)
-- [ ] **Phase 13: Sync Visibility** - Estado de conectividade e sync confiavel no shell autenticado
+- [x] **Phase 13: Sync Visibility** - Estado de conectividade e sync confiavel no shell autenticado (completed 2026-03-31)
 - [ ] **Phase 14: Leaderboard Identity Normalization** - Nome legivel e consistente em ranking e superficies admin
 - [ ] **Phase 15: Offline Navigation (SW Cache)** - Service Worker para cache de app shell e RSC payloads, garantindo navegacao offline sem PWA
 
@@ -78,7 +78,7 @@ Plans:
 Plans:
 
 - [x] 13-01-PLAN.md — Refatorar engine com callbacks de lifecycle e criar SyncStatusProvider com Context compartilhado
-- [ ] 13-02-PLAN.md — Criar SyncStatusIcon com 5 estados visuais e integrar no sidebar footer com verificacao visual
+- [x] 13-02-PLAN.md — Criar SyncStatusIcon com 5 estados visuais e integrar no sidebar footer com verificacao visual
 
 ### Phase 14: Leaderboard Identity Normalization
 
@@ -134,6 +134,6 @@ Plans:
 | 10. Responsive Pages                   | v1.1      | 3/3            | Complete    | 2026-03-27 |
 | 11. Dashboard + Visual Polish          | v1.1      | 3/3            | Complete    | 2026-03-27 |
 | 12. Export Workflows                   | v1.2      | 2/2            | Complete    | 2026-03-29 |
-| 13. Sync Visibility                    | v1.2      | 1/2 | In Progress|  |
+| 13. Sync Visibility                    | v1.2      | 2/2 | Complete   | 2026-03-31 |
 | 14. Leaderboard Identity Normalization | v1.2      | 0/2            | Not started | -          |
 | 15. Offline Navigation (SW Cache)      | v1.2      | 0/2            | Not started | -          |
