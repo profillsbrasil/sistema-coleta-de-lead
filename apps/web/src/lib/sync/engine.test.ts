@@ -16,6 +16,15 @@ vi.mock("./connectivity", () => ({
 	createConnectivityDetector: () => mockDetector,
 }));
 
+// Mock constants to make retries instant in tests
+vi.mock("./constants", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("./constants")>();
+	return {
+		...actual,
+		getBackoffDelay: () => 0,
+	};
+});
+
 // Mock tRPC client
 const mockPushChanges = { mutate: vi.fn() };
 const mockPullChanges = { query: vi.fn() };
@@ -395,6 +404,277 @@ describe("sync engine", () => {
 			expect(localStorage.getItem("lastSyncTimestamp")).toBe(
 				"2026-06-15T12:00:00Z"
 			);
+		});
+	});
+
+	describe("startSync callbacks", () => {
+		it("startSync(callbacks, detector) returns cleanup function", async () => {
+			const { startSync } = await import("./engine");
+			const callbacks = { onSyncStart: vi.fn(), onSyncEnd: vi.fn() };
+			const cleanup = startSync(callbacks, mockDetector);
+			expect(typeof cleanup).toBe("function");
+			cleanup();
+		});
+
+		it("startSync() without arguments still works (backward compatible)", async () => {
+			const { startSync } = await import("./engine");
+			const cleanup = startSync();
+			expect(typeof cleanup).toBe("function");
+			cleanup();
+		});
+
+		it("uses external detector when provided instead of creating new one", async () => {
+			const externalDetector = {
+				isOnline: true,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((_fn: (online: boolean) => void) => vi.fn()),
+			};
+			const { startSync } = await import("./engine");
+			const cleanup = startSync({}, externalDetector);
+			expect(externalDetector.subscribe).toHaveBeenCalled();
+			expect(externalDetector.start).toHaveBeenCalled();
+			cleanup();
+		});
+
+		it("calls onSyncStart when sync triggers", async () => {
+			const onSyncStart = vi.fn();
+
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			expect(onSyncStart).toHaveBeenCalled();
+
+			cleanup();
+		});
+
+		it("calls onSyncEnd with { lastSync, error: null } on successful sync", async () => {
+			const onSyncStart = vi.fn();
+
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			expect(onSyncEnd).toHaveBeenCalledWith(
+				expect.objectContaining({
+					lastSync: expect.any(String),
+					error: null,
+				})
+			);
+
+			cleanup();
+		});
+
+		it("calls onSyncEnd with error only after all 5 retries fail (D-11)", async () => {
+			const onSyncStart = vi.fn();
+			const onSyncEnd = vi.fn();
+
+			// Add data to syncQueue so pushChanges actually calls mutate
+			await db.syncQueue.add({
+				localId: "retry-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Retry Test" }),
+				retryCount: 0,
+			});
+
+			const transientError = new Error("Network error");
+			mockPushChanges.mutate.mockRejectedValue(transientError);
+
+			// Use a promise to track when syncWithRetry completes
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+
+			const wrappedOnSyncEnd = vi.fn(
+				(result: { lastSync: string; error: string | null }) => {
+					onSyncEnd(result);
+					resolveSync();
+				}
+			);
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const cleanup = startSync(
+				{ onSyncStart, onSyncEnd: wrappedOnSyncEnd },
+				externalDetector
+			);
+
+			// Trigger sync via connectivity callback
+			connectivityCallback?.(true);
+
+			// Wait for all retries to complete (backoff delay mocked to 0)
+			await syncDone;
+
+			expect(onSyncStart).toHaveBeenCalledTimes(1);
+			expect(onSyncEnd).toHaveBeenCalledTimes(1);
+			expect(onSyncEnd).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: "Network error",
+				})
+			);
+
+			cleanup();
+		});
+
+		it("calls onSyncEnd with error: null on 401 (auth error stops cleanly)", async () => {
+			const onSyncStart = vi.fn();
+
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			// Add data to syncQueue so pushChanges calls mutate
+			await db.syncQueue.add({
+				localId: "auth-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Auth Test" }),
+				retryCount: 0,
+			});
+
+			const authError = new Error("UNAUTHORIZED");
+			(authError as unknown as Record<string, unknown>).data = {
+				code: "UNAUTHORIZED",
+			};
+			mockPushChanges.mutate.mockRejectedValue(authError);
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			expect(onSyncEnd).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: null,
+				})
+			);
+
+			cleanup();
+		});
+
+		it("transient error then success does NOT fire onSyncEnd with error", async () => {
+			const onSyncStart = vi.fn();
+
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			// Add data to syncQueue so pushChanges calls mutate
+			await db.syncQueue.add({
+				localId: "transient-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Transient Test" }),
+				retryCount: 0,
+			});
+
+			// First attempt fails, second succeeds
+			mockPushChanges.mutate
+				.mockRejectedValueOnce(new Error("Transient"))
+				.mockResolvedValue({
+					acknowledged: [{ localId: "transient-uuid", queueId: "q1" }],
+					idMappings: [],
+				});
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: "2026-06-15T12:00:00Z",
+			});
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			expect(onSyncEnd).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: null,
+				})
+			);
+
+			cleanup();
 		});
 	});
 

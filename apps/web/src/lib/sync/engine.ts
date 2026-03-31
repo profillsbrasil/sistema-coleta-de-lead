@@ -4,9 +4,15 @@ import { toast } from "sonner";
 
 import { db } from "../db/index";
 import type { Lead } from "../db/types";
+import type { ConnectivityDetector } from "./connectivity";
 import { createConnectivityDetector } from "./connectivity";
 import { getBackoffDelay, SYNC_CONFIG } from "./constants";
 import { uploadPendingPhotos } from "./photo-upload";
+
+export interface SyncEngineCallbacks {
+	onSyncEnd?: (result: { lastSync: string; error: string | null }) => void;
+	onSyncStart?: () => void;
+}
 
 const syncClient = createTRPCClient<AppRouter>({
 	links: [
@@ -200,15 +206,24 @@ export async function syncCycle(): Promise<void> {
 	}
 }
 
-async function syncWithRetry(): Promise<void> {
+async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
+	callbacks?.onSyncStart?.();
+	let lastError: string | null = null;
+
 	for (let attempt = 0; attempt < SYNC_CONFIG.maxRetries; attempt++) {
 		try {
 			await syncCycle();
+			const lastSync =
+				localStorage.getItem("lastSyncTimestamp") ?? new Date().toISOString();
+			callbacks?.onSyncEnd?.({ lastSync, error: null });
 			return;
 		} catch (error: unknown) {
 			if (isUnauthorizedError(error)) {
+				const lastSync = localStorage.getItem("lastSyncTimestamp") ?? "";
+				callbacks?.onSyncEnd?.({ lastSync, error: null });
 				return;
 			}
+			lastError = error instanceof Error ? error.message : "Erro desconhecido";
 			if (attempt < SYNC_CONFIG.maxRetries - 1) {
 				await new Promise((resolve) => {
 					setTimeout(resolve, getBackoffDelay(attempt));
@@ -216,25 +231,32 @@ async function syncWithRetry(): Promise<void> {
 			}
 		}
 	}
+
+	// All retries exhausted (D-11)
+	const lastSync = localStorage.getItem("lastSyncTimestamp") ?? "";
+	callbacks?.onSyncEnd?.({ lastSync, error: lastError });
 }
 
-export function startSync(): () => void {
-	const detector = createConnectivityDetector();
+export function startSync(
+	callbacks?: SyncEngineCallbacks,
+	detector?: ConnectivityDetector
+): () => void {
+	const _detector = detector ?? createConnectivityDetector();
 
-	const unsubscribe = detector.subscribe((online) => {
+	const unsubscribe = _detector.subscribe((online) => {
 		if (online) {
-			syncWithRetry();
+			syncWithRetry(callbacks);
 		}
 	});
 
-	detector.start();
+	_detector.start();
 
-	if (detector.isOnline) {
-		syncWithRetry();
+	if (_detector.isOnline) {
+		syncWithRetry(callbacks);
 	}
 
 	return () => {
 		unsubscribe();
-		detector.stop();
+		_detector.stop();
 	};
 }
