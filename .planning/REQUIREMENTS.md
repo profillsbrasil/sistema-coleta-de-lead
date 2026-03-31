@@ -23,11 +23,10 @@
 - [ ] **ENH-06**: Leaderboard mostra um nome legivel para cada vendedor usando fallback canonico quando os metadados de auth estiverem incompletos
 - [ ] **ENH-09**: Nomes corrigidos permanecem consistentes no cache offline do leaderboard e nas superficies admin relacionadas ao vendedor
 
-### PWA e Instalacao
+### Navegacao Offline (SW Cache)
 
-- [ ] **PWA-01**: App expoe manifest, icones e metadata validos para instalacao em dispositivos moveis com modo standalone
-- [ ] **PWA-02**: Usuario elegivel ve CTA de instalacao apenas quando o browser suporta prompt ou quando existe guidance relevante para o device atual
-- [ ] **PWA-03**: No iOS Safari, usuario recebe orientacao manual de "Adicionar a Tela de Inicio" em vez de um botao de prompt quebrado
+- [ ] **SW-01**: Usuario autenticado que carregou o app online pode navegar entre todas as rotas autenticadas offline sem erro de RSC payload
+- [ ] **SW-02**: Service Worker cacheia app shell e RSC payloads sem manifest, sem install prompt, sem funcionalidade PWA
 
 ## Future Requirements
 
@@ -43,7 +42,8 @@
 | Feature | Reason |
 |---------|--------|
 | Geracao nativa de `.xlsx` | CSV compativel com Excel/Sheets cobre a necessidade operacional de v1.2 sem nova dependencia pesada |
-| Push notifications ou background sync | "PWA" nesta milestone significa instalabilidade, nao expansao de plataforma |
+| Push notifications ou background sync | SW e apenas para cache de navegacao, nao expansao de plataforma |
+| PWA (manifest, install prompt, home screen) | Usuario quer web-only, sem instalacao como app |
 | Integracoes com CRM, email ou compartilhamento em nuvem | O objetivo da milestone e handoff via arquivo exportado |
 | Sistema completo de perfis publicos | O bug atual pode ser resolvido com fallback canonico e cache consistente |
 
@@ -57,13 +57,12 @@
 | ENH-08 | Phase 13 | Complete |
 | ENH-06 | Phase 14 | Pending |
 | ENH-09 | Phase 14 | Pending |
-| PWA-01 | Phase 15 | Pending |
-| PWA-02 | Phase 15 | Pending |
-| PWA-03 | Phase 15 | Pending |
+| SW-01 | Phase 15 | Pending |
+| SW-02 | Phase 15 | Pending |
 
 **Coverage:**
-- v1.2 requirements: 9 total
-- Mapped to phases: 9
+- v1.2 requirements: 8 total
+- Mapped to phases: 8
 - Unmapped: 0
 
 ---
