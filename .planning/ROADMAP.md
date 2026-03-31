@@ -96,8 +96,8 @@ Plans:
 
 Plans:
 
-- [ ] 14-01: Normalizar resolver de display name no server e alinhar leaderboard/admin queries
-- [ ] 14-02: Invalidar/versionar cache de ranking e verificar fallback/current-user em online e offline
+- [x] 14-01-PLAN.md — TDD: criar testes + corrigir leaderboard.ts (CTE+ROW_NUMBER+COALESCE), admin/leads.ts (SPLIT_PART fallback), admin/stats.ts (idem + GROUP BY fix), remover "(voce)" de leaderboard-entry.tsx
+- [ ] 14-02-PLAN.md — Atualizar leaderboard-tab.tsx para usar rank do servidor (eliminar rank drift) + suite completa + verificacao visual
 
 ### Phase 15: Offline Navigation (SW Cache)
 
@@ -134,6 +134,6 @@ Plans:
 | 10. Responsive Pages                   | v1.1      | 3/3            | Complete    | 2026-03-27 |
 | 11. Dashboard + Visual Polish          | v1.1      | 3/3            | Complete    | 2026-03-27 |
 | 12. Export Workflows                   | v1.2      | 2/2            | Complete    | 2026-03-29 |
-| 13. Sync Visibility                    | v1.2      | 2/2 | Complete   | 2026-03-31 |
-| 14. Leaderboard Identity Normalization | v1.2      | 0/2            | Not started | -          |
+| 13. Sync Visibility                    | v1.2      | 2/2            | Complete    | 2026-03-31 |
+| 14. Leaderboard Identity Normalization | v1.2      | 1/2 | In Progress|  |
 | 15. Offline Navigation (SW Cache)      | v1.2      | 0/2            | Not started | -          |

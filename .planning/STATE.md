@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Export, Connectivity & PWA
-status: verifying
-stopped_at: Completed 13-02-PLAN.md
-last_updated: "2026-03-31T08:46:02.450Z"
+status: executing
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-03-31T11:20:15.674Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
   percent: 22
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Phase 13 — sync-visibility
+**Current focus:** Phase 14 — leaderboard-identity-normalization
 
 ## Current Position
 
 Milestone: v1.2 Export, Connectivity & PWA
-Phase: 13 (sync-visibility) — EXECUTING
+Phase: 14 (leaderboard-identity-normalization) — EXECUTING
 Plan: 2 of 2
-Status: Phase complete — ready for verification
+Status: Ready to execute
 Last activity: 2026-03-31
 
 Progress: [██░░░░░░░░] 22% (v1.2) — 0/4 phases, 2/9 plans complete
@@ -48,6 +48,7 @@ Progress: [██░░░░░░░░] 22% (v1.2) — 0/4 phases, 2/9 plans 
 | 12 | 2 | 12min | 6min |
 | Phase 13 P01 | 9min | 2 tasks | 5 files |
 | Phase 13 P02 | 8min | 2 tasks | 4 files |
+| Phase 14 P01 | 5min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -103,6 +104,9 @@ Decisoes relevantes para v1.1:
 - [Phase 13]: Estado atomico via single useState object { isSyncing, lastSync, lastError } para evitar flicker entre renders
 - [Phase 13]: SyncStatusIcon: pure functions exportadas (deriveSyncState, getTooltipText, formatBadgeCount) para testabilidade sem DOM
 - [Phase 13]: Hydration-safe pattern: nunca ler localStorage em useState initializer, sempre em useEffect (documentado em CLAUDE.md Common Hurdles)
+- [Phase 14]: D-07: COALESCE inline em cada router vs shared helper — mantido inline; queries sao distintas (CTE vs SPLIT_PART)
+- [Phase 14]: CTE com ROW_NUMBER() OVER para rank posicional no SQL; COALESCE('Vendedor #' || rank) garante fallback legivel
+- [Phase 14]: SPLIT_PART(email, '@', 1) como fallback para admin — mais informativo que numero generico
 
 ### Pending Todos
 
@@ -116,6 +120,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T08:46:02.448Z
-Stopped at: Completed 13-02-PLAN.md
+Last session: 2026-03-31T11:20:15.672Z
+Stopped at: Completed 14-01-PLAN.md
 Resume file: None
