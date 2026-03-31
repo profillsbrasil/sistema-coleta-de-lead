@@ -20,8 +20,8 @@
 
 ### Identidade no Leaderboard
 
-- [ ] **ENH-06**: Leaderboard mostra um nome legivel para cada vendedor usando fallback canonico quando os metadados de auth estiverem incompletos
-- [ ] **ENH-09**: Nomes corrigidos permanecem consistentes no cache offline do leaderboard e nas superficies admin relacionadas ao vendedor
+- [x] **ENH-06**: Leaderboard mostra um nome legivel para cada vendedor usando fallback canonico quando os metadados de auth estiverem incompletos
+- [x] **ENH-09**: Nomes corrigidos permanecem consistentes no cache offline do leaderboard e nas superficies admin relacionadas ao vendedor
 
 ### Navegacao Offline (SW Cache)
 
@@ -55,8 +55,8 @@
 | ENH-07 | Phase 12 | Complete |
 | ENH-02 | Phase 13 | Complete |
 | ENH-08 | Phase 13 | Complete |
-| ENH-06 | Phase 14 | Pending |
-| ENH-09 | Phase 14 | Pending |
+| ENH-06 | Phase 14 | Complete |
+| ENH-09 | Phase 14 | Complete |
 | SW-01 | Phase 15 | Pending |
 | SW-02 | Phase 15 | Pending |
 
