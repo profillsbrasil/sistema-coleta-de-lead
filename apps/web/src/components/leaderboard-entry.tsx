@@ -35,7 +35,6 @@ export function LeaderboardEntry({
 				<div className="flex-1">
 					<p className="font-semibold text-sm">
 						{name}
-						{isCurrentUser ? " (voce)" : ""}
 					</p>
 					<div className="flex justify-between">
 						<span className="text-muted-foreground text-xs">

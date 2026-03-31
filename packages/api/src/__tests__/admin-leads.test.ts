@@ -117,4 +117,33 @@ describe("adminLeadsRouter", () => {
 		expect(dbSpies.limit).not.toHaveBeenCalled();
 		expect(dbSpies.offset).not.toHaveBeenCalled();
 	});
+
+	it("listVendors retorna name nao-nulo usando SPLIT_PART como fallback", async () => {
+		const executeResult = {
+			rows: [
+				{ userId: "user-with-name", name: "Ana Costa" },
+				{ userId: "user-no-name", name: "joao.silva" },
+			],
+		};
+
+		const { adminLeadsRouter } = await loadAdminLeadsRouter([]);
+		const { db } = await import("@dashboard-leads-profills/db");
+		(db.execute as ReturnType<typeof vi.fn>).mockResolvedValue(executeResult);
+
+		const caller = adminLeadsRouter.createCaller({
+			supabase: {} as never,
+			user: { sub: "admin-user" },
+			userRole: "admin",
+		});
+
+		const result = await caller.listVendors();
+
+		expect(result).toHaveLength(2);
+		expect(result[0]?.name).toBe("Ana Costa");
+		expect(result[1]?.name).toBe("joao.silva");
+		for (const vendor of result) {
+			expect(vendor.name).toBeTruthy();
+			expect(typeof vendor.name).toBe("string");
+		}
+	});
 });
