@@ -12,8 +12,9 @@ Vendedores conseguem coletar leads de forma rapida e confiavel mesmo sem interne
 
 **v1.0 MVP — SHIPPED 2026-03-26**
 **v1.1 UI Refactor & Mobile UX — SHIPPED 2026-03-27**
+**Phase 14 complete (2026-03-31)** — Leaderboard identity normalized: COALESCE/ROW_NUMBER SQL, fallback "Vendedor #N", rank drift eliminado, sufixo "(você)" removido.
 
-11 phases concluidos, 34 plans executados, ~14.5k LOC TypeScript/TSX:
+14 phases concluidos, 36 plans executados, ~14.5k LOC TypeScript/TSX:
 - Auth: Supabase Auth com Google/Facebook/LinkedIn OAuth, roles admin/vendedor
 - Offline: Dexie + sync engine push-then-pull, server-wins, 74 testes passando
 - Captura: Form (<3 toques), QR scanner, foto comprimida + Supabase Storage
@@ -26,7 +27,6 @@ Vendedores conseguem coletar leads de forma rapida e confiavel mesmo sem interne
 
 Tech debt ativo:
 - LinkedIn/Facebook OAuth requer configuracao no Supabase Dashboard (manual)
-- Leaderboard mostra "Vendedor" para nao-current users (JOIN a auth.users pendente)
 - Nyquist validation incompleta: 4 fases com `nyquist_compliant: false`
 - 11 itens de human verification visual pendentes (media queries, dark mode, chart resize em browser real)
 
