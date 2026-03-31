@@ -38,18 +38,20 @@ export function SyncStatusProvider({
 	children: React.ReactNode;
 }) {
 	const [isOnline, setIsOnline] = useState(true);
-	const [syncState, setSyncState] = useState<SyncState>(() => ({
+	const [syncState, setSyncState] = useState<SyncState>({
 		isSyncing: false,
-		lastSync:
-			typeof window === "undefined"
-				? null
-				: localStorage.getItem("lastSyncTimestamp"),
+		lastSync: null,
 		lastError: null,
-	}));
+	});
 
 	const pendingCount = useLiveQuery(() => db.syncQueue.count(), [], 0);
 
 	useEffect(() => {
+		const storedSync = localStorage.getItem("lastSyncTimestamp");
+		if (storedSync) {
+			setSyncState((prev) => ({ ...prev, lastSync: storedSync }));
+		}
+
 		const detector = createConnectivityDetector();
 		setIsOnline(detector.isOnline);
 
