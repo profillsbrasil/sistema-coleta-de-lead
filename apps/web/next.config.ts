@@ -19,6 +19,24 @@ const nextConfig: NextConfig = {
 					},
 				],
 			},
+			{
+				source: "/sw-manifest.json",
+				headers: [
+					{
+						key: "Cache-Control",
+						value: "no-cache, no-store, must-revalidate",
+					},
+				],
+			},
+			{
+				source: "/sw-build.js",
+				headers: [
+					{
+						key: "Cache-Control",
+						value: "no-cache, no-store, must-revalidate",
+					},
+				],
+			},
 		];
 	},
 };

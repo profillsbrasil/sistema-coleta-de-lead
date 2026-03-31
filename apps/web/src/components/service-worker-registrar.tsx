@@ -8,16 +8,35 @@ export function ServiceWorkerRegistrar() {
 			return;
 		}
 
-		import("workbox-window").then(({ Workbox }) => {
-			const wb = new Workbox("/sw.js");
+		let cancelled = false;
 
-			// D-09: quando nova versao do SW esta waiting, ativar imediatamente
-			wb.addEventListener("waiting", () => {
-				wb.messageSkipWaiting();
-			});
+		async function registerServiceWorker() {
+			try {
+				const { Workbox } = await import("workbox-window");
+				if (cancelled) {
+					return;
+				}
 
-			wb.register();
-		});
+				const wb = new Workbox("/sw.js");
+
+				// D-09: quando nova versao do SW esta waiting, ativar imediatamente
+				wb.addEventListener("waiting", () => {
+					wb.messageSkipWaiting();
+				});
+
+				await wb.register();
+			} catch (error) {
+				if (process.env.NODE_ENV !== "production") {
+					console.error("Service worker registration failed", error);
+				}
+			}
+		}
+
+		registerServiceWorker();
+
+		return () => {
+			cancelled = true;
+		};
 	}, []);
 
 	return null;

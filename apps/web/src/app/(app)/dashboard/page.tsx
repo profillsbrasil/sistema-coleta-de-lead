@@ -1,21 +1,17 @@
+"use client";
+
 import FAB from "@/components/fab";
-import { createClient } from "@/lib/supabase/server";
+import { useRequiredAppAuth } from "@/components/app-auth-provider";
 
 import Dashboard from "./dashboard";
 
-export default async function DashboardPage() {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	const { data: claimsData } = await supabase.auth.getClaims();
-	const userRole = (claimsData?.claims as Record<string, unknown>)?.user_role;
-	const isAdmin = userRole === "admin";
+export default function DashboardPage() {
+	const { snapshot } = useRequiredAppAuth();
+	const isAdmin = snapshot.userRole === "admin";
 
 	return (
 		<div className="w-full">
-			<Dashboard isAdmin={isAdmin} userId={user?.id ?? ""} />
+			<Dashboard isAdmin={isAdmin} userId={snapshot.userId} />
 			<FAB />
 		</div>
 	);

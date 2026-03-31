@@ -9,9 +9,10 @@ import {
 	CardTitle,
 } from "@dashboard-leads-profills/ui/components/card";
 import { Loader2 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { readAuthSnapshot } from "@/lib/auth/auth-snapshot";
 import { createClient } from "@/lib/supabase/client";
 
 type OAuthProvider = "google" | "linkedin_oidc" | "facebook";
@@ -71,6 +72,10 @@ export default function LoginCard() {
 	const [loadingProvider, setLoadingProvider] = useState<OAuthProvider | null>(
 		null
 	);
+	const [localSnapshotName, setLocalSnapshotName] = useState<string | null>(
+		null
+	);
+	const router = useRouter();
 	const searchParams = useSearchParams();
 
 	useEffect(() => {
@@ -81,6 +86,10 @@ export default function LoginCard() {
 			toast.error("Nao foi possivel fazer login. Tente novamente.");
 		}
 	}, [searchParams]);
+
+	useEffect(() => {
+		setLocalSnapshotName(readAuthSnapshot()?.userName ?? null);
+	}, []);
 
 	function handleLogin(provider: OAuthProvider) {
 		setLoadingProvider(provider);
@@ -104,6 +113,16 @@ export default function LoginCard() {
 				</CardDescription>
 			</CardHeader>
 			<CardContent className="flex flex-col gap-4">
+				{localSnapshotName ? (
+					<Button
+						className="w-full"
+						onClick={() => router.push("/dashboard")}
+						size="lg"
+						variant="secondary"
+					>
+						Continuar offline como {localSnapshotName}
+					</Button>
+				) : null}
 				<Button
 					aria-busy={loadingProvider === "google"}
 					className="w-full"

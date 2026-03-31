@@ -1,12 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useRequiredAppAuth } from "@/components/app-auth-provider";
 
 import LeadList from "./lead-list";
 
-export default async function LeadsPage() {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+export default function LeadsPage() {
+	const { snapshot } = useRequiredAppAuth();
 
-	return <LeadList userId={user?.id ?? ""} />;
+	return <LeadList userId={snapshot.userId} />;
 }

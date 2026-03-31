@@ -1,17 +1,17 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { use } from "react";
+import { useRequiredAppAuth } from "@/components/app-auth-provider";
 
 import LeadDetail from "./lead-detail";
 
-export default async function LeadDetailPage({
+export default function LeadDetailPage({
 	params,
 }: {
 	params: Promise<{ id: string }>;
 }) {
-	const { id } = await params;
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	const { snapshot } = useRequiredAppAuth();
+	const { id } = use(params);
 
-	return <LeadDetail localId={id} userId={user?.id ?? ""} />;
+	return <LeadDetail localId={id} userId={snapshot.userId} />;
 }
