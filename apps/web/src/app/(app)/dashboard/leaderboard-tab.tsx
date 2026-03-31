@@ -32,12 +32,12 @@ export default function LeaderboardTab({ userId }: { userId: string }) {
 
 		const cacheData = async () => {
 			await db.leaderboardCache.clear();
-			const entries = serverData.ranking.map((r, i) => ({
+			const entries = serverData.ranking.map((r) => ({
 				userId: r.userId,
 				name: r.name,
 				totalLeads: r.totalLeads,
 				score: r.score,
-				rank: i + 1,
+				rank: r.rank,
 				lastSyncAt: serverData.serverTimestamp,
 			}));
 			await db.leaderboardCache.bulkPut(entries);
@@ -60,9 +60,8 @@ export default function LeaderboardTab({ userId }: { userId: string }) {
 	}, []);
 
 	const displayEntries = serverData
-		? serverData.ranking.map((r, i) => ({
+		? serverData.ranking.map((r) => ({
 				...r,
-				rank: i + 1,
 				lastSyncAt: serverData.serverTimestamp,
 			}))
 		: (cachedEntries ?? []);
