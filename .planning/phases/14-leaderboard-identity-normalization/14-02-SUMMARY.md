@@ -10,7 +10,7 @@ requires:
     provides: leaderboard.getRanking com rank: number via ROW_NUMBER() SQL
 provides:
   - leaderboard-tab.tsx com rank do servidor no cache Dexie (sem rank drift)
-  - Verificacao visual de nomes corretos e destaque sem "(voce)" (pendente checkpoint)
+  - Verificacao visual aprovada: nomes corretos, destaque sem "(voce)", cache offline funcional
 affects:
   - apps/web leaderboard display (cache offline agora reflete rank SQL correto)
 
@@ -38,35 +38,35 @@ requirements-completed:
   - ENH-09
 
 # Metrics
-duration: 2min
+duration: 16min
 completed: "2026-03-31"
-status: awaiting-checkpoint
 ---
 
 # Phase 14 Plan 02: Leaderboard rank do servidor (cache sem drift) Summary
 
-**Duas substituicoes cirurgicas em leaderboard-tab.tsx eliminam rank drift: cache Dexie agora usa r.rank do SQL ROW_NUMBER() em vez de i+1 calculado no JS.**
+**Duas substituicoes cirurgicas em leaderboard-tab.tsx eliminam rank drift: cache Dexie usa r.rank do SQL ROW_NUMBER(); verificacao visual aprovada com nomes corretos, destaque sem "(voce)" e cache offline funcional.**
 
 ## Performance
 
-- **Duration:** ~2 min
+- **Duration:** ~16 min (incluindo checkpoint de verificacao visual)
 - **Started:** 2026-03-31T11:21:56Z
-- **Completed:** Parcial — aguardando verificacao visual (checkpoint Task 3)
-- **Tasks:** 2 de 3 concluidas (Task 3 = checkpoint:human-verify)
+- **Completed:** 2026-03-31T11:37:39Z
+- **Tasks:** 3 de 3 concluidas
 - **Files modified:** 2
 
 ## Accomplishments
 
-- `leaderboard-tab.tsx`: bloco de cache Dexie agora usa `rank: r.rank` — rank SQL propagado ao IndexedDB
+- `leaderboard-tab.tsx`: bloco de cache Dexie agora usa `rank: r.rank` — rank SQL propagado ao IndexedDB sem drift
 - `leaderboard-tab.tsx`: displayEntries agora usa spread `...r` sem override de rank — `r.rank` incluido via spread
 - `leaderboard-entry.tsx`: formatacao Biome corrigida (tag `<p>` colapsada em linha unica)
 - Suite completa: 149 testes passando em web + api + env
+- Verificacao visual aprovada: nomes legiveis, destaque visual sem sufixo "(voce)", cache offline funcional
 
 ## Task Commits
 
 1. **Task 1: Atualizar leaderboard-tab.tsx para usar rank do servidor** - `6233b79` (fix)
 2. **Task 2: Rodar suite completa e verificar Biome** - `e14af45` (chore)
-3. **Task 3: Verificacao visual** - PENDENTE (checkpoint:human-verify)
+3. **Task 3: Verificacao visual** - aprovado pelo usuario (checkpoint:human-verify)
 
 ## Files Created/Modified
 
@@ -97,14 +97,21 @@ status: awaiting-checkpoint
 
 None — rank agora vem diretamente do servidor SQL.
 
-## Checkpoint Status
+## Issues Encountered
 
-**Task 3 (checkpoint:human-verify) aguardando:**
-- App deve ser iniciado com `bun run dev:web`
-- Verificar nomes corretos no leaderboard, destaque visual sem "(voce)", cache offline funcional
-- Verificar /admin/dashboard com nomes legiveis nos seletores de vendedor
+None — plano executado sem bloqueios.
 
-## Self-Check: PASSED (parcial — pre-checkpoint)
+## User Setup Required
+
+None - no external service configuration required.
+
+## Next Phase Readiness
+
+- Phase 14 completa: identidade do leaderboard normalizada em todas as camadas (SQL, API, UI, cache Dexie)
+- Pronto para phase 15: SW Cache para navegacao offline (app shell + RSC payloads)
+- Sem blockers.
+
+## Self-Check: PASSED
 
 - FOUND: apps/web/src/app/(app)/dashboard/leaderboard-tab.tsx
 - FOUND: apps/web/src/components/leaderboard-entry.tsx
@@ -113,4 +120,4 @@ None — rank agora vem diretamente do servidor SQL.
 
 ---
 *Phase: 14-leaderboard-identity-normalization*
-*Completed: 2026-03-31 (parcial — aguardando checkpoint)*
+*Completed: 2026-03-31*
