@@ -30,6 +30,7 @@
     "react-dom": "catalog:",
     "recharts": "3.8.0",
     "sonner": "catalog:",
+    "workbox-window": "7.4.0",
     "zod": "catalog:"
   },
   "devDependencies": {
