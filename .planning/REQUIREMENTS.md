@@ -15,8 +15,8 @@
 
 ### Conectividade e Sync
 
-- [ ] **ENH-02**: Usuario autenticado ve no shell do app um estado claro de conectividade e sync sem bloquear a captura offline
-- [ ] **ENH-08**: Estado de sync indica quando ha alteracoes pendentes, sincronizacao em andamento, falha recente ou ultima sincronizacao bem-sucedida
+- [x] **ENH-02**: Usuario autenticado ve no shell do app um estado claro de conectividade e sync sem bloquear a captura offline
+- [x] **ENH-08**: Estado de sync indica quando ha alteracoes pendentes, sincronizacao em andamento, falha recente ou ultima sincronizacao bem-sucedida
 
 ### Identidade no Leaderboard
 
@@ -53,8 +53,8 @@
 |-------------|-------|--------|
 | ENH-01 | Phase 12 | Complete |
 | ENH-07 | Phase 12 | Complete |
-| ENH-02 | Phase 13 | Pending |
-| ENH-08 | Phase 13 | Pending |
+| ENH-02 | Phase 13 | Complete |
+| ENH-08 | Phase 13 | Complete |
 | ENH-06 | Phase 14 | Pending |
 | ENH-09 | Phase 14 | Pending |
 | PWA-01 | Phase 15 | Pending |
