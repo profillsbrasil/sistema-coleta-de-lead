@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { SyncStatusIcon } from "./sync-status-icon";
 
 interface SidebarUserMenuProps {
 	gravatarUrl: string;
@@ -76,6 +77,7 @@ export default function SidebarUserMenu({
 							{userRole === "admin" ? "Admin" : "Vendedor"}
 						</span>
 					</div>
+					<SyncStatusIcon />
 					<Button
 						aria-label="Alternar tema"
 						onClick={handleToggleTheme}
