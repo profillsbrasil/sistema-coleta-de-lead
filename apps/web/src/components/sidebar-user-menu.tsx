@@ -14,6 +14,7 @@ import { LogOut, Moon, Sun } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { clearAuthSnapshot } from "@/lib/auth/auth-snapshot";
 import { createClient } from "@/lib/supabase/client";
 import { SyncStatusIcon } from "./sync-status-icon";
 
@@ -59,6 +60,7 @@ export default function SidebarUserMenu({
 
 	async function handleSignOut() {
 		const supabase = createClient();
+		clearAuthSnapshot();
 		await supabase.auth.signOut();
 		router.push("/login");
 	}

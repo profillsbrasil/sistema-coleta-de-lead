@@ -1,5 +1,7 @@
 import { SYNC_CONFIG } from "./constants";
 
+const HEALTHCHECK_URL = "/api/health";
+
 export type ConnectivityListener = (online: boolean) => void;
 
 export interface ConnectivityDetector {
@@ -28,7 +30,7 @@ export function createConnectivityDetector(
 
 	async function checkConnectivity(): Promise<boolean> {
 		try {
-			const response = await fetch(`/api/trpc/healthCheck?t=${Date.now()}`, {
+			const response = await fetch(`${HEALTHCHECK_URL}?t=${Date.now()}`, {
 				method: "HEAD",
 				cache: "no-store",
 			});

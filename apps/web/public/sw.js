@@ -6,28 +6,99 @@ importScripts(
 	"https://storage.googleapis.com/workbox-cdn/releases/7.4.0/workbox-sw.js"
 );
 
+// Build config gerado pelo postbuild — define self.__SW_BUILD_ID com o buildId do Next.js.
+// Em dev mode, sw-build.js nao existe — importScripts falha silenciosamente e __SW_BUILD_ID fica undefined.
+// O browser compara todos os importScripts ao checar updates de SW, entao mudanca no buildId
+// aciona instalacao automatica do SW novo.
+try {
+	importScripts("/sw-build.js");
+} catch {
+	// Dev mode — arquivo nao existe
+}
+
 const { registerRoute, setCatchHandler } = workbox.routing;
 const { NetworkFirst, CacheFirst } = workbox.strategies;
-const { precacheAndRoute } = workbox.precaching;
+const { precacheAndRoute, matchPrecache } = workbox.precaching;
 const { ExpirationPlugin } = workbox.expiration;
 const { clientsClaim } = workbox.core;
 const { CacheableResponsePlugin } = workbox.cacheableResponse;
+
+// Nomes dos caches — declarados no topo para uso nos handlers install/activate e nas strategies
+const STATIC_CACHE = "static-assets-v1";
+const RSC_CACHE = "rsc-payloads-v1";
 
 // D-09: ativar imediatamente sem aguardar reload manual
 // NOTA: workbox.core.skipWaiting() foi REMOVIDO no v7 — usar self.skipWaiting() diretamente
 self.skipWaiting();
 clientsClaim();
 
+// ---------------------------------------------------------------------------
+// Pre-cache de TODOS os chunks JS/CSS do build via manifest gerado pelo postbuild.
+// Sem isso, hard reload offline falha porque precacheAndRoute cacheia apenas o HTML
+// das rotas, nao os JS/CSS referenciados nesse HTML.
+// Em dev mode, sw-manifest.json nao existe — o .catch() garante install limpo.
+// ---------------------------------------------------------------------------
+self.addEventListener("install", (event) => {
+	event.waitUntil(
+		fetch("/sw-manifest.json")
+			.then((r) => r.json())
+			.then(async (manifest) => {
+				const cache = await caches.open(STATIC_CACHE);
+				await Promise.allSettled(
+					manifest.assets.map((url) =>
+						fetch(url).then((resp) => {
+							if (resp.ok) {
+								return cache.put(url, resp);
+							}
+						})
+					)
+				);
+			})
+			.catch(() => {
+				// Manifest nao encontrado (dev mode) — SW instala sem precache de chunks
+			})
+	);
+});
+
+// Limpar chunks obsoletos de deploys anteriores.
+// Compara o cache atual com o manifest — remove o que nao esta na lista.
+self.addEventListener("activate", (event) => {
+	event.waitUntil(
+		fetch("/sw-manifest.json")
+			.then((r) => r.json())
+			.then(async (manifest) => {
+				const cache = await caches.open(STATIC_CACHE);
+				const keys = await cache.keys();
+				const validUrls = new Set(
+					manifest.assets.map(
+						(a) => new URL(a, self.location.origin).toString()
+					)
+				);
+				for (const key of keys) {
+					if (!validUrls.has(key.url)) {
+						await cache.delete(key);
+					}
+				}
+			})
+			.catch(() => {
+				// Manifest indisponivel — manter cache existente
+			})
+	);
+});
+
 // D-01: pre-cache de todas as rotas autenticadas no install
-// revision: "v1" — atualizar ao mudar o app shell para invalidar o cache
+// revision usa o buildId do Next.js (via sw-build.js) para invalidar o cache a cada deploy.
+// Em dev mode, fallback para "dev" — precache nao e confiavel em dev de qualquer forma.
+const BUILD_REVISION = self.__SW_BUILD_ID || "dev";
+
 precacheAndRoute([
-	{ url: "/dashboard", revision: "v1" },
-	{ url: "/leads", revision: "v1" },
-	{ url: "/leads/new", revision: "v1" },
-	{ url: "/admin/leads", revision: "v1" },
-	{ url: "/admin/users", revision: "v1" },
-	{ url: "/admin/stats", revision: "v1" },
-	{ url: "/offline", revision: "v1" }, // D-08: pre-cache da pagina de fallback
+	{ url: "/dashboard", revision: BUILD_REVISION },
+	{ url: "/leads", revision: BUILD_REVISION },
+	{ url: "/leads/new", revision: BUILD_REVISION },
+	{ url: "/admin/leads", revision: BUILD_REVISION },
+	{ url: "/admin/users", revision: BUILD_REVISION },
+	{ url: "/admin/stats", revision: BUILD_REVISION },
+	{ url: "/offline", revision: BUILD_REVISION }, // D-08: pre-cache da pagina de fallback
 ]);
 
 // Plugin para normalizar URL antes de usar como cache key
@@ -41,8 +112,6 @@ const rscUrlNormalizerPlugin = {
 	},
 };
 
-const RSC_CACHE = "rsc-payloads-v1";
-
 // D-03: RSC payloads — NetworkFirst (network first, fallback ao cache offline)
 // Detectar pelo header RSC: 1 que o App Router envia em toda navegacao client-side
 registerRoute(
@@ -52,6 +121,12 @@ registerRoute(
 	new NetworkFirst({
 		cacheName: RSC_CACHE,
 		networkTimeoutSeconds: 3,
+		// ignoreVary: true — Next.js envia Vary: rsc, next-router-state-tree, Accept-Encoding
+		// O request normalizado (sem headers) causaria mismatch no Vary check do Chromium.
+		// Ignorar Vary garante que o cache key normalizado seja suficiente para lookup offline.
+		matchOptions: {
+			ignoreVary: true,
+		},
 		plugins: [
 			rscUrlNormalizerPlugin,
 			// CacheableResponsePlugin: garante que respostas 200 sejam armazenadas
@@ -64,8 +139,6 @@ registerRoute(
 		],
 	})
 );
-
-const STATIC_CACHE = "static-assets-v1";
 
 // D-04: assets estaticos Next.js — CacheFirst (imutaveis por hash no nome do arquivo)
 registerRoute(
@@ -99,9 +172,11 @@ registerRoute(
 
 // D-07: fallback para rotas offline nao cacheadas
 setCatchHandler(({ event }) => {
-	// Navegacao HTML: servir pagina offline
+	// Navegacao HTML: servir pagina offline pre-cacheada
+	// matchPrecache() resolve a revision key (?__WB_REVISION__=v1) internamente
+	// caches.match("/offline") nao funciona porque a cache key inclui o revision suffix
 	if (event.request.destination === "document") {
-		return caches.match("/offline");
+		return matchPrecache("/offline");
 	}
 	// RSC payload falhou e nao esta em cache:
 	// retornar 503 com Content-Type correto — React nao quebra, mantem estado atual

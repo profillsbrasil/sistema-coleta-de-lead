@@ -15,6 +15,7 @@ import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { clearAuthSnapshot } from "@/lib/auth/auth-snapshot";
 import { createClient } from "@/lib/supabase/client";
 
 export default function UserMenu() {
@@ -44,6 +45,7 @@ export default function UserMenu() {
 
 	async function handleSignOut() {
 		const supabase = createClient();
+		clearAuthSnapshot();
 		await supabase.auth.signOut();
 		router.push("/login");
 	}

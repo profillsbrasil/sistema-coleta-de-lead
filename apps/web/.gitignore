@@ -13,6 +13,8 @@
 
 # Build outputs
 /.next/
+/public/sw-manifest.json
+/public/sw-build.js
 /out/
 /build/
 /dist/

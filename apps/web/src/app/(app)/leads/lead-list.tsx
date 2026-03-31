@@ -85,7 +85,7 @@ function LeadResults({
 	isFiltered: boolean;
 	leads: Lead[];
 	onNavigate: (localId: string) => void;
-	sentinelRef: React.RefObject<HTMLDivElement | null>;
+	sentinelRef: React.RefObject<HTMLLIElement | null>;
 }) {
 	return (
 		<ul className="flex list-none flex-col gap-4">
@@ -113,7 +113,7 @@ export default function LeadList({ userId }: LeadListProps) {
 	const [limit, setLimit] = useState(PAGE_SIZE);
 	const [isExporting, setIsExporting] = useState(false);
 	const isExportingRef = useRef(false);
-	const sentinelRef = useRef<HTMLDivElement>(null);
+	const sentinelRef = useRef<HTMLLIElement>(null);
 
 	const leads = useLiveQuery(
 		() => queryLeads(userId, activeTag, limit),

@@ -12,14 +12,13 @@ import { Label } from "@dashboard-leads-profills/ui/components/label";
 import { Textarea } from "@dashboard-leads-profills/ui/components/textarea";
 import { ArrowLeft, Loader2, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Lead } from "@/lib/db/types";
 import { saveLead } from "@/lib/lead/save-lead";
 import { updateLead } from "@/lib/lead/update-lead";
 import { type LeadFormData, leadFormSchema } from "@/lib/lead/validation";
 import { formatPhone, maskPhoneInput, unmaskPhone } from "@/lib/masks/phone";
-import { createClient } from "@/lib/supabase/client";
 
 import PhotoCapture from "./photo-capture";
 import QRScanner from "./qr-scanner";
@@ -43,6 +42,7 @@ interface LeadFormProps {
 		data: LeadFormData,
 		photo: Blob | null | undefined
 	) => Promise<void>;
+	userId?: string | null;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form component with many fields requires co-located state and validation logic
@@ -53,6 +53,7 @@ export default function LeadForm({
 	onUpdate,
 	hidePhoto,
 	hideQR,
+	userId,
 }: LeadFormProps) {
 	const router = useRouter();
 	const isEditMode = !!lead;
@@ -77,20 +78,6 @@ export default function LeadForm({
 	const nameRef = useRef<HTMLInputElement>(null);
 	const phoneRef = useRef<HTMLInputElement>(null);
 	const emailRef = useRef<HTMLInputElement>(null);
-
-	const [userId, setUserId] = useState<string | null>(null);
-
-	useEffect(() => {
-		if (onSave) {
-			return;
-		}
-		const supabase = createClient();
-		supabase.auth.getUser().then(({ data }) => {
-			if (data.user) {
-				setUserId(data.user.id);
-			}
-		});
-	}, [onSave]);
 
 	function focusFirstError(fieldErrors: FormErrors) {
 		if (fieldErrors.name) {
