@@ -33,9 +33,7 @@ export function LeaderboardEntry({
 			<CardContent className="flex items-start gap-3">
 				<span className="min-w-6 text-muted-foreground text-xs">#{rank}</span>
 				<div className="flex-1">
-					<p className="font-semibold text-sm">
-						{name}
-					</p>
+					<p className="font-semibold text-sm">{name}</p>
 					<div className="flex justify-between">
 						<span className="text-muted-foreground text-xs">
 							{totalLeads} leads
