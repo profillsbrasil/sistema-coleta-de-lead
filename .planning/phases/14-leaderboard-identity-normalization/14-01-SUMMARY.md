@@ -130,6 +130,17 @@ None - no external service configuration required.
 - Todos os 22 testes em packages/api passando
 - Types limpos em packages/api (sem erros tsc)
 
+## Self-Check: PASSED
+
+- FOUND: packages/api/src/__tests__/leaderboard.test.ts
+- FOUND: packages/api/src/routers/leaderboard.ts
+- FOUND: packages/api/src/routers/admin/leads.ts
+- FOUND: packages/api/src/routers/admin/stats.ts
+- FOUND: apps/web/src/components/leaderboard-entry.tsx
+- FOUND commit: 0ef9398 (test)
+- FOUND commit: 827acef (feat)
+- FOUND commit: cae48f1 (feat)
+
 ---
 *Phase: 14-leaderboard-identity-normalization*
 *Completed: 2026-03-31*
