@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Export, Connectivity & PWA
-status: executing
-stopped_at: Checkpoint Task 3 — 14-02-PLAN.md aguardando verificacao visual
-last_updated: "2026-03-31T11:24:30.660Z"
+status: verifying
+stopped_at: Completed 14-02-PLAN.md
+last_updated: "2026-03-31T11:38:18.136Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 Milestone: v1.2 Export, Connectivity & PWA
 Phase: 14 (leaderboard-identity-normalization) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-31
 
 Progress: [██░░░░░░░░] 22% (v1.2) — 0/4 phases, 2/9 plans complete
@@ -49,6 +49,7 @@ Progress: [██░░░░░░░░] 22% (v1.2) — 0/4 phases, 2/9 plans 
 | Phase 13 P01 | 9min | 2 tasks | 5 files |
 | Phase 13 P02 | 8min | 2 tasks | 4 files |
 | Phase 14 P01 | 5min | 3 tasks | 6 files |
+| Phase 14 P02 | 16min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,8 @@ Decisoes relevantes para v1.1:
 - [Phase 14]: CTE com ROW_NUMBER() OVER para rank posicional no SQL; COALESCE('Vendedor #' || rank) garante fallback legivel
 - [Phase 14]: SPLIT_PART(email, '@', 1) como fallback para admin — mais informativo que numero generico
 - [Phase 14]: r.rank (SQL ROW_NUMBER) usada diretamente no cache Dexie em leaderboard-tab.tsx; rank drift eliminado
+- [Phase 14]: r.rank (SQL ROW_NUMBER) usada diretamente no cache Dexie em leaderboard-tab.tsx; rank drift eliminado
+- [Phase 14]: No displayEntries, remover rank: i+1 e deixar spread ...r incluir r.rank automaticamente
 
 ### Pending Todos
 
@@ -121,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T11:24:18.498Z
-Stopped at: Checkpoint Task 3 — 14-02-PLAN.md aguardando verificacao visual
+Last session: 2026-03-31T11:38:18.134Z
+Stopped at: Completed 14-02-PLAN.md
 Resume file: None
