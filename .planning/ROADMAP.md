@@ -135,5 +135,5 @@ Plans:
 | 11. Dashboard + Visual Polish          | v1.1      | 3/3            | Complete    | 2026-03-27 |
 | 12. Export Workflows                   | v1.2      | 2/2            | Complete    | 2026-03-29 |
 | 13. Sync Visibility                    | v1.2      | 2/2            | Complete    | 2026-03-31 |
-| 14. Leaderboard Identity Normalization | v1.2      | 2/2 | Complete   | 2026-03-31 |
+| 14. Leaderboard Identity Normalization | v1.2      | 2/2 | Complete    | 2026-03-31 |
 | 15. Offline Navigation (SW Cache)      | v1.2      | 0/2            | Not started | -          |
