@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Export, Connectivity & PWA
 status: verifying
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-03-31T11:42:17.953Z"
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-31T12:43:22.188Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
   percent: 22
 ---
 
@@ -50,6 +50,7 @@ Progress: [██░░░░░░░░] 22% (v1.2) — 0/4 phases, 2/9 plans 
 | Phase 13 P02 | 8min | 2 tasks | 4 files |
 | Phase 14 P01 | 5min | 3 tasks | 6 files |
 | Phase 14 P02 | 16min | 3 tasks | 2 files |
+| Phase 15 P01 | 345 | 4 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Decisoes relevantes para v1.1:
 - [Phase 14]: r.rank (SQL ROW_NUMBER) usada diretamente no cache Dexie em leaderboard-tab.tsx; rank drift eliminado
 - [Phase 14]: r.rank (SQL ROW_NUMBER) usada diretamente no cache Dexie em leaderboard-tab.tsx; rank drift eliminado
 - [Phase 14]: No displayEntries, remover rank: i+1 e deixar spread ...r incluir r.rank automaticamente
+- [Phase 15]: Cache buckets: rsc-payloads-v1 (NetworkFirst 3s timeout, 50 entries, 1h), static-assets-v1 (CacheFirst, 200 entries, 1yr), google-fonts-v1 (CacheFirst, 20 entries, 1yr)
+- [Phase 15]: ServiceWorkerRegistrar usa dynamic import de workbox-window dentro de useEffect para lazy load — sem impacto no bundle inicial
 
 ### Pending Todos
 
@@ -124,6 +127,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T11:38:18.134Z
-Stopped at: Completed 14-02-PLAN.md
+Last session: 2026-03-31T12:43:05.628Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None

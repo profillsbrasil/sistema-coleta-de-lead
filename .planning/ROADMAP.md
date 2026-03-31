@@ -115,8 +115,8 @@ Plans:
 
 Plans:
 
-- [ ] 15-01: Registrar Service Worker minimo com pre-cache de rotas autenticadas e cache-first para assets
-- [ ] 15-02: Verificacao de navegacao offline cross-browser (Chrome + Safari mobile)
+- [x] 15-01-PLAN.md — Instalar workbox-window, criar sw.js com Workbox CDN, ServiceWorkerRegistrar, pagina /offline e testes unitarios de logica pura
+- [ ] 15-02-PLAN.md — Protocolo de validacao manual cross-browser (Chrome DevTools 5 blocos + Safari) cobrindo os 4 success criteria do ROADMAP
 
 ## Progress
 
@@ -136,4 +136,4 @@ Plans:
 | 12. Export Workflows                   | v1.2      | 2/2            | Complete    | 2026-03-29 |
 | 13. Sync Visibility                    | v1.2      | 2/2            | Complete    | 2026-03-31 |
 | 14. Leaderboard Identity Normalization | v1.2      | 2/2 | Complete    | 2026-03-31 |
-| 15. Offline Navigation (SW Cache)      | v1.2      | 0/2            | Not started | -          |
+| 15. Offline Navigation (SW Cache)      | v1.2      | 1/2 | In Progress|  |
