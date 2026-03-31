@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Export, Connectivity & PWA
 status: executing
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-03-31T11:20:15.674Z"
+stopped_at: Checkpoint Task 3 — 14-02-PLAN.md aguardando verificacao visual
+last_updated: "2026-03-31T11:24:30.660Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 22
 ---
 
@@ -107,6 +107,7 @@ Decisoes relevantes para v1.1:
 - [Phase 14]: D-07: COALESCE inline em cada router vs shared helper — mantido inline; queries sao distintas (CTE vs SPLIT_PART)
 - [Phase 14]: CTE com ROW_NUMBER() OVER para rank posicional no SQL; COALESCE('Vendedor #' || rank) garante fallback legivel
 - [Phase 14]: SPLIT_PART(email, '@', 1) como fallback para admin — mais informativo que numero generico
+- [Phase 14]: r.rank (SQL ROW_NUMBER) usada diretamente no cache Dexie em leaderboard-tab.tsx; rank drift eliminado
 
 ### Pending Todos
 
@@ -120,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-31T11:20:15.672Z
-Stopped at: Completed 14-01-PLAN.md
+Last session: 2026-03-31T11:24:18.498Z
+Stopped at: Checkpoint Task 3 — 14-02-PLAN.md aguardando verificacao visual
 Resume file: None

@@ -37,7 +37,7 @@
 
 - [x] **Phase 12: Export Workflows** - Exportacao completa, segura e compativel com planilhas (completed 2026-03-29)
 - [x] **Phase 13: Sync Visibility** - Estado de conectividade e sync confiavel no shell autenticado (completed 2026-03-31)
-- [ ] **Phase 14: Leaderboard Identity Normalization** - Nome legivel e consistente em ranking e superficies admin
+- [x] **Phase 14: Leaderboard Identity Normalization** - Nome legivel e consistente em ranking e superficies admin (completed 2026-03-31)
 - [ ] **Phase 15: Offline Navigation (SW Cache)** - Service Worker para cache de app shell e RSC payloads, garantindo navegacao offline sem PWA
 
 ## Phase Details
@@ -97,7 +97,7 @@ Plans:
 Plans:
 
 - [x] 14-01-PLAN.md — TDD: criar testes + corrigir leaderboard.ts (CTE+ROW_NUMBER+COALESCE), admin/leads.ts (SPLIT_PART fallback), admin/stats.ts (idem + GROUP BY fix), remover "(voce)" de leaderboard-entry.tsx
-- [ ] 14-02-PLAN.md — Atualizar leaderboard-tab.tsx para usar rank do servidor (eliminar rank drift) + suite completa + verificacao visual
+- [x] 14-02-PLAN.md — Atualizar leaderboard-tab.tsx para usar rank do servidor (eliminar rank drift) + suite completa + verificacao visual
 
 ### Phase 15: Offline Navigation (SW Cache)
 
@@ -135,5 +135,5 @@ Plans:
 | 11. Dashboard + Visual Polish          | v1.1      | 3/3            | Complete    | 2026-03-27 |
 | 12. Export Workflows                   | v1.2      | 2/2            | Complete    | 2026-03-29 |
 | 13. Sync Visibility                    | v1.2      | 2/2            | Complete    | 2026-03-31 |
-| 14. Leaderboard Identity Normalization | v1.2      | 1/2 | In Progress|  |
+| 14. Leaderboard Identity Normalization | v1.2      | 2/2 | Complete   | 2026-03-31 |
 | 15. Offline Navigation (SW Cache)      | v1.2      | 0/2            | Not started | -          |
