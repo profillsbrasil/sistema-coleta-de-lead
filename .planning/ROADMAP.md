@@ -33,12 +33,12 @@
 
 ## v1.2 Export, Connectivity & PWA (Phases 12-15)
 
-**Milestone Goal:** Tornar o app mais confiavel e acionavel durante e apos o evento com exportacao de leads, visibilidade de conectividade/sync, identidade correta no leaderboard e instalacao como app.
+**Milestone Goal:** Tornar o app mais confiavel e acionavel durante e apos o evento com exportacao de leads, visibilidade de conectividade/sync e identidade correta no leaderboard.
 
 - [x] **Phase 12: Export Workflows** - Exportacao completa, segura e compativel com planilhas (completed 2026-03-29)
 - [ ] **Phase 13: Sync Visibility** - Estado de conectividade e sync confiavel no shell autenticado
 - [ ] **Phase 14: Leaderboard Identity Normalization** - Nome legivel e consistente em ranking e superficies admin
-- [ ] **Phase 15: PWA Installability** - Manifest, icones e fluxo de instalacao por plataforma
+- [ ] **Phase 15: Offline Navigation (SW Cache)** - Service Worker para cache de app shell e RSC payloads, garantindo navegacao offline sem PWA
 
 ## Phase Details
 
@@ -99,25 +99,24 @@ Plans:
 - [ ] 14-01: Normalizar resolver de display name no server e alinhar leaderboard/admin queries
 - [ ] 14-02: Invalidar/versionar cache de ranking e verificar fallback/current-user em online e offline
 
-### Phase 15: PWA Installability
+### Phase 15: Offline Navigation (SW Cache)
 
-**Goal**: Entregar instalabilidade mobile com metadata valida, CTA respeitoso por plataforma e verificacao real de home-screen launch sem expandir para uma plataforma PWA completa
+**Goal**: Garantir que navegacao entre rotas autenticadas funcione offline via Service Worker que cacheia app shell e RSC payloads — sem manifest, sem install prompt, sem PWA
 **Depends on**: Phase 14
-**Requirements**: PWA-01, PWA-02, PWA-03
+**Requirements**: SW-01, SW-02
 **Success Criteria** (what must be TRUE):
 
-  1. App expoe manifest e icones validos e pode ser instalado em modo standalone nos browsers suportados
-  2. Browsers Chromium exibem CTA/prompt apenas quando o evento de install esta disponivel e ocultam o CTA apos instalacao
-  3. iOS Safari exibe orientacao manual de "Adicionar a Tela de Inicio" em vez de um botao de prompt quebrado
-  4. Abrir o app pela home screen nos browsers alvo leva a um shell funcional e nao interrompe a captura de leads
-**Plans**: 3 plans
-**UI hint**: yes
+  1. Usuario autenticado que carregou o app online pode navegar entre todas as rotas autenticadas offline sem "Failed to fetch RSC payload"
+  2. Service Worker cacheia apenas assets estaticos e RSC payloads das rotas autenticadas — nenhum manifest, nenhum install prompt, nenhuma funcionalidade PWA
+  3. Formulario de captura de leads continua funcionando offline sem interrupcao durante navegacao
+  4. SW atualiza cache transparentemente quando online sem intervencao do usuario
+**Plans**: 2 plans
+**UI hint**: no
 
 Plans:
 
-- [ ] 15-01: Adicionar manifest, icones e metadata de instalacao no App Router
-- [ ] 15-02: Implementar CTA de instalacao Chromium + guidance iOS + hide em standalone
-- [ ] 15-03: Verificacao cross-browser do fluxo instalado/home-screen launch sem scope creep de push/background sync
+- [ ] 15-01: Registrar Service Worker minimo com pre-cache de rotas autenticadas e cache-first para assets
+- [ ] 15-02: Verificacao de navegacao offline cross-browser (Chrome + Safari mobile)
 
 ## Progress
 
@@ -137,4 +136,4 @@ Plans:
 | 12. Export Workflows                   | v1.2      | 2/2            | Complete    | 2026-03-29 |
 | 13. Sync Visibility                    | v1.2      | 1/2 | In Progress|  |
 | 14. Leaderboard Identity Normalization | v1.2      | 0/2            | Not started | -          |
-| 15. PWA Installability                 | v1.2      | 0/3            | Not started | -          |
+| 15. Offline Navigation (SW Cache)      | v1.2      | 0/2            | Not started | -          |
