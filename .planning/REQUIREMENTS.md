@@ -25,8 +25,8 @@
 
 ### Navegacao Offline (SW Cache)
 
-- [ ] **SW-01**: Usuario autenticado que carregou o app online pode navegar entre todas as rotas autenticadas offline sem erro de RSC payload
-- [ ] **SW-02**: Service Worker cacheia app shell e RSC payloads sem manifest, sem install prompt, sem funcionalidade PWA
+- [x] **SW-01**: Usuario autenticado que carregou o app online pode navegar entre todas as rotas autenticadas offline sem erro de RSC payload
+- [x] **SW-02**: Service Worker cacheia app shell e RSC payloads sem manifest, sem install prompt, sem funcionalidade PWA
 
 ## Future Requirements
 
@@ -57,8 +57,8 @@
 | ENH-08 | Phase 13 | Complete |
 | ENH-06 | Phase 14 | Complete |
 | ENH-09 | Phase 14 | Complete |
-| SW-01 | Phase 15 | Pending |
-| SW-02 | Phase 15 | Pending |
+| SW-01 | Phase 15 | Complete |
+| SW-02 | Phase 15 | Complete |
 
 **Coverage:**
 - v1.2 requirements: 8 total
