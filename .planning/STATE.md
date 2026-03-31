@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Export, Connectivity & PWA
-status: human_needed
-stopped_at: Phase 12 awaiting manual spreadsheet verification
-last_updated: "2026-03-29T15:45:24.000Z"
-last_activity: 2026-03-29
+status: executing
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-03-31T02:08:52.180Z"
+last_activity: 2026-03-31
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 9
-  completed_plans: 2
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 3
   percent: 22
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Vendedores coletam leads de forma rapida e confiavel mesmo sem internet, com sync automatico quando a conexao voltar.
-**Current focus:** Phase 12 manual verification
+**Current focus:** Phase 13 — sync-visibility
 
 ## Current Position
 
 Milestone: v1.2 Export, Connectivity & PWA
-Phase: 12 Export Workflows
-Plan: 2 of 2 in current phase
-Status: Awaiting manual spreadsheet verification
-Last activity: 2026-03-29 — Phase 12 needs Excel/Sheets verification
+Phase: 13 (sync-visibility) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-03-31
 
 Progress: [██░░░░░░░░] 22% (v1.2) — 0/4 phases, 2/9 plans complete
 
@@ -46,6 +46,7 @@ Progress: [██░░░░░░░░] 22% (v1.2) — 0/4 phases, 2/9 plans 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 12 | 2 | 12min | 6min |
+| Phase 13 P01 | 9min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,9 @@ Decisoes relevantes para v1.1:
 - [Phase 12]: Admin screen derives one named adminLeadFilters object from live UI state and reuses it for paginated and export queries.
 - [Phase 12-export-workflows]: Phase 12: filename generation stays centralized in the shared CSV utility, with seller/admin screens passing explicit scope labels.
 - [Phase 12-export-workflows]: Phase 12: seller and admin exports use toast feedback after download start instead of adding new inline export UI.
+- [Phase 13]: Engine callback pattern: onSyncStart/onSyncEnd para lifecycle reporting sem acoplar engine ao React
+- [Phase 13]: SyncStatusProvider cria e compartilha ConnectivityDetector com startSync (shared instance, evita Pitfall 1)
+- [Phase 13]: Estado atomico via single useState object { isSyncing, lastSync, lastError } para evitar flicker entre renders
 
 ### Pending Todos
 
@@ -109,6 +113,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-29T15:45:24.000Z
-Stopped at: Phase 12 awaiting manual spreadsheet verification
-Resume file: .planning/phases/12-export-workflows/12-VERIFICATION.md
+Last session: 2026-03-31T02:08:52.178Z
+Stopped at: Completed 13-01-PLAN.md
+Resume file: None
