@@ -460,6 +460,60 @@ describe("sync engine", () => {
 			expect(toast.info).toHaveBeenCalledWith(expect.stringContaining("1"));
 		});
 
+		it("preserves local photo blob when pull overwrites lead data", async () => {
+			const photoBlob = new Blob(["pending-photo"], { type: "image/jpeg" });
+
+			await db.leads.add({
+				localId: "photo-uuid",
+				serverId: 10,
+				userId: "user-1",
+				name: "Old Name",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "quente",
+				photo: photoBlob,
+				photoUrl: null,
+				createdAt: "2026-01-01T00:00:00Z",
+				updatedAt: "2026-01-01T00:00:00Z",
+				deletedAt: null,
+				syncStatus: "synced",
+			});
+
+			mockPullChanges.query.mockResolvedValue({
+				leads: [
+					{
+						id: BigInt(10),
+						localId: "photo-uuid",
+						userId: "user-1",
+						name: "Server Name",
+						phone: null,
+						email: null,
+						company: null,
+						position: null,
+						segment: null,
+						notes: null,
+						interestTag: "quente",
+						photoUrl: null,
+						createdAt: new Date("2026-01-01"),
+						updatedAt: new Date("2026-01-03"),
+						deletedAt: null,
+					},
+				],
+				serverTimestamp: "2026-01-04T00:00:00Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const lead = await db.leads.get("photo-uuid");
+			expect(lead?.name).toBe("Server Name");
+			expect(lead?.photo).not.toBeNull();
+		});
+
 		it("saves serverTimestamp to localStorage after pull", async () => {
 			mockPullChanges.query.mockResolvedValue({
 				leads: [],
