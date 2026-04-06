@@ -1,6 +1,6 @@
 import { db } from "@dashboard-leads-profills/db";
 import { leads } from "@dashboard-leads-profills/db/schema/leads";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, isNull } from "drizzle-orm";
 import z from "zod";
 
 import { protectedProcedure, router } from "../index";
@@ -97,12 +97,19 @@ export const syncRouter = router({
 						}
 						case "update": {
 							const fields = sanitizePayload(op.payload);
+							// Include isNull(leads.deletedAt) to prevent zombie resurrection.
+							// ACK regardless of rowcount — tombstoned/missing leads cannot be resolved client-side.
 							await db
 								.update(leads)
 								.set({ ...fields, updatedAt: new Date() })
 								.where(
-									and(eq(leads.localId, op.localId), eq(leads.userId, userId))
-								);
+									and(
+										eq(leads.localId, op.localId),
+										eq(leads.userId, userId),
+										isNull(leads.deletedAt),
+									)
+								)
+								.returning({ localId: leads.localId });
 							acknowledged.push({
 								localId: op.localId,
 								queueId: op.clientTimestamp,

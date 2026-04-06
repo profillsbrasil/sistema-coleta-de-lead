@@ -111,10 +111,18 @@ export const adminLeadsRouter = router({
 	delete: adminProcedure
 		.input(z.object({ localId: z.string() }))
 		.mutation(async ({ input }) => {
-			await db
+			const deleted = await db
 				.update(leads)
 				.set({ deletedAt: new Date() })
-				.where(eq(leads.localId, input.localId));
+				.where(eq(leads.localId, input.localId))
+				.returning({ localId: leads.localId });
+
+			if (deleted.length === 0) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Lead not found",
+				});
+			}
 
 			return { success: true };
 		}),
