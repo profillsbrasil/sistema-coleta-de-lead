@@ -79,7 +79,9 @@ async function pushChanges(): Promise<void> {
 	// Delete only acknowledged items from syncQueue
 	const ackIds = result.acknowledged
 		.map((a) => {
-			const queueItem = pendingOps.find((p) => p.localId === a.localId);
+			const queueItem = pendingOps.find(
+				(p) => p.localId === a.localId && p.timestamp === a.queueId,
+			);
 			return queueItem?.id;
 		})
 		.filter((id): id is number => id != null);
