@@ -2,9 +2,7 @@ import { db } from "../db/index";
 import { checkStorageAndCompress } from "./compression";
 import type { LeadFormData } from "./validation";
 
-function emptyToNull(value: string | undefined): string | null {
-	return !value || value === "" ? null : value;
-}
+import { emptyToNull } from "./helpers";
 
 export async function updateLead(
 	localId: string,
