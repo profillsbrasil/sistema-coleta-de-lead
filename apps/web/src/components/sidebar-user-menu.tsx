@@ -5,12 +5,18 @@ import {
 	AvatarFallback,
 	AvatarImage,
 } from "@dashboard-leads-profills/ui/components/avatar";
-import { Button } from "@dashboard-leads-profills/ui/components/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@dashboard-leads-profills/ui/components/dropdown-menu";
 import {
 	SidebarMenu,
 	SidebarMenuItem,
 } from "@dashboard-leads-profills/ui/components/sidebar";
-import { LogOut, Moon, Sun } from "lucide-react";
+import { ChevronsUpDown, LogOut, Moon, Sun, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -33,13 +39,6 @@ function getInitials(name: string): string {
 		return `${parts[0][0]}${parts.at(-1)?.[0] ?? ""}`.toUpperCase();
 	}
 	return name.slice(0, 2).toUpperCase();
-}
-
-function ThemeIcon({ resolvedTheme }: { resolvedTheme: string | undefined }) {
-	if (resolvedTheme === "dark") {
-		return <Sun />;
-	}
-	return <Moon />;
 }
 
 export default function SidebarUserMenu({
@@ -68,38 +67,63 @@ export default function SidebarUserMenu({
 	return (
 		<SidebarMenu>
 			<SidebarMenuItem>
-				<div className="flex items-center gap-3 px-2 py-2">
-					<Avatar>
-						<AvatarImage alt={userName} src={gravatarUrl} />
-						<AvatarFallback>{getInitials(userName)}</AvatarFallback>
-					</Avatar>
-					<div className="flex min-w-0 flex-1 flex-col">
-						<span className="truncate font-semibold text-sm">{userName}</span>
-						<span className="truncate text-muted-foreground text-xs">
-							{userRole === "admin" ? "Admin" : "Vendedor"}
-						</span>
-					</div>
+				<div className="flex items-center gap-2 px-2 py-2">
+					<DropdownMenu>
+						<DropdownMenuTrigger className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-md p-1 text-left outline-none hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring">
+							<Avatar>
+								<AvatarImage alt={userName} src={gravatarUrl} />
+								<AvatarFallback>{getInitials(userName)}</AvatarFallback>
+							</Avatar>
+							<div className="flex min-w-0 flex-1 flex-col">
+								<span className="truncate font-semibold text-sm">
+									{userName}
+								</span>
+								<span className="truncate text-muted-foreground text-xs">
+									{userRole === "admin" ? "Admin" : "Vendedor"}
+								</span>
+							</div>
+							<ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+						</DropdownMenuTrigger>
+						<DropdownMenuContent
+							align="start"
+							className="w-56"
+							side="top"
+							sideOffset={8}
+						>
+							<DropdownMenuItem
+								onClick={() => router.push("/account" as unknown as "/")}
+							>
+								<User />
+								Minha Conta
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem onClick={handleToggleTheme}>
+								{mounted ? (
+									resolvedTheme === "dark" ? (
+										<Sun />
+									) : (
+										<Moon />
+									)
+								) : (
+									<Sun className="opacity-0" />
+								)}
+								{mounted
+									? resolvedTheme === "dark"
+										? "Tema Claro"
+										: "Tema Escuro"
+									: "Tema"}
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem
+								onClick={handleSignOut}
+								variant="destructive"
+							>
+								<LogOut />
+								Sair
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 					<SyncStatusIcon />
-					<Button
-						aria-label="Alternar tema"
-						onClick={handleToggleTheme}
-						size="icon-sm"
-						variant="ghost"
-					>
-						{mounted ? (
-							<ThemeIcon resolvedTheme={resolvedTheme} />
-						) : (
-							<Sun className="opacity-0" />
-						)}
-					</Button>
-					<Button
-						aria-label="Sair"
-						onClick={handleSignOut}
-						size="icon-sm"
-						variant="ghost"
-					>
-						<LogOut />
-					</Button>
 				</div>
 			</SidebarMenuItem>
 		</SidebarMenu>
