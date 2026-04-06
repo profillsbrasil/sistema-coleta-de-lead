@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 
 import { db } from "../db/index";
+import { SYNC_CONFIG } from "./constants";
 
 export async function uploadPendingPhotos(): Promise<void> {
 	const supabase = createClient();

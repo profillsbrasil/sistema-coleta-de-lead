@@ -14,16 +14,27 @@ export interface SyncEngineCallbacks {
 	onSyncStart?: () => void;
 }
 
+function fetchWithTimeout(
+	url: URL | RequestInfo,
+	options?: RequestInit,
+): Promise<Response> {
+	const controller = new AbortController();
+	const timeoutId = setTimeout(
+		() => controller.abort(),
+		SYNC_CONFIG.pushPullTimeoutMs,
+	);
+	return fetch(url, {
+		...options,
+		credentials: "include",
+		signal: controller.signal,
+	}).finally(() => clearTimeout(timeoutId));
+}
+
 const syncClient = createTRPCClient<AppRouter>({
 	links: [
 		httpBatchLink({
 			url: "/api/trpc",
-			fetch(url, options) {
-				return fetch(url, {
-					...options,
-					credentials: "include",
-				});
-			},
+			fetch: fetchWithTimeout,
 		}),
 	],
 });
