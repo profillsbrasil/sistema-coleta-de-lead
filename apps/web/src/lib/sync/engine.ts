@@ -252,9 +252,19 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 
 export function startSync(
 	callbacks?: SyncEngineCallbacks,
-	detector?: ConnectivityDetector
+	detector?: ConnectivityDetector,
 ): () => void {
 	const _detector = detector ?? createConnectivityDetector();
+	let periodicTimerId: ReturnType<typeof setTimeout> | null = null;
+
+	function schedulePeriodicSync(): void {
+		periodicTimerId = setTimeout(async () => {
+			if (_detector.isOnline && !isSyncing) {
+				await syncWithRetry(callbacks);
+			}
+			schedulePeriodicSync();
+		}, SYNC_CONFIG.periodicSyncIntervalMs);
+	}
 
 	const unsubscribe = _detector.subscribe((online) => {
 		if (online) {
@@ -268,8 +278,14 @@ export function startSync(
 		syncWithRetry(callbacks);
 	}
 
+	schedulePeriodicSync();
+
 	return () => {
 		unsubscribe();
 		_detector.stop();
+		if (periodicTimerId !== null) {
+			clearTimeout(periodicTimerId);
+			periodicTimerId = null;
+		}
 	};
 }

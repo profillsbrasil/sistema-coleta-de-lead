@@ -740,6 +740,65 @@ describe("sync engine", () => {
 
 			cleanup();
 		});
+
+		it("re-schedules sync via periodic timer after retries exhausted", async () => {
+			// Override periodicSyncIntervalMs to a short value for test speed
+			const constants = await import("./constants");
+			const originalConfig = { ...constants.SYNC_CONFIG };
+			Object.assign(constants.SYNC_CONFIG, { periodicSyncIntervalMs: 50 });
+
+			await db.syncQueue.add({
+				localId: "periodic-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Periodic Test" }),
+				retryCount: 0,
+			});
+
+			mockPushChanges.mutate.mockRejectedValue(new Error("Network error"));
+
+			const onSyncStart = vi.fn();
+
+			let firstRoundResolve: () => void;
+			const firstRoundDone = new Promise<void>((resolve) => {
+				firstRoundResolve = resolve;
+			});
+			const onSyncEnd = vi.fn(() => {
+				if (onSyncEnd.mock.calls.length === 1) {
+					firstRoundResolve();
+				}
+			});
+
+			const externalDetector = {
+				isOnline: true,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn(() => vi.fn()),
+			};
+
+			const { startSync } = await import("./engine");
+			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+
+			// Wait for initial syncWithRetry to exhaust all retries (backoff mocked to 0ms)
+			await firstRoundDone;
+
+			const callsAfterFirstRound = onSyncStart.mock.calls.length;
+			expect(callsAfterFirstRound).toBeGreaterThanOrEqual(1);
+
+			// Now let the periodic timer fire with a successful response
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [],
+				idMappings: [],
+			});
+
+			// Wait for the periodic timer to fire (50ms interval)
+			await new Promise((resolve) => setTimeout(resolve, 200));
+
+			expect(onSyncStart.mock.calls.length).toBeGreaterThan(callsAfterFirstRound);
+
+			cleanup();
+			Object.assign(constants.SYNC_CONFIG, originalConfig);
+		});
 	});
 
 	describe("error handling", () => {

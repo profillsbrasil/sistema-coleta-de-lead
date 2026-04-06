@@ -5,6 +5,7 @@ export const SYNC_CONFIG = {
 	pollIntervalMs: 30_000,
 	pushPullTimeoutMs: 30_000,
 	photoUploadTimeoutMs: 60_000,
+	periodicSyncIntervalMs: 60_000,
 } as const;
 
 export function getBackoffDelay(retryCount: number): number {
