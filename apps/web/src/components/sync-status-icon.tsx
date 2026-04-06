@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@dashboard-leads-profills/ui/components/button";
+import { buttonVariants } from "@dashboard-leads-profills/ui/components/button";
 import {
 	Tooltip,
 	TooltipContent,
@@ -96,7 +96,13 @@ export function SyncStatusIcon() {
 			<Tooltip>
 				<TooltipTrigger
 					render={
-						<Button aria-label={tooltipText} size="icon-sm" variant="ghost" />
+						<span
+							aria-hidden="true"
+							className={cn(
+								buttonVariants({ size: "icon-sm", variant: "ghost" }),
+								"cursor-inherit"
+							)}
+						/>
 					}
 				>
 					<span className="relative inline-flex items-center justify-center">
