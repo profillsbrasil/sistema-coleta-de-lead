@@ -164,7 +164,8 @@ async function pullChanges(): Promise<void> {
 		}
 
 		const mapped = mapServerLeadToLocal(serverRecord);
-		await db.leads.put(mapped);
+		const mergedPhoto = localLead?.photo ?? null;
+		await db.leads.put({ ...mapped, photo: mergedPhoto });
 	}
 
 	localStorage.setItem("lastSyncTimestamp", result.serverTimestamp);
