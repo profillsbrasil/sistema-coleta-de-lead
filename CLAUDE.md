@@ -1,122 +1,148 @@
-# Dashboard Leads Profills
+# Sistema Coleta de Lead
 
-## Stack
+## Fonte de Verdade
 
-- **Monorepo**: Turborepo 2.8, Bun 1.3
-- **Frontend**: Next.js 16.2 (React 19, React Compiler), TailwindCSS 4, shadcn/ui
-- **API**: tRPC 11 (RPC type-safe)
-- **ORM**: Drizzle ORM 0.45, PostgreSQL (Supabase)
-- **Auth**: Supabase Auth via `@supabase/ssr` (cookie-based sessions, OAuth Google/Facebook/LinkedIn)
-- **Offline**: Dexie 4 (IndexedDB) como storage primario, sync push-then-pull server-wins
-- **Linting**: Biome 2.4 (Ultracite preset)
-- **Testes**: Vitest 3.2
-- **TypeScript**: 5 strict
+- Este arquivo e a referencia canonica para contexto de produto, arquitetura e convencoes do projeto.
+- Em caso de conflito entre documentacao de agente e codigo, o codigo-fonte vence.
+- `AGENTS.md` e `.claude/CLAUDE.md` devem permanecer alinhados a este arquivo, sem manter uma segunda versao da arquitetura.
 
-## Arquitetura
+## Objetivo do Produto
 
+- O sistema existe para coleta rapida de leads em eventos e congressos, com operacao offline-first.
+- O foco principal e nao perder dados quando a rede falha.
+- O app nao deve derivar para um CRM completo. Funis, automacoes complexas e fluxos de follow-up nao sao o centro do produto atual.
+
+## Stack Atual
+
+- Monorepo: Turborepo + Bun workspaces
+- Frontend: Next.js 16, React 19, React Compiler, Tailwind CSS 4
+- UI compartilhada: `packages/ui` com primitives shadcn/ui path-based
+- API: tRPC 11 em route handler Next.js
+- Banco: PostgreSQL + Drizzle ORM
+- Auth: Supabase Auth via `@supabase/ssr` e `@supabase/supabase-js`
+- Offline local: Dexie 4 + `dexie-react-hooks`
+- Testes: Vitest
+- Lint/format: Ultracite / Biome
+
+## Estrutura Real do Monorepo
+
+```text
+apps/web        App Next.js na porta 3001
+packages/api    Routers tRPC, contexto auth e regras de negocio
+packages/db     Schema Drizzle, migrations e acesso ao Postgres
+packages/env    Validacao de env para server e client
+packages/ui     Componentes e utilitarios de UI compartilhados
+packages/auth   Pacote legado/utilitario de auth; nao e a superficie ativa do app/API hoje
+packages/config Base compartilhada de TypeScript
 ```
-apps/web               Next.js (porta 3001) — consome api, auth, ui, env
-packages/api           tRPC routers — consome auth, db, env
-packages/auth          Supabase Auth clients (server + browser) — consome env
-packages/db            Drizzle ORM + schema — consome env
-packages/env           T3 Env validation (server + web exports)
-packages/ui            shadcn/ui components, hooks, styles
-packages/config        tsconfig.base.json compartilhado
-```
 
-Namespace: `@dashboard-leads-profills/*` (workspace refs via `workspace:*`, versoes via `catalog:`)
+Namespace de workspace: `@dashboard-leads-profills/*`
 
-## Comandos
+## Auth Real
+
+- O app web usa clientes Supabase em `apps/web/src/lib/supabase/client.ts`, `apps/web/src/lib/supabase/server.ts` e `apps/web/src/lib/supabase/proxy.ts`.
+- O middleware de sessao fica em `apps/web/src/middleware.ts` e redireciona rotas privadas para `/login`.
+- O callback OAuth fica em `apps/web/src/app/auth/callback/route.ts`.
+- O login atual usa Google, LinkedIn e Facebook via Supabase OAuth em `apps/web/src/components/login-card.tsx`.
+- O contexto tRPC cria um cliente Supabase diretamente em `packages/api/src/context.ts` e extrai claims para `user` e `userRole`.
+- Operacoes administrativas no backend usam `packages/api/src/lib/supabase-admin.ts`.
+- Existe um pacote `packages/auth`, mas ele nao e consumido pelo app nem pela API no estado atual. Nao trate esse pacote como ponto central sem uma refatoracao explicita.
+
+## Arquitetura Offline-First
+
+- Lead CRUD salva primeiro no IndexedDB via Dexie em `apps/web/src/lib/db/index.ts`.
+- O schema local Dexie esta na versao 5.
+- A fila de sincronizacao local fica em `syncQueue`.
+- O sync engine esta em `apps/web/src/lib/sync/engine.ts` e trabalha com `create`, `update` e `delete`.
+- A estrategia atual e push, upload de fotos, pull e refresh do leaderboard.
+- Em conflitos, a regra pratica e server-wins para dados do servidor durante o pull.
+- O status de sync exposto na UI vem de `apps/web/src/components/sync-status-provider.tsx`.
+- A deteccao de conectividade usa eventos do browser e polling em `/api/health` por `HEAD`, implementado em `apps/web/src/lib/sync/connectivity.ts`.
+
+## Service Worker
+
+- O service worker existe para manter navegacao autenticada utilizavel offline no App Router.
+- Nao trate o app como PWA completa.
+- Nao existe manifest de instalacao, install prompt ou background sync.
+- O registro do SW fica em `apps/web/src/components/service-worker-registrar.tsx`.
+- O worker esta em `apps/web/public/sw.js`.
+- O build gera `sw-manifest.json` e `sw-build.js` via `apps/web/scripts/generate-sw-manifest.ts`.
+- O SW faz pre-cache de rotas autenticadas, assets estaticos e payloads RSC, com fallback para `/offline`.
+
+## Areas Funcionais Relevantes
+
+- Dashboard: `apps/web/src/app/(app)/dashboard`
+- Leads: `apps/web/src/app/(app)/leads`
+- Admin: `apps/web/src/app/(app)/admin`
+- Sync API: `packages/api/src/routers/sync.ts`
+- Leaderboard API: `packages/api/src/routers/leaderboard.ts`
+- Admin API: `packages/api/src/routers/admin/*`
+
+## Banco e Dados
+
+- Schema Drizzle em `packages/db/src/schema`
+- Tabelas centrais atuais:
+  - `leads`
+  - `user_roles`
+- O ranking usa SQL direto e consulta `auth.users` para nome do vendedor.
+- `drizzle.config.ts` carrega env de `../../apps/web/.env`; comandos `db:*` devem ser executados a partir da raiz do repo.
+
+## Variaveis de Ambiente Reais
+
+Arquivo esperado no desenvolvimento: `apps/web/.env`
+
+Server:
+- `DATABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `NODE_ENV`
+
+Client:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+As validacoes ficam em `packages/env/src/server.ts` e `packages/env/src/web.ts`.
+
+## Comandos do Workspace
 
 ```bash
-bun run dev            # turbo dev (todos os apps)
-bun run dev:web        # turbo -F web dev (apenas web, porta 3001)
-bun run build          # turbo build
-bun run check-types    # turbo check-types
-bun run check          # biome check --write .
-bun run test           # turbo test (vitest)
-bun run db:push        # drizzle push schema
-bun run db:generate    # drizzle generate migrations
-bun run db:migrate     # drizzle migrate
-bun run db:studio      # drizzle studio (UI)
+bun run dev          # turbo dev
+bun run dev:web      # next dev --port 3001 apenas para o app web
+bun run build        # turbo build
+bun run check-types  # turbo check-types
+bun run test         # turbo test
+bun run check        # ultracite check
+bun run fix          # ultracite fix
+bun run db:push      # drizzle-kit push no pacote db
+bun run db:generate  # drizzle-kit generate no pacote db
+bun run db:migrate   # drizzle-kit migrate no pacote db
+bun run db:studio    # drizzle-kit studio no pacote db
 ```
 
-## Convencoes
+## Convencoes de Codigo
 
-- Indentacao: tabs (Biome)
-- Quotes: double quotes (Biome)
-- Imports: organizados automaticamente (Biome), absolute `@/` para app root
-- CSS classes: `cn()` de `@dashboard-leads-profills/ui/lib/utils` — nunca string concat
-- Commits: Conventional Commits em Portugues (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`)
-- Modules: `type: "module"` em todos os packages
-- UI imports: path-based, nao barrel. Ex: `@dashboard-leads-profills/ui/components/button`
-- No `any` — usar `unknown`. No `console.log` em producao.
+- Use imports path-based para `packages/ui`. Exemplo: `@dashboard-leads-profills/ui/components/button`
+- Evite barrel files novos para UI ou modulos internos.
+- `cn()` vem de `@dashboard-leads-profills/ui/lib/utils`.
+- Mantenha `type: "module"` e TypeScript estrito.
+- Nao introduza `any` sem justificativa; prefira `unknown`.
+- Nao deixe `console.log` em producao.
+- Para componentes/client code sensiveis a SSR, respeite fronteiras de runtime. Dexie e browser-only.
 
-## UI Components
+## Guardrails para Agentes
 
-- Verificar `packages/ui/src/components/` antes de criar componentes
-- Compound patterns (CardHeader, CardContent, etc.)
-- Recharts wrappado com `ChartContainer`/`ChartTooltip` do shadcn
+- Antes de descrever arquitetura, verifique o codigo correspondente.
+- Use sempre as superficies de auth baseadas em Supabase descritas neste repo.
+- Nao afirme que o health check de conectividade e `/api/trpc/healthCheck`. O endpoint usado pelo app e `/api/health`.
+- Nao tratar o service worker como PWA completa.
+- Nao mover o app para usar `packages/auth` por padrao. Isso seria refatoracao, nao manutencao rotineira.
+- Quando tocar offline/sync, preserve a prioridade do dado local e o comportamento resiliente sem rede.
 
-## Offline-First Architecture
+## Hurdles Conhecidos
 
-**Core Value:** Vendedores coletam leads offline em congressos. Dados NUNCA podem ser perdidos.
-
-**Como funciona:**
-- Lead CRUD → salva direto no Dexie (IndexedDB), zero dependencia de rede
-- Sync engine (`apps/web/src/lib/sync/engine.ts`) → push-then-pull quando online, server-wins
-- `SyncStatusProvider` (`apps/web/src/components/sync-status-provider.tsx`) → React Context com 5 campos (isOnline, isSyncing, pendingCount, lastSync, lastError)
-- ConnectivityDetector → polling `/api/trpc/healthCheck` a cada 30s + browser online/offline events
-
-**Limitacao critica do Next.js App Router:**
-- Navegacao client-side entre rotas busca RSC payload do servidor
-- Sem internet, o fetch falha e a pagina quebra ("Failed to fetch RSC payload")
-- **Solucao:** Service Worker apenas para cache de app shell e RSC payloads (SEM PWA, SEM manifest, SEM install prompt)
-- O SW deve ser minimo: pre-cache de rotas autenticadas + cache-first para assets estaticos
-
-**NAO e PWA. O app e web-only. Service Worker e usado exclusivamente como camada de cache.**
-
-## Env Vars
-
-Arquivo: `apps/web/.env` (nao versionado)
-
-| Variavel                        | Escopo          | Descricao                                           |
-| ------------------------------- | --------------- | --------------------------------------------------- |
-| `DATABASE_URL`                  | server          | Connection string PostgreSQL (Supabase)             |
-| `NEXT_PUBLIC_SUPABASE_URL`      | server + client | URL do projeto Supabase                             |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | server + client | Anon key publica do Supabase                        |
-| `SUPABASE_SERVICE_ROLE_KEY`     | server          | Service role key (admin ops, nunca expor ao client) |
-
-Validacao: T3 Env + Zod em `packages/env/src/server.ts` e `packages/env/src/web.ts`.
-
-## Common Hurdles
-
-- **Drizzle .env path**: `drizzle.config.ts` carrega env de `../../apps/web/.env`. Rodar `db:*` sempre do root.
-- **tRPC context**: Acoplado a `NextRequest`. Testes de routers precisam mockar o context.
-- **UI imports**: path-based, nao barrel. Ex: `@dashboard-leads-profills/ui/components/button`
-- **T3 Env no CI**: Build precisa de env vars validas (mesmo placeholder).
-- **Auth users**: `auth.users` (Supabase, invisivel no Drizzle). Roles em `public.user_roles`.
-- **Hydration + localStorage**: Nunca ler localStorage em useState initializer — causa hydration mismatch. Ler no useEffect.
-
-## Testes
-
-- Vitest 3.2 com workspace. Config por pacote.
-- Rodar: `bun run test` (via Turborepo)
-
-## CI
-
-GitHub Actions em `.github/workflows/ci.yml`: Biome check → Type check → Test → Build
-
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
-
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
-
-Use these entry points:
-
-- `/gsd:quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd:debug` for investigation and bug fixing
-- `/gsd:execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
+- `packages/auth` ainda existe no monorepo, mas nao e a integracao principal do runtime atual.
+- O Dexie local ainda carrega migracoes de legado, incluindo limpeza do antigo `followUpStatus`.
+- O leaderboard depende de `auth.users` no Supabase para obter nomes.
+- O middleware ignora `/api/*`; autenticação de API e tratada dentro do contexto tRPC ou nos handlers.
+- Builds e testes que exigem env devem usar as mesmas variaveis reais do projeto.

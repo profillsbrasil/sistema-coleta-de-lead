@@ -42,12 +42,6 @@
       "type": "http",
       "url": "https://mcp.supabase.com/mcp",
       "headers": {}
-    },
-    "better-auth": {
-      "source": "custom",
-      "type": "http",
-      "url": "https://mcp.inkeep.com/better-auth/mcp",
-      "headers": {}
     }
   },
   "format_on_save": "on",

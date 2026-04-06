@@ -37,7 +37,6 @@ turbo test --affected --filter=./apps/*  # combine with filter
 **How it works:**
 
 - Default: compares `main...HEAD`
-- In GitHub Actions: auto-detects `GITHUB_BASE_REF`
 - Override base: `TURBO_SCM_BASE=development turbo build --affected`
 - Override head: `TURBO_SCM_HEAD=your-branch turbo build --affected`
 
@@ -214,16 +213,12 @@ npx turbo-ignore --task=test
 
 ## CI Integration Example
 
-```yaml
-# GitHub Actions
-- name: Check for changes
-  id: turbo-ignore
-  run: npx turbo-ignore web
-  continue-on-error: true
-
-- name: Build
-  if: steps.turbo-ignore.outcome == 'failure' # changes detected
-  run: pnpm build
+```bash
+if npx turbo-ignore web; then
+  echo "No relevant changes"
+else
+  pnpm build
+fi
 ```
 
 ## Comparison Depth
