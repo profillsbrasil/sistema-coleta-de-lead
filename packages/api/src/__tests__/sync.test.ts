@@ -31,6 +31,7 @@ async function loadSyncRouter(mockDb: MockDb) {
 		and: vi.fn((...args: unknown[]) => ({ and: args })),
 		eq: vi.fn((col: unknown, val: unknown) => ({ eq: [col, val] })),
 		gt: vi.fn((col: unknown, val: unknown) => ({ gt: [col, val] })),
+		isNull: vi.fn((col: unknown) => ({ isNull: col })),
 	}));
 
 	const module = await import("../routers/sync");
@@ -58,7 +59,9 @@ describe("syncRouter.pushChanges", () => {
 		// op2 (update) falha; op3 NÃO deve ser processada
 		const updateChain = {
 			set: vi.fn().mockReturnThis(),
-			where: vi.fn().mockRejectedValueOnce(new Error("DB constraint violation")),
+			where: vi.fn().mockReturnValue({
+				returning: vi.fn().mockRejectedValueOnce(new Error("DB constraint violation")),
+			}),
 		};
 
 		const mockDb: MockDb = {
@@ -94,7 +97,7 @@ describe("syncRouter.pushChanges", () => {
 
 		// Op 1 foi ACKada; op 2 falhou; op 3 nunca foi processada
 		expect(result.acknowledged).toHaveLength(1);
-		expect(result.acknowledged[0].localId).toBe("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+		expect(result.acknowledged[0]?.localId).toBe("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
 
 		// failedOperation aponta para op 2
 		expect(result.failedOperation).toBeDefined();
@@ -109,7 +112,9 @@ describe("syncRouter.pushChanges", () => {
 	it("retorna failedOperation quando a primeira operação falha", async () => {
 		const updateChain = {
 			set: vi.fn().mockReturnThis(),
-			where: vi.fn().mockRejectedValue(new Error("DB down")),
+			where: vi.fn().mockReturnValue({
+				returning: vi.fn().mockRejectedValue(new Error("DB down")),
+			}),
 		};
 		const mockDb: MockDb = {
 			insert: vi.fn(),
@@ -209,7 +214,71 @@ describe("syncRouter.pushChanges", () => {
 		});
 
 		expect(result.idMappings).toHaveLength(1);
-		expect(result.idMappings[0].localId).toBe("ffffffff-ffff-4fff-8fff-ffffffffffff");
+		expect(result.idMappings[0]?.localId).toBe("ffffffff-ffff-4fff-8fff-ffffffffffff");
 		expect(result.failedOperation?.localId).toBe("11111111-1111-4111-8111-111111111111");
+	});
+
+	it("ACKa silenciosamente update de lead tombstoned ou inexistente (rowcount=0)", async () => {
+		// returning vazio simula rowcount=0 — lead tombstoned (deletedAt definido) ou inexistente
+		const updateChain = {
+			set: vi.fn().mockReturnThis(),
+			where: vi.fn().mockReturnValue({
+				returning: vi.fn().mockResolvedValue([]), // rowcount=0
+			}),
+		};
+		const mockDb: MockDb = {
+			insert: vi.fn(),
+			update: vi.fn().mockReturnValue(updateChain),
+			select: vi.fn(),
+		};
+
+		const { caller } = await loadSyncRouter(mockDb);
+
+		const result = await caller.pushChanges({
+			operations: [
+				{
+					localId: "44444444-4444-4444-8444-444444444444",
+					operation: "update",
+					payload: { name: "Ghost Lead" },
+					clientTimestamp: "2026-01-01T00:00:00.000Z",
+				},
+			],
+		});
+
+		// Deve ACKar silenciosamente — sem failedOperation
+		expect(result.acknowledged).toHaveLength(1);
+		expect(result.acknowledged[0]?.localId).toBe("44444444-4444-4444-8444-444444444444");
+		expect(result.failedOperation).toBeUndefined();
+	});
+
+	it("ACKa delete de lead inexistente (idempotente por natureza)", async () => {
+		// Soft-delete retorna void — não usa .returning(), ACK é sempre garantido
+		const updateChain = {
+			set: vi.fn().mockReturnThis(),
+			where: vi.fn().mockResolvedValue(undefined), // resolve com undefined — 0 rows afetadas
+		};
+		const mockDb: MockDb = {
+			insert: vi.fn(),
+			update: vi.fn().mockReturnValue(updateChain),
+			select: vi.fn(),
+		};
+
+		const { caller } = await loadSyncRouter(mockDb);
+
+		const result = await caller.pushChanges({
+			operations: [
+				{
+					localId: "55555555-5555-4555-8555-555555555555",
+					operation: "delete",
+					payload: {},
+					clientTimestamp: "2026-01-01T00:00:00.000Z",
+				},
+			],
+		});
+
+		// Deve ACKar independente de rowcount
+		expect(result.acknowledged).toHaveLength(1);
+		expect(result.acknowledged[0]?.localId).toBe("55555555-5555-4555-8555-555555555555");
+		expect(result.failedOperation).toBeUndefined();
 	});
 });

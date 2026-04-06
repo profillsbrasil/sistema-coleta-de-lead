@@ -93,10 +93,10 @@ export const adminUsersRouter = router({
 			})
 		)
 		.mutation(async ({ input }) => {
-			await db.delete(userRoles).where(eq(userRoles.userId, input.userId));
-			await db
-				.insert(userRoles)
-				.values({ userId: input.userId, role: input.role });
+			await db.transaction(async (tx) => {
+				await tx.delete(userRoles).where(eq(userRoles.userId, input.userId));
+				await tx.insert(userRoles).values({ userId: input.userId, role: input.role });
+			});
 
 			return { success: true };
 		}),
@@ -124,10 +124,10 @@ export const adminUsersRouter = router({
 				});
 			}
 
-			await db.delete(userRoles).where(eq(userRoles.userId, input.userId));
-			await db
-				.insert(userRoles)
-				.values({ userId: input.userId, role: "vendedor" });
+			await db.transaction(async (tx) => {
+				await tx.delete(userRoles).where(eq(userRoles.userId, input.userId));
+				await tx.insert(userRoles).values({ userId: input.userId, role: "vendedor" });
+			});
 
 			return { success: true };
 		}),
