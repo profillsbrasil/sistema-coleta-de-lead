@@ -128,7 +128,7 @@ describe("sync engine", () => {
 		});
 
 		it("deletes only acknowledged items from syncQueue after push", async () => {
-			const id = await db.syncQueue.add({
+			await db.syncQueue.add({
 				localId: "test-uuid-1",
 				operation: "create",
 				timestamp: "2026-01-01T00:00:00Z",
@@ -137,7 +137,7 @@ describe("sync engine", () => {
 			});
 
 			mockPushChanges.mutate.mockResolvedValue({
-				acknowledged: [{ localId: "test-uuid-1", queueId: String(id) }],
+				acknowledged: [{ localId: "test-uuid-1", queueId: "2026-01-01T00:00:00Z" }],
 				idMappings: [],
 			});
 
@@ -175,6 +175,41 @@ describe("sync engine", () => {
 
 			const { syncCycle } = await import("./engine");
 			await expect(syncCycle()).resolves.toBeUndefined();
+		});
+
+		it("deletes all acknowledged queue items when same localId has multiple ops", async () => {
+			const ts1 = "2026-01-01T00:00:00Z";
+			const ts2 = "2026-01-01T00:00:01Z";
+
+			await db.syncQueue.add({
+				localId: "dup-uuid",
+				operation: "create",
+				timestamp: ts1,
+				payload: JSON.stringify({ name: "Test" }),
+				retryCount: 0,
+			});
+
+			await db.syncQueue.add({
+				localId: "dup-uuid",
+				operation: "update",
+				timestamp: ts2,
+				payload: JSON.stringify({ name: "Updated" }),
+				retryCount: 0,
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [
+					{ localId: "dup-uuid", queueId: ts1 },
+					{ localId: "dup-uuid", queueId: ts2 },
+				],
+				idMappings: [{ localId: "dup-uuid", serverId: "42" }],
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const remaining = await db.syncQueue.count();
+			expect(remaining).toBe(0);
 		});
 
 		it("updates serverId and syncStatus on created leads", async () => {
