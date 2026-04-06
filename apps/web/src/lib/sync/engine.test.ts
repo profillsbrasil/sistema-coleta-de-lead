@@ -72,6 +72,7 @@ describe("sync engine", () => {
 		await db.leads.clear();
 		await db.syncQueue.clear();
 		await db.photoUploadMeta?.clear();
+		await db.syncMeta?.clear();
 
 		mockUploadPendingPhotos.mockResolvedValue(0);
 
@@ -90,6 +91,7 @@ describe("sync engine", () => {
 		await db.leads.clear();
 		await db.syncQueue.clear();
 		await db.photoUploadMeta?.clear();
+		await db.syncMeta?.clear();
 	});
 
 	describe("startSync", () => {
@@ -574,7 +576,7 @@ describe("sync engine", () => {
 
 	describe("pull phase", () => {
 		it("queries server for changes since last sync timestamp", async () => {
-			localStorage.setItem("lastSyncTimestamp", "2026-01-01T00:00:00Z");
+			await db.syncMeta.put({ key: "lastSyncTimestamp", value: "2026-01-01T00:00:00Z" });
 
 			mockPullChanges.query.mockResolvedValue({
 				leads: [],
@@ -831,7 +833,7 @@ describe("sync engine", () => {
 			expect(lead?.photo).not.toBeNull();
 		});
 
-		it("saves serverTimestamp to localStorage after pull", async () => {
+		it("saves serverTimestamp to Dexie syncMeta after pull", async () => {
 			mockPullChanges.query.mockResolvedValue({
 				leads: [],
 				serverTimestamp: "2026-06-15T12:00:00Z",
@@ -840,9 +842,54 @@ describe("sync engine", () => {
 			const { syncCycle } = await import("./engine");
 			await syncCycle();
 
-			expect(localStorage.getItem("lastSyncTimestamp")).toBe(
-				"2026-06-15T12:00:00Z"
-			);
+			const meta = await db.syncMeta.get("lastSyncTimestamp");
+			expect(meta?.value).toBe("2026-06-15T12:00:00Z");
+		});
+
+		it("persiste serverTimestamp em Dexie syncMeta após pull (não localStorage)", async () => {
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: "2026-06-15T12:00:00.000Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const meta = await db.syncMeta.get("lastSyncTimestamp");
+			expect(meta?.value).toBe("2026-06-15T12:00:00.000Z");
+			// localStorage NÃO deve ser usado
+			expect(localStorageMap.has("lastSyncTimestamp")).toBe(false);
+		});
+
+		it("usa '1970-01-01T00:00:00Z' como fallback quando syncMeta não existe", async () => {
+			// syncMeta está vazio (beforeEach limpou)
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: "2026-06-15T12:00:00.000Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			expect(mockPullChanges.query).toHaveBeenCalledWith({
+				since: "1970-01-01T00:00:00Z",
+			});
+		});
+
+		it("lê lastSyncTimestamp de Dexie syncMeta na próxima chamada", async () => {
+			await db.syncMeta.put({ key: "lastSyncTimestamp", value: "2026-03-01T08:00:00.000Z" });
+
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: "2026-03-01T10:00:00.000Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			expect(mockPullChanges.query).toHaveBeenCalledWith({
+				since: "2026-03-01T08:00:00.000Z",
+			});
 		});
 	});
 
