@@ -71,6 +71,7 @@ describe("sync engine", () => {
 		localStorageMap.clear();
 		await db.leads.clear();
 		await db.syncQueue.clear();
+		await db.photoUploadMeta?.clear();
 
 		mockUploadPendingPhotos.mockResolvedValue(0);
 
@@ -88,6 +89,7 @@ describe("sync engine", () => {
 	afterEach(async () => {
 		await db.leads.clear();
 		await db.syncQueue.clear();
+		await db.photoUploadMeta?.clear();
 	});
 
 	describe("startSync", () => {

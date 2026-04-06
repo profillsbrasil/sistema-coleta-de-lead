@@ -1,13 +1,20 @@
 import { createClient } from "@/lib/supabase/client";
 
 import { db } from "../db/index";
-import { SYNC_CONFIG } from "./constants";
+
+const MAX_UPLOAD_RETRIES = 10;
 
 export async function uploadPendingPhotos(): Promise<number> {
 	const supabase = createClient();
 
+	// Excluir leads com uploadFailed=true (limite de retries atingido)
 	const candidates = await db.leads
-		.filter((lead) => lead.photo !== null && lead.serverId !== null)
+		.filter(
+			(lead) =>
+				lead.photo !== null &&
+				lead.serverId !== null &&
+				lead.uploadFailed !== true,
+		)
 		.toArray();
 
 	if (candidates.length === 0) {
@@ -31,6 +38,18 @@ export async function uploadPendingPhotos(): Promise<number> {
 			});
 
 		if (error) {
+			const existing = await db.photoUploadMeta.get(lead.localId);
+			const newCount = (existing?.retryCount ?? 0) + 1;
+
+			if (newCount >= MAX_UPLOAD_RETRIES) {
+				await db.leads.update(lead.localId, { uploadFailed: true });
+				await db.photoUploadMeta.delete(lead.localId);
+			} else {
+				await db.photoUploadMeta.put({
+					localId: lead.localId,
+					retryCount: newCount,
+				});
+			}
 			continue;
 		}
 
@@ -51,6 +70,9 @@ export async function uploadPendingPhotos(): Promise<number> {
 			photo: null,
 			photoUrl: data.publicUrl,
 		});
+
+		// Upload bem-sucedido — limpar meta de retries se existia
+		await db.photoUploadMeta.delete(lead.localId);
 
 		uploadedCount++;
 	}
