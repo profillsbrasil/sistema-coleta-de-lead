@@ -1405,6 +1405,233 @@ describe("sync engine", () => {
 		});
 	});
 
+	describe("failure scenarios", () => {
+		it("payload JSON corrompido na syncQueue bloqueia o ciclo e reporta isStalled após retries", async () => {
+			await db.syncQueue.add({
+				localId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+				operation: "create",
+				timestamp: "2026-01-01T00:00:00.000Z",
+				payload: "INVALID JSON {{{",
+				retryCount: 0,
+			});
+
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const control = startSync({ onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			expect(onSyncEnd).toHaveBeenCalledWith(
+				expect.objectContaining({
+					isStalled: true,
+					error: expect.any(String),
+				})
+			);
+			// Engine não deve ter chamado o servidor (erro ocorre antes do fetch)
+			expect(mockPushChanges.mutate).not.toHaveBeenCalled();
+
+			control.stop();
+		});
+
+		it("AbortError do fetchWithTimeout é tratado como erro transiente e esgota retries", async () => {
+			await db.syncQueue.add({
+				localId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+				operation: "create",
+				timestamp: "2026-01-01T00:00:00.000Z",
+				payload: JSON.stringify({ name: "Abort Test", interestTag: "frio" }),
+				retryCount: 0,
+			});
+
+			const abortError = new Error("The operation was aborted");
+			abortError.name = "AbortError";
+			mockPushChanges.mutate.mockRejectedValue(abortError);
+
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+			const onSyncEnd = vi.fn(() => resolveSync());
+			const onRetry = vi.fn();
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const control = startSync({ onSyncEnd, onRetry }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			// 5 retries: onRetry chamado nas tentativas 2, 3, 4, 5 (4x)
+			expect(onRetry).toHaveBeenCalledTimes(4);
+			expect(onSyncEnd).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: "The operation was aborted",
+					isStalled: true,
+				})
+			);
+
+			control.stop();
+		});
+
+		it("ACKs são aplicados mesmo quando pullChanges falha em seguida", async () => {
+			await db.syncQueue.add({
+				localId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+				operation: "create",
+				timestamp: "2026-01-01T00:00:00.000Z",
+				payload: JSON.stringify({ name: "Pull Fail Test", interestTag: "morno" }),
+				retryCount: 0,
+			});
+
+			// Push tem sucesso e ACKa a operação
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [{
+					localId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+					queueId: "2026-01-01T00:00:00.000Z",
+				}],
+				idMappings: [],
+			});
+			// Pull falha
+			mockPullChanges.query.mockRejectedValue(new Error("Network error during pull"));
+
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const control = startSync({ onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			// ACK foi aplicado — syncQueue deve estar vazia
+			const queueCount = await db.syncQueue.count();
+			expect(queueCount).toBe(0);
+
+			// lastSyncTimestamp NÃO foi atualizado (pull nunca completou)
+			const meta = await db.syncMeta.get("lastSyncTimestamp");
+			expect(meta).toBeUndefined();
+
+			control.stop();
+		});
+
+		it("server wins quando updatedAt são iguais e local está pending", async () => {
+			const sharedTimestamp = "2026-01-01T10:00:00.000Z";
+
+			// Lead local com mesmo timestamp que o servidor, status pending
+			await db.leads.add({
+				localId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+				serverId: 42,
+				userId: "user-123",
+				name: "Local Name",
+				updatedAt: sharedTimestamp,
+				createdAt: sharedTimestamp,
+				syncStatus: "pending",
+				interestTag: "frio",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				photo: null,
+				photoUrl: null,
+				deletedAt: null,
+				uploadFailed: false,
+			});
+
+			// Servidor retorna o mesmo lead com nome diferente e timestamp idêntico
+			mockPullChanges.query.mockResolvedValue({
+				leads: [{
+					localId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+					id: 42,
+					userId: "user-123",
+					name: "Server Name",
+					updatedAt: sharedTimestamp,
+					createdAt: sharedTimestamp,
+					interestTag: "quente",
+					phone: null,
+					email: null,
+					company: null,
+					position: null,
+					segment: null,
+					notes: null,
+					photoUrl: null,
+					deletedAt: null,
+				}],
+				serverTimestamp: new Date().toISOString(),
+			});
+
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const control = startSync({ onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			// Server wins — lead deve ter o nome do servidor (timestamps iguais → localLead.updatedAt > server é false)
+			const lead = await db.leads.get("dddddddd-dddd-4ddd-8ddd-dddddddddddd");
+			expect(lead?.name).toBe("Server Name");
+			expect(lead?.interestTag).toBe("quente");
+
+			control.stop();
+		});
+	});
+
 	describe("error handling", () => {
 		it("preserves syncQueue and leads on 401 error", async () => {
 			await db.syncQueue.add({
