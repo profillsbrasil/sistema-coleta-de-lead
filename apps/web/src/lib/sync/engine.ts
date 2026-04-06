@@ -10,7 +10,11 @@ import { getBackoffDelay, SYNC_CONFIG } from "./constants";
 import { uploadPendingPhotos } from "./photo-upload";
 
 export interface SyncEngineCallbacks {
-	onSyncEnd?: (result: { lastSync: string; error: string | null }) => void;
+	onSyncEnd?: (result: {
+		lastSync: string;
+		error: string | null;
+		authExpired?: boolean;
+	}) => void;
 	onSyncStart?: () => void;
 }
 
@@ -195,9 +199,9 @@ async function fetchLeaderboard(): Promise<void> {
 	}
 }
 
-export async function syncCycle(): Promise<void> {
+export async function syncCycle(): Promise<{ authExpired: boolean }> {
 	if (isSyncing) {
-		return;
+		return { authExpired: false };
 	}
 
 	isSyncing = true;
@@ -215,10 +219,11 @@ export async function syncCycle(): Promise<void> {
 		}
 		await pullChanges();
 		await fetchLeaderboard();
+		return { authExpired: false };
 	} catch (error: unknown) {
 		if (isUnauthorizedError(error)) {
 			// 401: stop sync, preserve local data (OFFL-06)
-			return;
+			return { authExpired: true };
 		}
 		throw error;
 	} finally {
@@ -232,15 +237,19 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 
 	for (let attempt = 0; attempt < SYNC_CONFIG.maxRetries; attempt++) {
 		try {
-			await syncCycle();
+			const result = await syncCycle();
 			const lastSync =
 				localStorage.getItem("lastSyncTimestamp") ?? new Date().toISOString();
+			if (result.authExpired) {
+				callbacks?.onSyncEnd?.({ lastSync, error: null, authExpired: true });
+				return;
+			}
 			callbacks?.onSyncEnd?.({ lastSync, error: null });
 			return;
 		} catch (error: unknown) {
 			if (isUnauthorizedError(error)) {
 				const lastSync = localStorage.getItem("lastSyncTimestamp") ?? "";
-				callbacks?.onSyncEnd?.({ lastSync, error: null });
+				callbacks?.onSyncEnd?.({ lastSync, error: null, authExpired: true });
 				return;
 			}
 			lastError = error instanceof Error ? error.message : "Erro desconhecido";

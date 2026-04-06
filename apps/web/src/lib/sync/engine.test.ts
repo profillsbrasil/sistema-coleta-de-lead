@@ -182,7 +182,7 @@ describe("sync engine", () => {
 			);
 
 			const { syncCycle } = await import("./engine");
-			await expect(syncCycle()).resolves.toBeUndefined();
+			await expect(syncCycle()).resolves.toEqual({ authExpired: false });
 		});
 
 		it("deletes all acknowledged queue items when same localId has multiple ops", async () => {
@@ -802,6 +802,53 @@ describe("sync engine", () => {
 				expect.objectContaining({
 					error: null,
 				})
+			);
+
+			cleanup();
+		});
+
+		it("calls onSyncEnd with authExpired: true on 401 error", async () => {
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			await db.syncQueue.add({
+				localId: "auth-expired-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Auth Expired Test" }),
+				retryCount: 0,
+			});
+
+			const authError = new Error("UNAUTHORIZED");
+			(authError as unknown as Record<string, unknown>).data = {
+				code: "UNAUTHORIZED",
+			};
+			mockPushChanges.mutate.mockRejectedValue(authError);
+
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					setTimeout(() => fn(true), 0);
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const cleanup = startSync({ onSyncEnd }, externalDetector);
+
+			await syncDone;
+
+			expect(onSyncEnd).toHaveBeenCalledWith(
+				expect.objectContaining({
+					authExpired: true,
+					error: null,
+				}),
 			);
 
 			cleanup();
