@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/client";
 import { db } from "../db/index";
 import { SYNC_CONFIG } from "./constants";
 
-export async function uploadPendingPhotos(): Promise<void> {
+export async function uploadPendingPhotos(): Promise<number> {
 	const supabase = createClient();
 
 	const candidates = await db.leads
@@ -11,8 +11,10 @@ export async function uploadPendingPhotos(): Promise<void> {
 		.toArray();
 
 	if (candidates.length === 0) {
-		return;
+		return 0;
 	}
+
+	let uploadedCount = 0;
 
 	for (const lead of candidates) {
 		if (!lead.photo) {
@@ -49,5 +51,9 @@ export async function uploadPendingPhotos(): Promise<void> {
 			photo: null,
 			photoUrl: data.publicUrl,
 		});
+
+		uploadedCount++;
 	}
+
+	return uploadedCount;
 }
