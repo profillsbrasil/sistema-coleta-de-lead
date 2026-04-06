@@ -203,10 +203,15 @@ export async function syncCycle(): Promise<void> {
 	isSyncing = true;
 	try {
 		await pushChanges();
+		let photosUploaded = 0;
 		try {
-			await uploadPendingPhotos();
+			photosUploaded = await uploadPendingPhotos();
 		} catch {
 			// Photo upload failure should not break sync cycle
+		}
+		// Second push to send photoUrl updates enqueued by uploadPendingPhotos
+		if (photosUploaded > 0) {
+			await pushChanges();
 		}
 		await pullChanges();
 		await fetchLeaderboard();

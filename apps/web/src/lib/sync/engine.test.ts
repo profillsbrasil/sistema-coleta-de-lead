@@ -25,6 +25,12 @@ vi.mock("./constants", async (importOriginal) => {
 	};
 });
 
+// Mock photo upload
+const mockUploadPendingPhotos = vi.fn();
+vi.mock("./photo-upload", () => ({
+	uploadPendingPhotos: mockUploadPendingPhotos,
+}));
+
 // Mock tRPC client
 const mockPushChanges = { mutate: vi.fn() };
 const mockPullChanges = { query: vi.fn() };
@@ -65,6 +71,8 @@ describe("sync engine", () => {
 		localStorageMap.clear();
 		await db.leads.clear();
 		await db.syncQueue.clear();
+
+		mockUploadPendingPhotos.mockResolvedValue(0);
 
 		// Default mock responses
 		mockPushChanges.mutate.mockResolvedValue({
@@ -252,6 +260,63 @@ describe("sync engine", () => {
 			const lead = await db.leads.get("test-uuid-1");
 			expect(lead?.serverId).toBe(42);
 			expect(lead?.syncStatus).toBe("synced");
+		});
+
+		it("runs a second push after photo upload enqueues new items", async () => {
+			mockUploadPendingPhotos.mockImplementation(async () => {
+				await db.syncQueue.add({
+					localId: "photo-push-uuid",
+					operation: "update",
+					timestamp: new Date().toISOString(),
+					payload: JSON.stringify({ photoUrl: "https://example.com/photo.jpg" }),
+					retryCount: 0,
+				});
+				return 1;
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [],
+				idMappings: [],
+			});
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: new Date().toISOString(),
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			// First push skips (queue empty), second push sends the photoUrl update
+			expect(mockPushChanges.mutate).toHaveBeenCalledTimes(1);
+			expect(mockPushChanges.mutate).toHaveBeenCalledWith({
+				operations: expect.arrayContaining([
+					expect.objectContaining({
+						localId: "photo-push-uuid",
+						operation: "update",
+					}),
+				]),
+			});
+		});
+
+		it("does NOT run second push if no photos were uploaded", async () => {
+			mockUploadPendingPhotos.mockResolvedValue(0);
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [],
+				idMappings: [],
+			});
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: new Date().toISOString(),
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			// Only initial push (may be 0 or 1 depending on queue state)
+			// The key check is that it's NOT called twice
+			const callCount = mockPushChanges.mutate.mock.calls.length;
+			expect(callCount).toBeLessThanOrEqual(1);
 		});
 	});
 
