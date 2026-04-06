@@ -15,7 +15,18 @@ export interface Lead {
 	serverId: number | null;
 	syncStatus: "pending" | "synced" | "conflict";
 	updatedAt: string;
+	uploadFailed: boolean;
 	userId: string;
+}
+
+export interface PhotoUploadMeta {
+	localId: string;
+	retryCount: number;
+}
+
+export interface SyncMeta {
+	key: string;
+	value: string;
 }
 
 export interface SyncQueueItem {

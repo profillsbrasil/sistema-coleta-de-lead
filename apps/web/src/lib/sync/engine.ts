@@ -14,8 +14,10 @@ export interface SyncEngineCallbacks {
 		lastSync: string;
 		error: string | null;
 		authExpired?: boolean;
+		isStalled?: boolean;
 	}) => void;
 	onSyncStart?: () => void;
+	onRetry?: (attempt: number, totalAttempts: number) => void;
 }
 
 function fetchWithTimeout(
@@ -80,7 +82,7 @@ async function pushChanges(): Promise<void> {
 
 	const result = await syncClient.sync.pushChanges.mutate({ operations });
 
-	// Delete only acknowledged items from syncQueue
+	// 1. Delete only acknowledged items from syncQueue
 	const ackIds = result.acknowledged
 		.map((a) => {
 			const queueItem = pendingOps.find(
@@ -94,12 +96,30 @@ async function pushChanges(): Promise<void> {
 		await db.syncQueue.bulkDelete(ackIds);
 	}
 
-	// Update serverId and syncStatus for created leads
+	// 2. Update serverId and syncStatus for created leads
 	for (const mapping of result.idMappings) {
+		const pendingCount = await db.syncQueue
+			.where("localId")
+			.equals(mapping.localId)
+			.count();
 		await db.leads.update(mapping.localId, {
 			serverId: Number(mapping.serverId),
-			syncStatus: "synced",
+			syncStatus: pendingCount > 0 ? "pending" : "synced",
 		});
+	}
+
+	// 3. React to failed operation — increment retryCount so persistent failures are visible
+	if (result.failedOperation) {
+		const failedItem = pendingOps.find(
+			(p) =>
+				p.localId === result.failedOperation!.localId &&
+				p.timestamp === result.failedOperation!.queueId,
+		);
+		if (failedItem?.id != null) {
+			await db.syncQueue.update(failedItem.id, {
+				retryCount: (failedItem.retryCount ?? 0) + 1,
+			});
+		}
 	}
 }
 
@@ -133,12 +153,13 @@ function mapServerLeadToLocal(
 				? serverLead.deletedAt.toISOString()
 				: ((serverLead.deletedAt as string) ?? null),
 		syncStatus: "synced" as const,
+		uploadFailed: false,
 	};
 }
 
 async function pullChanges(): Promise<void> {
-	const lastSync =
-		localStorage.getItem("lastSyncTimestamp") ?? "1970-01-01T00:00:00Z";
+	const metaEntry = await db.syncMeta.get("lastSyncTimestamp");
+	const lastSync = metaEntry?.value ?? "1970-01-01T00:00:00Z";
 
 	const result = await syncClient.sync.pullChanges.query({ since: lastSync });
 
@@ -169,10 +190,14 @@ async function pullChanges(): Promise<void> {
 
 		const mapped = mapServerLeadToLocal(serverRecord);
 		const mergedPhoto = localLead?.photo ?? null;
-		await db.leads.put({ ...mapped, photo: mergedPhoto });
+		await db.leads.put({
+			...mapped,
+			photo: mergedPhoto,
+			uploadFailed: localLead?.uploadFailed ?? false,
+		});
 	}
 
-	localStorage.setItem("lastSyncTimestamp", result.serverTimestamp);
+	await db.syncMeta.put({ key: "lastSyncTimestamp", value: result.serverTimestamp });
 
 	if (conflictCount > 0) {
 		toast.info(`${conflictCount} lead(s) atualizado(s) pelo servidor`);
@@ -238,8 +263,8 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 	for (let attempt = 0; attempt < SYNC_CONFIG.maxRetries; attempt++) {
 		try {
 			const result = await syncCycle();
-			const lastSync =
-				localStorage.getItem("lastSyncTimestamp") ?? new Date().toISOString();
+			const syncMetaEntry = await db.syncMeta.get("lastSyncTimestamp");
+			const lastSync = syncMetaEntry?.value ?? new Date().toISOString();
 			if (result.authExpired) {
 				callbacks?.onSyncEnd?.({ lastSync, error: null, authExpired: true });
 				return;
@@ -248,12 +273,15 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 			return;
 		} catch (error: unknown) {
 			if (isUnauthorizedError(error)) {
-				const lastSync = localStorage.getItem("lastSyncTimestamp") ?? "";
+				const syncMetaEntry = await db.syncMeta.get("lastSyncTimestamp");
+				const lastSync = syncMetaEntry?.value ?? "";
 				callbacks?.onSyncEnd?.({ lastSync, error: null, authExpired: true });
 				return;
 			}
 			lastError = error instanceof Error ? error.message : "Erro desconhecido";
 			if (attempt < SYNC_CONFIG.maxRetries - 1) {
+				// Notificar UI antes do backoff (attempt é 0-indexed; mostrar próximo attempt)
+				callbacks?.onRetry?.(attempt + 2, SYNC_CONFIG.maxRetries);
 				await new Promise((resolve) => {
 					setTimeout(resolve, getBackoffDelay(attempt));
 				});
@@ -262,14 +290,15 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 	}
 
 	// All retries exhausted (D-11)
-	const lastSync = localStorage.getItem("lastSyncTimestamp") ?? "";
-	callbacks?.onSyncEnd?.({ lastSync, error: lastError });
+	const syncMetaEntry = await db.syncMeta.get("lastSyncTimestamp");
+	const lastSync = syncMetaEntry?.value ?? "";
+	callbacks?.onSyncEnd?.({ lastSync, error: lastError, isStalled: true });
 }
 
 export function startSync(
 	callbacks?: SyncEngineCallbacks,
 	detector?: ConnectivityDetector,
-): () => void {
+): { stop: () => void; retry: () => void } {
 	const _detector = detector ?? createConnectivityDetector();
 	let periodicTimerId: ReturnType<typeof setTimeout> | null = null;
 
@@ -296,12 +325,20 @@ export function startSync(
 
 	schedulePeriodicSync();
 
-	return () => {
+	function stop(): void {
 		unsubscribe();
 		_detector.stop();
 		if (periodicTimerId !== null) {
 			clearTimeout(periodicTimerId);
 			periodicTimerId = null;
 		}
-	};
+	}
+
+	function retry(): void {
+		if (_detector.isOnline && !isSyncing) {
+			syncWithRetry(callbacks);
+		}
+	}
+
+	return { stop, retry };
 }

@@ -1,27 +1,35 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { db } from "@/lib/db/index";
 import { createConnectivityDetector } from "@/lib/sync/connectivity";
 import type { SyncEngineCallbacks } from "@/lib/sync/engine";
 
 interface SyncStatus {
-    isOnline: boolean;
-    isSyncing: boolean;
-    lastError: string | null;
-    lastSync: string | null;
-    pendingCount: number;
-    authExpired: boolean;
+	isOnline: boolean;
+	isSyncing: boolean;
+	lastError: string | null;
+	lastSync: string | null;
+	pendingCount: number;
+	authExpired: boolean;
+	retryAttempt: number | null;
+	totalRetries: number;
+	isStalled: boolean;
+	manualRetry: () => void;
 }
 
 const SyncStatusContext = createContext<SyncStatus>({
-    isOnline: true,
-    isSyncing: false,
-    pendingCount: 0,
-    lastSync: null,
-    lastError: null,
-    authExpired: false,
+	isOnline: true,
+	isSyncing: false,
+	pendingCount: 0,
+	lastSync: null,
+	lastError: null,
+	authExpired: false,
+	retryAttempt: null,
+	totalRetries: 5,
+	isStalled: false,
+	manualRetry: () => undefined,
 });
 
 export function useSyncStatus(): SyncStatus {
@@ -29,10 +37,13 @@ export function useSyncStatus(): SyncStatus {
 }
 
 interface SyncState {
-    isSyncing: boolean;
-    lastError: string | null;
-    lastSync: string | null;
-    authExpired: boolean;
+	isSyncing: boolean;
+	lastError: string | null;
+	lastSync: string | null;
+	authExpired: boolean;
+	retryAttempt: number | null;
+	totalRetries: number;
+	isStalled: boolean;
 }
 
 export function SyncStatusProvider({
@@ -42,19 +53,25 @@ export function SyncStatusProvider({
 }) {
 	const [isOnline, setIsOnline] = useState(true);
 	const [syncState, setSyncState] = useState<SyncState>({
-	    isSyncing: false,
-	    lastSync: null,
-	    lastError: null,
-	    authExpired: false,
+		isSyncing: false,
+		lastSync: null,
+		lastError: null,
+		authExpired: false,
+		retryAttempt: null,
+		totalRetries: 5,
+		isStalled: false,
 	});
+
+	const retryRef = useRef<(() => void) | null>(null);
 
 	const pendingCount = useLiveQuery(() => db.syncQueue.count(), [], 0);
 
 	useEffect(() => {
-		const storedSync = localStorage.getItem("lastSyncTimestamp");
-		if (storedSync) {
-			setSyncState((prev) => ({ ...prev, lastSync: storedSync }));
-		}
+		db.syncMeta.get("lastSyncTimestamp").then((meta) => {
+			if (meta?.value) {
+				setSyncState((prev) => ({ ...prev, lastSync: meta.value }));
+			}
+		});
 
 		const detector = createConnectivityDetector();
 		setIsOnline(detector.isOnline);
@@ -64,27 +81,43 @@ export function SyncStatusProvider({
 		});
 
 		const callbacks: SyncEngineCallbacks = {
-			onSyncStart: () => setSyncState((prev) => ({ ...prev, isSyncing: true })),
+			onSyncStart: () =>
+				setSyncState((prev) => ({
+					...prev,
+					isSyncing: true,
+					retryAttempt: null,
+					isStalled: false,
+				})),
 			onSyncEnd: (result) =>
-			    setSyncState({
-			        isSyncing: false,
-			        lastSync: result.lastSync,
-			        lastError: result.error,
-			        authExpired: result.authExpired ?? false,
-			    }),
+				setSyncState({
+					isSyncing: false,
+					lastSync: result.lastSync,
+					lastError: result.error,
+					authExpired: result.authExpired ?? false,
+					retryAttempt: null,
+					totalRetries: 5,
+					isStalled: result.isStalled ?? false,
+				}),
+			onRetry: (attempt, totalAttempts) =>
+				setSyncState((prev) => ({
+					...prev,
+					retryAttempt: attempt,
+					totalRetries: totalAttempts,
+				})),
 		};
 
-		let cleanup: (() => void) | undefined;
+		let syncControl: { stop: () => void; retry: () => void } | undefined;
 
 		async function init() {
 			const { startSync } = await import("@/lib/sync/engine");
-			cleanup = startSync(callbacks, detector);
+			syncControl = startSync(callbacks, detector);
+			retryRef.current = syncControl.retry;
 		}
 
 		init();
 
 		return () => {
-			cleanup?.();
+			syncControl?.stop();
 			unsubscribeDetector();
 			detector.stop();
 		};
@@ -94,6 +127,7 @@ export function SyncStatusProvider({
 		isOnline,
 		...syncState,
 		pendingCount,
+		manualRetry: () => retryRef.current?.(),
 	};
 
 	return <SyncStatusContext value={value}>{children}</SyncStatusContext>;
