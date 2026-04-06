@@ -10,20 +10,35 @@ import { getBackoffDelay, SYNC_CONFIG } from "./constants";
 import { uploadPendingPhotos } from "./photo-upload";
 
 export interface SyncEngineCallbacks {
-	onSyncEnd?: (result: { lastSync: string; error: string | null }) => void;
+	onSyncEnd?: (result: {
+		lastSync: string;
+		error: string | null;
+		authExpired?: boolean;
+	}) => void;
 	onSyncStart?: () => void;
+}
+
+function fetchWithTimeout(
+	url: URL | RequestInfo,
+	options?: RequestInit,
+): Promise<Response> {
+	const controller = new AbortController();
+	const timeoutId = setTimeout(
+		() => controller.abort(),
+		SYNC_CONFIG.pushPullTimeoutMs,
+	);
+	return fetch(url, {
+		...options,
+		credentials: "include",
+		signal: controller.signal,
+	}).finally(() => clearTimeout(timeoutId));
 }
 
 const syncClient = createTRPCClient<AppRouter>({
 	links: [
 		httpBatchLink({
 			url: "/api/trpc",
-			fetch(url, options) {
-				return fetch(url, {
-					...options,
-					credentials: "include",
-				});
-			},
+			fetch: fetchWithTimeout,
 		}),
 	],
 });
@@ -68,7 +83,9 @@ async function pushChanges(): Promise<void> {
 	// Delete only acknowledged items from syncQueue
 	const ackIds = result.acknowledged
 		.map((a) => {
-			const queueItem = pendingOps.find((p) => p.localId === a.localId);
+			const queueItem = pendingOps.find(
+				(p) => p.localId === a.localId && p.timestamp === a.queueId,
+			);
 			return queueItem?.id;
 		})
 		.filter((id): id is number => id != null);
@@ -102,6 +119,7 @@ function mapServerLeadToLocal(
 		notes: (serverLead.notes as string) ?? null,
 		interestTag: (serverLead.interestTag as Lead["interestTag"]) ?? "frio",
 		photo: null,
+		photoUrl: (serverLead.photoUrl as string) ?? null,
 		createdAt:
 			serverLead.createdAt instanceof Date
 				? serverLead.createdAt.toISOString()
@@ -150,7 +168,8 @@ async function pullChanges(): Promise<void> {
 		}
 
 		const mapped = mapServerLeadToLocal(serverRecord);
-		await db.leads.put(mapped);
+		const mergedPhoto = localLead?.photo ?? null;
+		await db.leads.put({ ...mapped, photo: mergedPhoto });
 	}
 
 	localStorage.setItem("lastSyncTimestamp", result.serverTimestamp);
@@ -180,25 +199,31 @@ async function fetchLeaderboard(): Promise<void> {
 	}
 }
 
-export async function syncCycle(): Promise<void> {
+export async function syncCycle(): Promise<{ authExpired: boolean }> {
 	if (isSyncing) {
-		return;
+		return { authExpired: false };
 	}
 
 	isSyncing = true;
 	try {
 		await pushChanges();
+		let photosUploaded = 0;
 		try {
-			await uploadPendingPhotos();
+			photosUploaded = await uploadPendingPhotos();
 		} catch {
 			// Photo upload failure should not break sync cycle
 		}
+		// Second push to send photoUrl updates enqueued by uploadPendingPhotos
+		if (photosUploaded > 0) {
+			await pushChanges();
+		}
 		await pullChanges();
 		await fetchLeaderboard();
+		return { authExpired: false };
 	} catch (error: unknown) {
 		if (isUnauthorizedError(error)) {
 			// 401: stop sync, preserve local data (OFFL-06)
-			return;
+			return { authExpired: true };
 		}
 		throw error;
 	} finally {
@@ -212,15 +237,19 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 
 	for (let attempt = 0; attempt < SYNC_CONFIG.maxRetries; attempt++) {
 		try {
-			await syncCycle();
+			const result = await syncCycle();
 			const lastSync =
 				localStorage.getItem("lastSyncTimestamp") ?? new Date().toISOString();
+			if (result.authExpired) {
+				callbacks?.onSyncEnd?.({ lastSync, error: null, authExpired: true });
+				return;
+			}
 			callbacks?.onSyncEnd?.({ lastSync, error: null });
 			return;
 		} catch (error: unknown) {
 			if (isUnauthorizedError(error)) {
 				const lastSync = localStorage.getItem("lastSyncTimestamp") ?? "";
-				callbacks?.onSyncEnd?.({ lastSync, error: null });
+				callbacks?.onSyncEnd?.({ lastSync, error: null, authExpired: true });
 				return;
 			}
 			lastError = error instanceof Error ? error.message : "Erro desconhecido";
@@ -239,9 +268,19 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 
 export function startSync(
 	callbacks?: SyncEngineCallbacks,
-	detector?: ConnectivityDetector
+	detector?: ConnectivityDetector,
 ): () => void {
 	const _detector = detector ?? createConnectivityDetector();
+	let periodicTimerId: ReturnType<typeof setTimeout> | null = null;
+
+	function schedulePeriodicSync(): void {
+		periodicTimerId = setTimeout(async () => {
+			if (_detector.isOnline && !isSyncing) {
+				await syncWithRetry(callbacks);
+			}
+			schedulePeriodicSync();
+		}, SYNC_CONFIG.periodicSyncIntervalMs);
+	}
 
 	const unsubscribe = _detector.subscribe((online) => {
 		if (online) {
@@ -255,8 +294,14 @@ export function startSync(
 		syncWithRetry(callbacks);
 	}
 
+	schedulePeriodicSync();
+
 	return () => {
 		unsubscribe();
 		_detector.stop();
+		if (periodicTimerId !== null) {
+			clearTimeout(periodicTimerId);
+			periodicTimerId = null;
+		}
 	};
 }

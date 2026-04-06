@@ -9,6 +9,7 @@ export interface Lead {
 	notes: string | null;
 	phone: string | null;
 	photo: Blob | null;
+	photoUrl: string | null;
 	position: string | null;
 	segment: string | null;
 	serverId: number | null;

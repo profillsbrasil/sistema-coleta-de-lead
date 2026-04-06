@@ -25,6 +25,12 @@ vi.mock("./constants", async (importOriginal) => {
 	};
 });
 
+// Mock photo upload
+const mockUploadPendingPhotos = vi.fn();
+vi.mock("./photo-upload", () => ({
+	uploadPendingPhotos: mockUploadPendingPhotos,
+}));
+
 // Mock tRPC client
 const mockPushChanges = { mutate: vi.fn() };
 const mockPullChanges = { query: vi.fn() };
@@ -65,6 +71,8 @@ describe("sync engine", () => {
 		localStorageMap.clear();
 		await db.leads.clear();
 		await db.syncQueue.clear();
+
+		mockUploadPendingPhotos.mockResolvedValue(0);
 
 		// Default mock responses
 		mockPushChanges.mutate.mockResolvedValue({
@@ -128,7 +136,7 @@ describe("sync engine", () => {
 		});
 
 		it("deletes only acknowledged items from syncQueue after push", async () => {
-			const id = await db.syncQueue.add({
+			await db.syncQueue.add({
 				localId: "test-uuid-1",
 				operation: "create",
 				timestamp: "2026-01-01T00:00:00Z",
@@ -137,8 +145,72 @@ describe("sync engine", () => {
 			});
 
 			mockPushChanges.mutate.mockResolvedValue({
-				acknowledged: [{ localId: "test-uuid-1", queueId: String(id) }],
+				acknowledged: [{ localId: "test-uuid-1", queueId: "2026-01-01T00:00:00Z" }],
 				idMappings: [],
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const remaining = await db.syncQueue.count();
+			expect(remaining).toBe(0);
+		});
+
+		it("completes sync cycle when push resolves within timeout", async () => {
+			await db.syncQueue.add({
+				localId: "timeout-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Timeout Test" }),
+				retryCount: 0,
+			});
+
+			mockPushChanges.mutate.mockImplementation(
+				() =>
+					new Promise((resolve) =>
+						setTimeout(
+							() =>
+								resolve({
+									acknowledged: [
+										{ localId: "timeout-uuid", queueId: "q1" },
+									],
+									idMappings: [],
+								}),
+							10,
+						),
+					),
+			);
+
+			const { syncCycle } = await import("./engine");
+			await expect(syncCycle()).resolves.toEqual({ authExpired: false });
+		});
+
+		it("deletes all acknowledged queue items when same localId has multiple ops", async () => {
+			const ts1 = "2026-01-01T00:00:00Z";
+			const ts2 = "2026-01-01T00:00:01Z";
+
+			await db.syncQueue.add({
+				localId: "dup-uuid",
+				operation: "create",
+				timestamp: ts1,
+				payload: JSON.stringify({ name: "Test" }),
+				retryCount: 0,
+			});
+
+			await db.syncQueue.add({
+				localId: "dup-uuid",
+				operation: "update",
+				timestamp: ts2,
+				payload: JSON.stringify({ name: "Updated" }),
+				retryCount: 0,
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [
+					{ localId: "dup-uuid", queueId: ts1 },
+					{ localId: "dup-uuid", queueId: ts2 },
+				],
+				idMappings: [{ localId: "dup-uuid", serverId: "42" }],
 			});
 
 			const { syncCycle } = await import("./engine");
@@ -161,6 +233,7 @@ describe("sync engine", () => {
 				notes: null,
 				interestTag: "quente",
 				photo: null,
+				photoUrl: null,
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 				deletedAt: null,
@@ -187,6 +260,63 @@ describe("sync engine", () => {
 			const lead = await db.leads.get("test-uuid-1");
 			expect(lead?.serverId).toBe(42);
 			expect(lead?.syncStatus).toBe("synced");
+		});
+
+		it("runs a second push after photo upload enqueues new items", async () => {
+			mockUploadPendingPhotos.mockImplementation(async () => {
+				await db.syncQueue.add({
+					localId: "photo-push-uuid",
+					operation: "update",
+					timestamp: new Date().toISOString(),
+					payload: JSON.stringify({ photoUrl: "https://example.com/photo.jpg" }),
+					retryCount: 0,
+				});
+				return 1;
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [],
+				idMappings: [],
+			});
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: new Date().toISOString(),
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			// First push skips (queue empty), second push sends the photoUrl update
+			expect(mockPushChanges.mutate).toHaveBeenCalledTimes(1);
+			expect(mockPushChanges.mutate).toHaveBeenCalledWith({
+				operations: expect.arrayContaining([
+					expect.objectContaining({
+						localId: "photo-push-uuid",
+						operation: "update",
+					}),
+				]),
+			});
+		});
+
+		it("does NOT run second push if no photos were uploaded", async () => {
+			mockUploadPendingPhotos.mockResolvedValue(0);
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [],
+				idMappings: [],
+			});
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: new Date().toISOString(),
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			// Only initial push (may be 0 or 1 depending on queue state)
+			// The key check is that it's NOT called twice
+			const callCount = mockPushChanges.mutate.mock.calls.length;
+			expect(callCount).toBeLessThanOrEqual(1);
 		});
 	});
 
@@ -253,6 +383,7 @@ describe("sync engine", () => {
 				notes: null,
 				interestTag: "frio",
 				photo: null,
+				photoUrl: null,
 				createdAt: "2026-01-01T00:00:00Z",
 				updatedAt: "2026-01-01T00:00:00Z",
 				deletedAt: null,
@@ -305,6 +436,7 @@ describe("sync engine", () => {
 				notes: null,
 				interestTag: "quente",
 				photo: null,
+				photoUrl: null,
 				createdAt: "2026-01-01T00:00:00Z",
 				updatedAt: "2026-01-03T00:00:00Z",
 				deletedAt: null,
@@ -356,6 +488,7 @@ describe("sync engine", () => {
 				notes: null,
 				interestTag: "frio",
 				photo: null,
+				photoUrl: null,
 				createdAt: "2026-01-01T00:00:00Z",
 				updatedAt: "2026-01-01T00:00:00Z",
 				deletedAt: null,
@@ -390,6 +523,60 @@ describe("sync engine", () => {
 			await syncCycle();
 
 			expect(toast.info).toHaveBeenCalledWith(expect.stringContaining("1"));
+		});
+
+		it("preserves local photo blob when pull overwrites lead data", async () => {
+			const photoBlob = new Blob(["pending-photo"], { type: "image/jpeg" });
+
+			await db.leads.add({
+				localId: "photo-uuid",
+				serverId: 10,
+				userId: "user-1",
+				name: "Old Name",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "quente",
+				photo: photoBlob,
+				photoUrl: null,
+				createdAt: "2026-01-01T00:00:00Z",
+				updatedAt: "2026-01-01T00:00:00Z",
+				deletedAt: null,
+				syncStatus: "synced",
+			});
+
+			mockPullChanges.query.mockResolvedValue({
+				leads: [
+					{
+						id: BigInt(10),
+						localId: "photo-uuid",
+						userId: "user-1",
+						name: "Server Name",
+						phone: null,
+						email: null,
+						company: null,
+						position: null,
+						segment: null,
+						notes: null,
+						interestTag: "quente",
+						photoUrl: null,
+						createdAt: new Date("2026-01-01"),
+						updatedAt: new Date("2026-01-03"),
+						deletedAt: null,
+					},
+				],
+				serverTimestamp: "2026-01-04T00:00:00Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const lead = await db.leads.get("photo-uuid");
+			expect(lead?.name).toBe("Server Name");
+			expect(lead?.photo).not.toBeNull();
 		});
 
 		it("saves serverTimestamp to localStorage after pull", async () => {
@@ -620,6 +807,53 @@ describe("sync engine", () => {
 			cleanup();
 		});
 
+		it("calls onSyncEnd with authExpired: true on 401 error", async () => {
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			await db.syncQueue.add({
+				localId: "auth-expired-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Auth Expired Test" }),
+				retryCount: 0,
+			});
+
+			const authError = new Error("UNAUTHORIZED");
+			(authError as unknown as Record<string, unknown>).data = {
+				code: "UNAUTHORIZED",
+			};
+			mockPushChanges.mutate.mockRejectedValue(authError);
+
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					setTimeout(() => fn(true), 0);
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const cleanup = startSync({ onSyncEnd }, externalDetector);
+
+			await syncDone;
+
+			expect(onSyncEnd).toHaveBeenCalledWith(
+				expect.objectContaining({
+					authExpired: true,
+					error: null,
+				}),
+			);
+
+			cleanup();
+		});
+
 		it("transient error then success does NOT fire onSyncEnd with error", async () => {
 			const onSyncStart = vi.fn();
 
@@ -676,6 +910,65 @@ describe("sync engine", () => {
 
 			cleanup();
 		});
+
+		it("re-schedules sync via periodic timer after retries exhausted", async () => {
+			// Override periodicSyncIntervalMs to a short value for test speed
+			const constants = await import("./constants");
+			const originalConfig = { ...constants.SYNC_CONFIG };
+			Object.assign(constants.SYNC_CONFIG, { periodicSyncIntervalMs: 50 });
+
+			await db.syncQueue.add({
+				localId: "periodic-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Periodic Test" }),
+				retryCount: 0,
+			});
+
+			mockPushChanges.mutate.mockRejectedValue(new Error("Network error"));
+
+			const onSyncStart = vi.fn();
+
+			let firstRoundResolve: () => void;
+			const firstRoundDone = new Promise<void>((resolve) => {
+				firstRoundResolve = resolve;
+			});
+			const onSyncEnd = vi.fn(() => {
+				if (onSyncEnd.mock.calls.length === 1) {
+					firstRoundResolve();
+				}
+			});
+
+			const externalDetector = {
+				isOnline: true,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn(() => vi.fn()),
+			};
+
+			const { startSync } = await import("./engine");
+			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+
+			// Wait for initial syncWithRetry to exhaust all retries (backoff mocked to 0ms)
+			await firstRoundDone;
+
+			const callsAfterFirstRound = onSyncStart.mock.calls.length;
+			expect(callsAfterFirstRound).toBeGreaterThanOrEqual(1);
+
+			// Now let the periodic timer fire with a successful response
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [],
+				idMappings: [],
+			});
+
+			// Wait for the periodic timer to fire (50ms interval)
+			await new Promise((resolve) => setTimeout(resolve, 200));
+
+			expect(onSyncStart.mock.calls.length).toBeGreaterThan(callsAfterFirstRound);
+
+			cleanup();
+			Object.assign(constants.SYNC_CONFIG, originalConfig);
+		});
 	});
 
 	describe("error handling", () => {
@@ -700,6 +993,7 @@ describe("sync engine", () => {
 				notes: null,
 				interestTag: "quente",
 				photo: null,
+				photoUrl: null,
 				createdAt: new Date().toISOString(),
 				updatedAt: new Date().toISOString(),
 				deletedAt: null,
