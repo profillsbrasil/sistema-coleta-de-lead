@@ -47,6 +47,8 @@ async function loadAdminLeadsRouter(rows: AdminLeadRow[]) {
 		and: (...conditions: unknown[]) => ({ kind: "and", conditions }),
 		eq: (left: unknown, right: unknown) => ({ kind: "eq", left, right }),
 		isNull: (value: unknown) => ({ kind: "isNull", value }),
+		desc: (col: unknown) => ({ kind: "desc", col }),
+		count: (col: unknown) => ({ kind: "count", col }),
 		sql: (strings: TemplateStringsArray, ...values: unknown[]) => ({
 			kind: "sql",
 			text: strings.join("?"),
