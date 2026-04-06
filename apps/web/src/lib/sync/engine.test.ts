@@ -318,6 +318,101 @@ describe("sync engine", () => {
 			const callCount = mockPushChanges.mutate.mock.calls.length;
 			expect(callCount).toBeLessThanOrEqual(1);
 		});
+
+		it("aplica bulkDelete(ackIds) e idMappings antes de reagir ao failedOperation", async () => {
+			const successTs = "2026-01-01T00:00:00.000Z";
+			const failTs = "2026-01-01T00:00:01.000Z";
+
+			await db.leads.add({
+				localId: "lead-ok",
+				serverId: null,
+				userId: "user-1",
+				name: "Lead OK",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "quente",
+				photo: null,
+				photoUrl: null,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+				deletedAt: null,
+				syncStatus: "pending",
+			});
+			await db.syncQueue.add({
+				localId: "lead-ok",
+				operation: "create",
+				payload: JSON.stringify({ name: "Lead OK" }),
+				retryCount: 0,
+				timestamp: successTs,
+			});
+			await db.syncQueue.add({
+				localId: "lead-fail",
+				operation: "update",
+				payload: JSON.stringify({ name: "Lead Fail" }),
+				retryCount: 0,
+				timestamp: failTs,
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [{ localId: "lead-ok", queueId: successTs }],
+				idMappings: [{ localId: "lead-ok", serverId: "99" }],
+				failedOperation: {
+					localId: "lead-fail",
+					queueId: failTs,
+					message: "DB error",
+				},
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			// ACK do lead-ok foi aplicado — removido da syncQueue
+			const remaining = await db.syncQueue.toArray();
+			const remainingLocalIds = remaining.map((r) => r.localId);
+			expect(remainingLocalIds).not.toContain("lead-ok");
+
+			// idMapping do lead-ok foi aplicado — serverId atualizado
+			const leadOk = await db.leads.get("lead-ok");
+			expect(leadOk?.serverId).toBe(99);
+
+			// lead-fail ainda está na fila com retryCount incrementado
+			const failItem = remaining.find((r) => r.localId === "lead-fail");
+			expect(failItem).toBeDefined();
+			expect(failItem?.retryCount).toBe(1);
+		});
+
+		it("incrementa retryCount da operação falhada quando servidor retorna failedOperation", async () => {
+			const failTs = "2026-01-01T10:00:00.000Z";
+			await db.syncQueue.add({
+				localId: "lead-broken",
+				operation: "update",
+				payload: JSON.stringify({ name: "Broken" }),
+				retryCount: 3,
+				timestamp: failTs,
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [],
+				idMappings: [],
+				failedOperation: {
+					localId: "lead-broken",
+					queueId: failTs,
+					message: "constraint violation",
+				},
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const item = await db.syncQueue
+				.filter((q) => q.localId === "lead-broken")
+				.first();
+			expect(item?.retryCount).toBe(4);
+		});
 	});
 
 	describe("pull phase", () => {

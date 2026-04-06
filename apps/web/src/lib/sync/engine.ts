@@ -80,7 +80,7 @@ async function pushChanges(): Promise<void> {
 
 	const result = await syncClient.sync.pushChanges.mutate({ operations });
 
-	// Delete only acknowledged items from syncQueue
+	// 1. Delete only acknowledged items from syncQueue
 	const ackIds = result.acknowledged
 		.map((a) => {
 			const queueItem = pendingOps.find(
@@ -94,12 +94,26 @@ async function pushChanges(): Promise<void> {
 		await db.syncQueue.bulkDelete(ackIds);
 	}
 
-	// Update serverId and syncStatus for created leads
+	// 2. Update serverId and syncStatus for created leads
 	for (const mapping of result.idMappings) {
 		await db.leads.update(mapping.localId, {
 			serverId: Number(mapping.serverId),
 			syncStatus: "synced",
 		});
+	}
+
+	// 3. React to failed operation — increment retryCount so persistent failures are visible
+	if (result.failedOperation) {
+		const failedItem = pendingOps.find(
+			(p) =>
+				p.localId === result.failedOperation!.localId &&
+				p.timestamp === result.failedOperation!.queueId,
+		);
+		if (failedItem?.id != null) {
+			await db.syncQueue.update(failedItem.id, {
+				retryCount: (failedItem.retryCount ?? 0) + 1,
+			});
+		}
 	}
 }
 
