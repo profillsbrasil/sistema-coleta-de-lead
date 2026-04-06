@@ -1,7 +1,5 @@
 "use client";
 
-import { clearAuthSnapshot } from "@/lib/auth/auth-snapshot";
-import { createClient } from "@/lib/supabase/client";
 import {
 	Avatar,
 	AvatarFallback,
@@ -19,9 +17,11 @@ import {
 	SidebarMenuItem,
 } from "@dashboard-leads-profills/ui/components/sidebar";
 import { LogOut, Moon, Sun, User } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { type ReactNode, useEffect, useState } from "react";
+import { clearAuthSnapshot } from "@/lib/auth/auth-snapshot";
+import { createClient } from "@/lib/supabase/client";
 import { SyncStatusIcon } from "./sync-status-icon";
 
 interface SidebarUserMenuProps {
