@@ -24,6 +24,11 @@ export interface PhotoUploadMeta {
 	retryCount: number;
 }
 
+export interface SyncMeta {
+	key: string;
+	value: string;
+}
+
 export interface SyncQueueItem {
 	id?: number;
 	localId: string;

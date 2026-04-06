@@ -1,11 +1,12 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Lead, LeaderboardEntry, PhotoUploadMeta, SyncQueueItem } from "./types";
+import type { Lead, LeaderboardEntry, PhotoUploadMeta, SyncMeta, SyncQueueItem } from "./types";
 
 const db = new Dexie("dashboard-leads") as Dexie & {
 	leads: EntityTable<Lead, "localId">;
 	syncQueue: EntityTable<SyncQueueItem, "id">;
 	leaderboardCache: EntityTable<LeaderboardEntry, "userId">;
 	photoUploadMeta: EntityTable<PhotoUploadMeta, "localId">;
+	syncMeta: EntityTable<SyncMeta, "key">;
 };
 
 db.version(1).stores({
@@ -99,5 +100,14 @@ db.version(7)
 			})
 	);
 
-export type { Lead, LeaderboardEntry, PhotoUploadMeta, SyncQueueItem };
+db.version(8).stores({
+	leads:
+		"localId, serverId, userId, interestTag, syncStatus, createdAt, updatedAt",
+	syncQueue: "++id, localId, operation, timestamp",
+	leaderboardCache: "userId, rank",
+	photoUploadMeta: "localId",
+	syncMeta: "key",
+});
+
+export type { Lead, LeaderboardEntry, PhotoUploadMeta, SyncMeta, SyncQueueItem };
 export { db };

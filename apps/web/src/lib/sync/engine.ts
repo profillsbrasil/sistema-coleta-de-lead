@@ -151,12 +151,13 @@ function mapServerLeadToLocal(
 				? serverLead.deletedAt.toISOString()
 				: ((serverLead.deletedAt as string) ?? null),
 		syncStatus: "synced" as const,
+		uploadFailed: false,
 	};
 }
 
 async function pullChanges(): Promise<void> {
-	const lastSync =
-		localStorage.getItem("lastSyncTimestamp") ?? "1970-01-01T00:00:00Z";
+	const metaEntry = await db.syncMeta.get("lastSyncTimestamp");
+	const lastSync = metaEntry?.value ?? "1970-01-01T00:00:00Z";
 
 	const result = await syncClient.sync.pullChanges.query({ since: lastSync });
 
@@ -187,10 +188,14 @@ async function pullChanges(): Promise<void> {
 
 		const mapped = mapServerLeadToLocal(serverRecord);
 		const mergedPhoto = localLead?.photo ?? null;
-		await db.leads.put({ ...mapped, photo: mergedPhoto });
+		await db.leads.put({
+			...mapped,
+			photo: mergedPhoto,
+			uploadFailed: localLead?.uploadFailed ?? false,
+		});
 	}
 
-	localStorage.setItem("lastSyncTimestamp", result.serverTimestamp);
+	await db.syncMeta.put({ key: "lastSyncTimestamp", value: result.serverTimestamp });
 
 	if (conflictCount > 0) {
 		toast.info(`${conflictCount} lead(s) atualizado(s) pelo servidor`);
@@ -256,8 +261,8 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 	for (let attempt = 0; attempt < SYNC_CONFIG.maxRetries; attempt++) {
 		try {
 			const result = await syncCycle();
-			const lastSync =
-				localStorage.getItem("lastSyncTimestamp") ?? new Date().toISOString();
+			const syncMetaEntry = await db.syncMeta.get("lastSyncTimestamp");
+			const lastSync = syncMetaEntry?.value ?? new Date().toISOString();
 			if (result.authExpired) {
 				callbacks?.onSyncEnd?.({ lastSync, error: null, authExpired: true });
 				return;
@@ -266,7 +271,8 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 			return;
 		} catch (error: unknown) {
 			if (isUnauthorizedError(error)) {
-				const lastSync = localStorage.getItem("lastSyncTimestamp") ?? "";
+				const syncMetaEntry = await db.syncMeta.get("lastSyncTimestamp");
+				const lastSync = syncMetaEntry?.value ?? "";
 				callbacks?.onSyncEnd?.({ lastSync, error: null, authExpired: true });
 				return;
 			}
@@ -280,7 +286,8 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 	}
 
 	// All retries exhausted (D-11)
-	const lastSync = localStorage.getItem("lastSyncTimestamp") ?? "";
+	const syncMetaEntry = await db.syncMeta.get("lastSyncTimestamp");
+	const lastSync = syncMetaEntry?.value ?? "";
 	callbacks?.onSyncEnd?.({ lastSync, error: lastError });
 }
 

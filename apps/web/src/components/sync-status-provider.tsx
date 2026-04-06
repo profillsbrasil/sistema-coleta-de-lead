@@ -51,10 +51,11 @@ export function SyncStatusProvider({
 	const pendingCount = useLiveQuery(() => db.syncQueue.count(), [], 0);
 
 	useEffect(() => {
-		const storedSync = localStorage.getItem("lastSyncTimestamp");
-		if (storedSync) {
-			setSyncState((prev) => ({ ...prev, lastSync: storedSync }));
-		}
+		db.syncMeta.get("lastSyncTimestamp").then((meta) => {
+			if (meta?.value) {
+				setSyncState((prev) => ({ ...prev, lastSync: meta.value }));
+			}
+		});
 
 		const detector = createConnectivityDetector();
 		setIsOnline(detector.isOnline);
