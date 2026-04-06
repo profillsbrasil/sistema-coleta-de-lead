@@ -1,6 +1,6 @@
 import { db } from "@dashboard-leads-profills/db";
 import { leads } from "@dashboard-leads-profills/db/schema/leads";
-import { and, isNull, type SQL, sql } from "drizzle-orm";
+import { and, asc, isNotNull, isNull, type SQL, sql } from "drizzle-orm";
 import z from "zod";
 
 import { adminProcedure, router } from "../../index";
@@ -148,15 +148,12 @@ export const adminStatsRouter = router({
 		}),
 
 	getDistinctSegments: adminProcedure.query(async () => {
-		const rows = await db.execute(
-			sql`
-				SELECT DISTINCT segment
-				FROM leads
-				WHERE segment IS NOT NULL AND deleted_at IS NULL
-				ORDER BY segment ASC
-			`
-		);
+		const rows = await db
+			.selectDistinct({ segment: leads.segment })
+			.from(leads)
+			.where(and(isNotNull(leads.segment), isNull(leads.deletedAt)))
+			.orderBy(asc(leads.segment));
 
-		return (rows.rows as Array<{ segment: string }>).map((r) => r.segment);
+		return rows.map((r) => r.segment as string);
 	}),
 });
