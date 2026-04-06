@@ -221,6 +221,8 @@ describe("sync engine", () => {
 		});
 
 		it("updates serverId and syncStatus on created leads", async () => {
+			const ts = "2026-01-01T00:00:00.000Z";
+
 			await db.leads.add({
 				localId: "test-uuid-1",
 				serverId: null,
@@ -234,8 +236,8 @@ describe("sync engine", () => {
 				interestTag: "quente",
 				photo: null,
 				photoUrl: null,
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
+				createdAt: ts,
+				updatedAt: ts,
 				deletedAt: null,
 				syncStatus: "pending",
 				userId: "user-1",
@@ -244,13 +246,14 @@ describe("sync engine", () => {
 			await db.syncQueue.add({
 				localId: "test-uuid-1",
 				operation: "create",
-				timestamp: new Date().toISOString(),
+				timestamp: ts,
 				payload: JSON.stringify({ name: "Test" }),
 				retryCount: 0,
 			});
 
 			mockPushChanges.mutate.mockResolvedValue({
-				acknowledged: [{ localId: "test-uuid-1", queueId: "q1" }],
+				// queueId deve bater com o timestamp real para que bulkDelete funcione
+				acknowledged: [{ localId: "test-uuid-1", queueId: ts }],
 				idMappings: [{ localId: "test-uuid-1", serverId: "42" }],
 			});
 
@@ -412,6 +415,158 @@ describe("sync engine", () => {
 				.filter((q) => q.localId === "lead-broken")
 				.first();
 			expect(item?.retryCount).toBe(4);
+		});
+
+		it("mantém syncStatus 'pending' quando create ACKado mas update do mesmo localId falhou", async () => {
+			const createTs = "2026-01-01T00:00:00.000Z";
+			const updateTs = "2026-01-01T00:00:01.000Z";
+
+			await db.leads.add({
+				localId: "lead-partial",
+				serverId: null,
+				userId: "user-1",
+				name: "Original",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "quente",
+				photo: null,
+				photoUrl: null,
+				createdAt: "2026-01-01T00:00:00.000Z",
+				updatedAt: "2026-01-01T00:00:01.000Z",
+				deletedAt: null,
+				syncStatus: "pending",
+			});
+
+			// create foi ACKado, update ficou na fila (não ACKado = failedOperation)
+			await db.syncQueue.add({
+				localId: "lead-partial",
+				operation: "create",
+				payload: JSON.stringify({ name: "Original" }),
+				retryCount: 0,
+				timestamp: createTs,
+			});
+			await db.syncQueue.add({
+				localId: "lead-partial",
+				operation: "update",
+				payload: JSON.stringify({ name: "Edited Draft" }),
+				retryCount: 0,
+				timestamp: updateTs,
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				// servidor ACKou só o create, update falhou
+				acknowledged: [{ localId: "lead-partial", queueId: createTs }],
+				idMappings: [{ localId: "lead-partial", serverId: "77" }],
+				failedOperation: {
+					localId: "lead-partial",
+					queueId: updateTs,
+					message: "DB constraint",
+				},
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const lead = await db.leads.get("lead-partial");
+			// serverId deve ter sido atualizado (idMapping foi aplicado)
+			expect(lead?.serverId).toBe(77);
+			// syncStatus NÃO deve virar "synced" — update ainda está pendente
+			expect(lead?.syncStatus).toBe("pending");
+
+			// update ainda deve estar na syncQueue com retryCount incrementado
+			const updateItem = await db.syncQueue
+				.filter((q) => q.localId === "lead-partial" && q.operation === "update")
+				.first();
+			expect(updateItem).toBeDefined();
+			expect(updateItem?.retryCount).toBe(1);
+		});
+
+		it("pull não sobrescreve draft local quando syncStatus é 'pending' após ACK parcial", async () => {
+			const createTs = "2026-01-01T00:00:00.000Z";
+			const updateTs = "2026-01-01T00:00:01.000Z";
+			const draftUpdatedAt = "2026-01-01T00:00:01.000Z";
+			const serverUpdatedAt = "2026-01-01T00:00:00.500Z"; // servidor tem versão mais antiga
+
+			await db.leads.add({
+				localId: "lead-draft",
+				serverId: null,
+				userId: "user-1",
+				name: "Draft Edit",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "morno",
+				photo: null,
+				photoUrl: null,
+				createdAt: "2026-01-01T00:00:00.000Z",
+				updatedAt: draftUpdatedAt,
+				deletedAt: null,
+				syncStatus: "pending",
+			});
+
+			await db.syncQueue.add({
+				localId: "lead-draft",
+				operation: "create",
+				payload: JSON.stringify({ name: "Draft Edit" }),
+				retryCount: 0,
+				timestamp: createTs,
+			});
+			await db.syncQueue.add({
+				localId: "lead-draft",
+				operation: "update",
+				payload: JSON.stringify({ name: "Draft Edit" }),
+				retryCount: 0,
+				timestamp: updateTs,
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [{ localId: "lead-draft", queueId: createTs }],
+				idMappings: [{ localId: "lead-draft", serverId: "88" }],
+				failedOperation: {
+					localId: "lead-draft",
+					queueId: updateTs,
+					message: "DB error",
+				},
+			});
+
+			// Pull retorna versão do servidor (mais antiga que o draft local)
+			mockPullChanges.query.mockResolvedValue({
+				leads: [
+					{
+						id: BigInt(88),
+						localId: "lead-draft",
+						userId: "user-1",
+						name: "Server Version",
+						phone: null,
+						email: null,
+						company: null,
+						position: null,
+						segment: null,
+						notes: null,
+						interestTag: "morno",
+						photoUrl: null,
+						createdAt: new Date("2026-01-01T00:00:00.000Z"),
+						updatedAt: new Date(serverUpdatedAt),
+						deletedAt: null,
+					},
+				],
+				serverTimestamp: new Date().toISOString(),
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			// Draft local NÃO deve ter sido sobrescrito — pull skipa leads com pending + newer updatedAt
+			const lead = await db.leads.get("lead-draft");
+			expect(lead?.name).toBe("Draft Edit");
+			expect(lead?.syncStatus).toBe("pending");
 		});
 	});
 

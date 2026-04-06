@@ -96,9 +96,13 @@ async function pushChanges(): Promise<void> {
 
 	// 2. Update serverId and syncStatus for created leads
 	for (const mapping of result.idMappings) {
+		const pendingCount = await db.syncQueue
+			.where("localId")
+			.equals(mapping.localId)
+			.count();
 		await db.leads.update(mapping.localId, {
 			serverId: Number(mapping.serverId),
-			syncStatus: "synced",
+			syncStatus: pendingCount > 0 ? "pending" : "synced",
 		});
 	}
 
