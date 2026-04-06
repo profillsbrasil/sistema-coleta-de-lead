@@ -22,6 +22,7 @@ function makeLead(overrides: Partial<Lead> = {}): Lead {
 		updatedAt: "2026-01-01T00:00:00.000Z",
 		deletedAt: null,
 		syncStatus: "synced",
+		uploadFailed: false,
 		...overrides,
 	};
 }
