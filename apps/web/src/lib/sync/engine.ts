@@ -115,6 +115,7 @@ function mapServerLeadToLocal(
 		notes: (serverLead.notes as string) ?? null,
 		interestTag: (serverLead.interestTag as Lead["interestTag"]) ?? "frio",
 		photo: null,
+		photoUrl: (serverLead.photoUrl as string) ?? null,
 		createdAt:
 			serverLead.createdAt instanceof Date
 				? serverLead.createdAt.toISOString()
