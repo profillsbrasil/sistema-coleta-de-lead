@@ -148,6 +148,35 @@ describe("sync engine", () => {
 			expect(remaining).toBe(0);
 		});
 
+		it("completes sync cycle when push resolves within timeout", async () => {
+			await db.syncQueue.add({
+				localId: "timeout-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Timeout Test" }),
+				retryCount: 0,
+			});
+
+			mockPushChanges.mutate.mockImplementation(
+				() =>
+					new Promise((resolve) =>
+						setTimeout(
+							() =>
+								resolve({
+									acknowledged: [
+										{ localId: "timeout-uuid", queueId: "q1" },
+									],
+									idMappings: [],
+								}),
+							10,
+						),
+					),
+			);
+
+			const { syncCycle } = await import("./engine");
+			await expect(syncCycle()).resolves.toBeUndefined();
+		});
+
 		it("updates serverId and syncStatus on created leads", async () => {
 			await db.leads.add({
 				localId: "test-uuid-1",
