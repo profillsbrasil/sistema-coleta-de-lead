@@ -2,7 +2,7 @@ import { db } from "@dashboard-leads-profills/db";
 import { userRoles } from "@dashboard-leads-profills/db/schema/auth";
 import { leads } from "@dashboard-leads-profills/db/schema/leads";
 import { TRPCError } from "@trpc/server";
-import { and, count, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, count, eq, inArray, isNull } from "drizzle-orm";
 import z from "zod";
 
 import { adminProcedure, router } from "../../index";
