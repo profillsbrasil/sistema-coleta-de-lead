@@ -1,4 +1,5 @@
 import { db } from "../db/index";
+import { checkStorageAndCompress } from "./compression";
 import type { LeadFormData } from "./validation";
 
 function emptyToNull(value: string | undefined): string | null {
@@ -13,6 +14,8 @@ export async function saveLead(
 	const localId = crypto.randomUUID();
 	const now = new Date().toISOString();
 
+	const processedPhoto = photo ? await checkStorageAndCompress(photo) : null;
+
 	await db.transaction("rw", db.leads, db.syncQueue, async () => {
 		await db.leads.add({
 			localId,
@@ -26,12 +29,13 @@ export async function saveLead(
 			segment: emptyToNull(data.segment),
 			notes: emptyToNull(data.notes),
 			interestTag: data.interestTag,
-			photo,
+			photo: processedPhoto,
 			photoUrl: null,
 			createdAt: now,
 			updatedAt: now,
 			deletedAt: null,
 			syncStatus: "pending",
+			uploadFailed: false,
 		});
 
 		await db.syncQueue.add({

@@ -55,6 +55,7 @@ describe("uploadPendingPhotos", () => {
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
 			syncStatus: "synced",
+			uploadFailed: false,
 		});
 
 		const { uploadPendingPhotos } = await import("./photo-upload");
@@ -114,6 +115,7 @@ describe("uploadPendingPhotos", () => {
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
 			syncStatus: "synced",
+			uploadFailed: false,
 		});
 
 		const { uploadPendingPhotos } = await import("./photo-upload");
@@ -142,6 +144,7 @@ describe("uploadPendingPhotos", () => {
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
 			syncStatus: "synced",
+			uploadFailed: false,
 		});
 
 		const { uploadPendingPhotos } = await import("./photo-upload");
@@ -171,6 +174,7 @@ describe("uploadPendingPhotos", () => {
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
 			syncStatus: "synced",
+			uploadFailed: false,
 		});
 
 		const { uploadPendingPhotos } = await import("./photo-upload");
@@ -209,6 +213,7 @@ describe("uploadPendingPhotos", () => {
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
 			syncStatus: "synced",
+			uploadFailed: false,
 		});
 
 		const { uploadPendingPhotos } = await import("./photo-upload");
@@ -241,6 +246,7 @@ describe("uploadPendingPhotos", () => {
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
 			syncStatus: "synced",
+			uploadFailed: false,
 		});
 
 		const { uploadPendingPhotos } = await import("./photo-upload");
@@ -249,5 +255,110 @@ describe("uploadPendingPhotos", () => {
 		expect(mockUpload).toHaveBeenCalledTimes(1);
 		const [path] = mockUpload.mock.calls[0];
 		expect(path).toBe("user-xyz/abc-def-123.jpg");
+	});
+
+	it("incrementa retryCount em photoUploadMeta após falha de upload", async () => {
+		mockUpload.mockResolvedValue({ error: { message: "Bucket error" } });
+
+		const photoBlob = new Blob(["fake-photo"], { type: "image/jpeg" });
+		await db.leads.add({
+			localId: "local-retry",
+			serverId: 42,
+			userId: "user-1",
+			name: "Retry Lead",
+			phone: null,
+			email: null,
+			company: null,
+			position: null,
+			segment: null,
+			notes: null,
+			interestTag: "quente",
+			photo: photoBlob,
+			photoUrl: null,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			deletedAt: null,
+			syncStatus: "synced",
+			uploadFailed: false,
+		});
+
+		const { uploadPendingPhotos } = await import("./photo-upload");
+		await uploadPendingPhotos();
+
+		const meta = await db.photoUploadMeta.get("local-retry");
+		expect(meta?.retryCount).toBe(1);
+	});
+
+	it("marca uploadFailed após 10 falhas e não tenta mais no próximo ciclo", async () => {
+		mockUpload.mockResolvedValue({ error: { message: "Still broken" } });
+
+		const photoBlob = new Blob(["fake-photo"], { type: "image/jpeg" });
+		await db.leads.add({
+			localId: "local-exhaust",
+			serverId: 99,
+			userId: "user-1",
+			name: "Exhausted Lead",
+			phone: null,
+			email: null,
+			company: null,
+			position: null,
+			segment: null,
+			notes: null,
+			interestTag: "frio",
+			photo: photoBlob,
+			photoUrl: null,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			deletedAt: null,
+			syncStatus: "synced",
+			uploadFailed: false,
+		});
+
+		// Já tem 9 tentativas anteriores registradas
+		await db.photoUploadMeta.put({ localId: "local-exhaust", retryCount: 9 });
+
+		const { uploadPendingPhotos } = await import("./photo-upload");
+		await uploadPendingPhotos();
+
+		const lead = await db.leads.get("local-exhaust");
+		expect(lead?.uploadFailed).toBe(true);
+
+		// Próximo ciclo não deve tentar (uploadFailed=true exclui do candidato)
+		mockUpload.mockClear();
+		await uploadPendingPhotos();
+		expect(mockUpload).not.toHaveBeenCalled();
+	});
+
+	it("limpa photoUploadMeta após upload bem-sucedido", async () => {
+		const photoBlob = new Blob(["fake-photo"], { type: "image/jpeg" });
+		await db.leads.add({
+			localId: "local-success-meta",
+			serverId: 55,
+			userId: "user-1",
+			name: "Meta Cleanup Lead",
+			phone: null,
+			email: null,
+			company: null,
+			position: null,
+			segment: null,
+			notes: null,
+			interestTag: "morno",
+			photo: photoBlob,
+			photoUrl: null,
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			deletedAt: null,
+			syncStatus: "synced",
+			uploadFailed: false,
+		});
+
+		// Tinha 3 tentativas anteriores
+		await db.photoUploadMeta.put({ localId: "local-success-meta", retryCount: 3 });
+
+		const { uploadPendingPhotos } = await import("./photo-upload");
+		await uploadPendingPhotos();
+
+		const meta = await db.photoUploadMeta.get("local-success-meta");
+		expect(meta).toBeUndefined();
 	});
 });

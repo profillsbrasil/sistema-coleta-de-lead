@@ -71,6 +71,8 @@ describe("sync engine", () => {
 		localStorageMap.clear();
 		await db.leads.clear();
 		await db.syncQueue.clear();
+		await db.photoUploadMeta?.clear();
+		await db.syncMeta?.clear();
 
 		mockUploadPendingPhotos.mockResolvedValue(0);
 
@@ -88,22 +90,25 @@ describe("sync engine", () => {
 	afterEach(async () => {
 		await db.leads.clear();
 		await db.syncQueue.clear();
+		await db.photoUploadMeta?.clear();
+		await db.syncMeta?.clear();
 	});
 
 	describe("startSync", () => {
-		it("returns a cleanup function", async () => {
+		it("returns stop and retry functions", async () => {
 			const { startSync } = await import("./engine");
-			const cleanup = startSync();
-			expect(typeof cleanup).toBe("function");
-			cleanup();
+			const control = startSync();
+			expect(typeof control.stop).toBe("function");
+			expect(typeof control.retry).toBe("function");
+			control.stop();
 		});
 
 		it("subscribes to connectivity detector", async () => {
 			const { startSync } = await import("./engine");
-			const cleanup = startSync();
+			const control = startSync();
 			expect(mockDetector.subscribe).toHaveBeenCalled();
 			expect(mockDetector.start).toHaveBeenCalled();
-			cleanup();
+			control.stop();
 		});
 	});
 
@@ -221,6 +226,8 @@ describe("sync engine", () => {
 		});
 
 		it("updates serverId and syncStatus on created leads", async () => {
+			const ts = "2026-01-01T00:00:00.000Z";
+
 			await db.leads.add({
 				localId: "test-uuid-1",
 				serverId: null,
@@ -234,8 +241,8 @@ describe("sync engine", () => {
 				interestTag: "quente",
 				photo: null,
 				photoUrl: null,
-				createdAt: new Date().toISOString(),
-				updatedAt: new Date().toISOString(),
+				createdAt: ts,
+				updatedAt: ts,
 				deletedAt: null,
 				syncStatus: "pending",
 				userId: "user-1",
@@ -244,13 +251,14 @@ describe("sync engine", () => {
 			await db.syncQueue.add({
 				localId: "test-uuid-1",
 				operation: "create",
-				timestamp: new Date().toISOString(),
+				timestamp: ts,
 				payload: JSON.stringify({ name: "Test" }),
 				retryCount: 0,
 			});
 
 			mockPushChanges.mutate.mockResolvedValue({
-				acknowledged: [{ localId: "test-uuid-1", queueId: "q1" }],
+				// queueId deve bater com o timestamp real para que bulkDelete funcione
+				acknowledged: [{ localId: "test-uuid-1", queueId: ts }],
 				idMappings: [{ localId: "test-uuid-1", serverId: "42" }],
 			});
 
@@ -318,11 +326,258 @@ describe("sync engine", () => {
 			const callCount = mockPushChanges.mutate.mock.calls.length;
 			expect(callCount).toBeLessThanOrEqual(1);
 		});
+
+		it("aplica bulkDelete(ackIds) e idMappings antes de reagir ao failedOperation", async () => {
+			const successTs = "2026-01-01T00:00:00.000Z";
+			const failTs = "2026-01-01T00:00:01.000Z";
+
+			await db.leads.add({
+				localId: "lead-ok",
+				serverId: null,
+				userId: "user-1",
+				name: "Lead OK",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "quente",
+				photo: null,
+				photoUrl: null,
+				createdAt: new Date().toISOString(),
+				updatedAt: new Date().toISOString(),
+				deletedAt: null,
+				syncStatus: "pending",
+			});
+			await db.syncQueue.add({
+				localId: "lead-ok",
+				operation: "create",
+				payload: JSON.stringify({ name: "Lead OK" }),
+				retryCount: 0,
+				timestamp: successTs,
+			});
+			await db.syncQueue.add({
+				localId: "lead-fail",
+				operation: "update",
+				payload: JSON.stringify({ name: "Lead Fail" }),
+				retryCount: 0,
+				timestamp: failTs,
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [{ localId: "lead-ok", queueId: successTs }],
+				idMappings: [{ localId: "lead-ok", serverId: "99" }],
+				failedOperation: {
+					localId: "lead-fail",
+					queueId: failTs,
+					message: "DB error",
+				},
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			// ACK do lead-ok foi aplicado — removido da syncQueue
+			const remaining = await db.syncQueue.toArray();
+			const remainingLocalIds = remaining.map((r) => r.localId);
+			expect(remainingLocalIds).not.toContain("lead-ok");
+
+			// idMapping do lead-ok foi aplicado — serverId atualizado
+			const leadOk = await db.leads.get("lead-ok");
+			expect(leadOk?.serverId).toBe(99);
+
+			// lead-fail ainda está na fila com retryCount incrementado
+			const failItem = remaining.find((r) => r.localId === "lead-fail");
+			expect(failItem).toBeDefined();
+			expect(failItem?.retryCount).toBe(1);
+		});
+
+		it("incrementa retryCount da operação falhada quando servidor retorna failedOperation", async () => {
+			const failTs = "2026-01-01T10:00:00.000Z";
+			await db.syncQueue.add({
+				localId: "lead-broken",
+				operation: "update",
+				payload: JSON.stringify({ name: "Broken" }),
+				retryCount: 3,
+				timestamp: failTs,
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [],
+				idMappings: [],
+				failedOperation: {
+					localId: "lead-broken",
+					queueId: failTs,
+					message: "constraint violation",
+				},
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const item = await db.syncQueue
+				.filter((q) => q.localId === "lead-broken")
+				.first();
+			expect(item?.retryCount).toBe(4);
+		});
+
+		it("mantém syncStatus 'pending' quando create ACKado mas update do mesmo localId falhou", async () => {
+			const createTs = "2026-01-01T00:00:00.000Z";
+			const updateTs = "2026-01-01T00:00:01.000Z";
+
+			await db.leads.add({
+				localId: "lead-partial",
+				serverId: null,
+				userId: "user-1",
+				name: "Original",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "quente",
+				photo: null,
+				photoUrl: null,
+				createdAt: "2026-01-01T00:00:00.000Z",
+				updatedAt: "2026-01-01T00:00:01.000Z",
+				deletedAt: null,
+				syncStatus: "pending",
+			});
+
+			// create foi ACKado, update ficou na fila (não ACKado = failedOperation)
+			await db.syncQueue.add({
+				localId: "lead-partial",
+				operation: "create",
+				payload: JSON.stringify({ name: "Original" }),
+				retryCount: 0,
+				timestamp: createTs,
+			});
+			await db.syncQueue.add({
+				localId: "lead-partial",
+				operation: "update",
+				payload: JSON.stringify({ name: "Edited Draft" }),
+				retryCount: 0,
+				timestamp: updateTs,
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				// servidor ACKou só o create, update falhou
+				acknowledged: [{ localId: "lead-partial", queueId: createTs }],
+				idMappings: [{ localId: "lead-partial", serverId: "77" }],
+				failedOperation: {
+					localId: "lead-partial",
+					queueId: updateTs,
+					message: "DB constraint",
+				},
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const lead = await db.leads.get("lead-partial");
+			// serverId deve ter sido atualizado (idMapping foi aplicado)
+			expect(lead?.serverId).toBe(77);
+			// syncStatus NÃO deve virar "synced" — update ainda está pendente
+			expect(lead?.syncStatus).toBe("pending");
+
+			// update ainda deve estar na syncQueue com retryCount incrementado
+			const updateItem = await db.syncQueue
+				.filter((q) => q.localId === "lead-partial" && q.operation === "update")
+				.first();
+			expect(updateItem).toBeDefined();
+			expect(updateItem?.retryCount).toBe(1);
+		});
+
+		it("pull não sobrescreve draft local quando syncStatus é 'pending' após ACK parcial", async () => {
+			const createTs = "2026-01-01T00:00:00.000Z";
+			const updateTs = "2026-01-01T00:00:01.000Z";
+			const draftUpdatedAt = "2026-01-01T00:00:01.000Z";
+			const serverUpdatedAt = "2026-01-01T00:00:00.500Z"; // servidor tem versão mais antiga
+
+			await db.leads.add({
+				localId: "lead-draft",
+				serverId: null,
+				userId: "user-1",
+				name: "Draft Edit",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "morno",
+				photo: null,
+				photoUrl: null,
+				createdAt: "2026-01-01T00:00:00.000Z",
+				updatedAt: draftUpdatedAt,
+				deletedAt: null,
+				syncStatus: "pending",
+			});
+
+			await db.syncQueue.add({
+				localId: "lead-draft",
+				operation: "create",
+				payload: JSON.stringify({ name: "Draft Edit" }),
+				retryCount: 0,
+				timestamp: createTs,
+			});
+			await db.syncQueue.add({
+				localId: "lead-draft",
+				operation: "update",
+				payload: JSON.stringify({ name: "Draft Edit" }),
+				retryCount: 0,
+				timestamp: updateTs,
+			});
+
+			mockPushChanges.mutate.mockResolvedValue({
+				acknowledged: [{ localId: "lead-draft", queueId: createTs }],
+				idMappings: [{ localId: "lead-draft", serverId: "88" }],
+				failedOperation: {
+					localId: "lead-draft",
+					queueId: updateTs,
+					message: "DB error",
+				},
+			});
+
+			// Pull retorna versão do servidor (mais antiga que o draft local)
+			mockPullChanges.query.mockResolvedValue({
+				leads: [
+					{
+						id: BigInt(88),
+						localId: "lead-draft",
+						userId: "user-1",
+						name: "Server Version",
+						phone: null,
+						email: null,
+						company: null,
+						position: null,
+						segment: null,
+						notes: null,
+						interestTag: "morno",
+						photoUrl: null,
+						createdAt: new Date("2026-01-01T00:00:00.000Z"),
+						updatedAt: new Date(serverUpdatedAt),
+						deletedAt: null,
+					},
+				],
+				serverTimestamp: new Date().toISOString(),
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			// Draft local NÃO deve ter sido sobrescrito — pull skipa leads com pending + newer updatedAt
+			const lead = await db.leads.get("lead-draft");
+			expect(lead?.name).toBe("Draft Edit");
+			expect(lead?.syncStatus).toBe("pending");
+		});
 	});
 
 	describe("pull phase", () => {
 		it("queries server for changes since last sync timestamp", async () => {
-			localStorage.setItem("lastSyncTimestamp", "2026-01-01T00:00:00Z");
+			await db.syncMeta.put({ key: "lastSyncTimestamp", value: "2026-01-01T00:00:00Z" });
 
 			mockPullChanges.query.mockResolvedValue({
 				leads: [],
@@ -579,7 +834,7 @@ describe("sync engine", () => {
 			expect(lead?.photo).not.toBeNull();
 		});
 
-		it("saves serverTimestamp to localStorage after pull", async () => {
+		it("saves serverTimestamp to Dexie syncMeta after pull", async () => {
 			mockPullChanges.query.mockResolvedValue({
 				leads: [],
 				serverTimestamp: "2026-06-15T12:00:00Z",
@@ -588,26 +843,72 @@ describe("sync engine", () => {
 			const { syncCycle } = await import("./engine");
 			await syncCycle();
 
-			expect(localStorage.getItem("lastSyncTimestamp")).toBe(
-				"2026-06-15T12:00:00Z"
-			);
+			const meta = await db.syncMeta.get("lastSyncTimestamp");
+			expect(meta?.value).toBe("2026-06-15T12:00:00Z");
+		});
+
+		it("persiste serverTimestamp em Dexie syncMeta após pull (não localStorage)", async () => {
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: "2026-06-15T12:00:00.000Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const meta = await db.syncMeta.get("lastSyncTimestamp");
+			expect(meta?.value).toBe("2026-06-15T12:00:00.000Z");
+			// localStorage NÃO deve ser usado
+			expect(localStorageMap.has("lastSyncTimestamp")).toBe(false);
+		});
+
+		it("usa '1970-01-01T00:00:00Z' como fallback quando syncMeta não existe", async () => {
+			// syncMeta está vazio (beforeEach limpou)
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: "2026-06-15T12:00:00.000Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			expect(mockPullChanges.query).toHaveBeenCalledWith({
+				since: "1970-01-01T00:00:00Z",
+			});
+		});
+
+		it("lê lastSyncTimestamp de Dexie syncMeta na próxima chamada", async () => {
+			await db.syncMeta.put({ key: "lastSyncTimestamp", value: "2026-03-01T08:00:00.000Z" });
+
+			mockPullChanges.query.mockResolvedValue({
+				leads: [],
+				serverTimestamp: "2026-03-01T10:00:00.000Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			expect(mockPullChanges.query).toHaveBeenCalledWith({
+				since: "2026-03-01T08:00:00.000Z",
+			});
 		});
 	});
 
 	describe("startSync callbacks", () => {
-		it("startSync(callbacks, detector) returns cleanup function", async () => {
+		it("startSync(callbacks, detector) retorna { stop, retry }", async () => {
 			const { startSync } = await import("./engine");
 			const callbacks = { onSyncStart: vi.fn(), onSyncEnd: vi.fn() };
-			const cleanup = startSync(callbacks, mockDetector);
-			expect(typeof cleanup).toBe("function");
-			cleanup();
+			const control = startSync(callbacks, mockDetector);
+			expect(typeof control.stop).toBe("function");
+			expect(typeof control.retry).toBe("function");
+			control.stop();
 		});
 
 		it("startSync() without arguments still works (backward compatible)", async () => {
 			const { startSync } = await import("./engine");
-			const cleanup = startSync();
-			expect(typeof cleanup).toBe("function");
-			cleanup();
+			const control = startSync();
+			expect(typeof control.stop).toBe("function");
+			control.stop();
 		});
 
 		it("uses external detector when provided instead of creating new one", async () => {
@@ -618,10 +919,10 @@ describe("sync engine", () => {
 				subscribe: vi.fn((_fn: (online: boolean) => void) => vi.fn()),
 			};
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({}, externalDetector);
+			const control = startSync({}, externalDetector);
 			expect(externalDetector.subscribe).toHaveBeenCalled();
 			expect(externalDetector.start).toHaveBeenCalled();
-			cleanup();
+			control.stop();
 		});
 
 		it("calls onSyncStart when sync triggers", async () => {
@@ -646,14 +947,14 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
 
 			connectivityCallback?.(true);
 			await syncDone;
 
 			expect(onSyncStart).toHaveBeenCalled();
 
-			cleanup();
+			control.stop();
 		});
 
 		it("calls onSyncEnd with { lastSync, error: null } on successful sync", async () => {
@@ -678,7 +979,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
 
 			connectivityCallback?.(true);
 			await syncDone;
@@ -690,7 +991,7 @@ describe("sync engine", () => {
 				})
 			);
 
-			cleanup();
+			control.stop();
 		});
 
 		it("calls onSyncEnd with error only after all 5 retries fail (D-11)", async () => {
@@ -734,7 +1035,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync(
+			const control = startSync(
 				{ onSyncStart, onSyncEnd: wrappedOnSyncEnd },
 				externalDetector
 			);
@@ -753,7 +1054,7 @@ describe("sync engine", () => {
 				})
 			);
 
-			cleanup();
+			control.stop();
 		});
 
 		it("calls onSyncEnd with error: null on 401 (auth error stops cleanly)", async () => {
@@ -793,7 +1094,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
 
 			connectivityCallback?.(true);
 			await syncDone;
@@ -804,7 +1105,7 @@ describe("sync engine", () => {
 				})
 			);
 
-			cleanup();
+			control.stop();
 		});
 
 		it("calls onSyncEnd with authExpired: true on 401 error", async () => {
@@ -840,7 +1141,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncEnd }, externalDetector);
 
 			await syncDone;
 
@@ -851,7 +1152,7 @@ describe("sync engine", () => {
 				}),
 			);
 
-			cleanup();
+			control.stop();
 		});
 
 		it("transient error then success does NOT fire onSyncEnd with error", async () => {
@@ -897,7 +1198,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
 
 			connectivityCallback?.(true);
 			await syncDone;
@@ -908,7 +1209,7 @@ describe("sync engine", () => {
 				})
 			);
 
-			cleanup();
+			control.stop();
 		});
 
 		it("re-schedules sync via periodic timer after retries exhausted", async () => {
@@ -947,7 +1248,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
 
 			// Wait for initial syncWithRetry to exhaust all retries (backoff mocked to 0ms)
 			await firstRoundDone;
@@ -966,8 +1267,141 @@ describe("sync engine", () => {
 
 			expect(onSyncStart.mock.calls.length).toBeGreaterThan(callsAfterFirstRound);
 
-			cleanup();
+			control.stop();
 			Object.assign(constants.SYNC_CONFIG, originalConfig);
+		});
+
+		it("startSync retorna objeto com stop e retry", async () => {
+			const { startSync } = await import("./engine");
+			const control = startSync({}, mockDetector);
+
+			expect(typeof control.stop).toBe("function");
+			expect(typeof control.retry).toBe("function");
+
+			control.stop();
+		});
+
+		it("chama onRetry com attempt e total durante retries", async () => {
+			await db.syncQueue.add({
+				localId: "retry-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Retry Test" }),
+				retryCount: 0,
+			});
+
+			// Primeira falha, segunda sucesso → onRetry chamado 1×
+			mockPushChanges.mutate
+				.mockRejectedValueOnce(new Error("Network fail"))
+				.mockResolvedValue({ acknowledged: [], idMappings: [] });
+
+			const onRetry = vi.fn();
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const control = startSync({ onRetry, onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			control.stop();
+
+			// Após 1 falha, onRetry deve ter sido chamado com attempt=2, total=5
+			expect(onRetry).toHaveBeenCalledTimes(1);
+			expect(onRetry).toHaveBeenCalledWith(2, 5);
+		});
+
+		it("chama onSyncEnd com isStalled: true quando todos retries esgotados", async () => {
+			await db.syncQueue.add({
+				localId: "stalled-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Stalled Test" }),
+				retryCount: 0,
+			});
+
+			mockPushChanges.mutate.mockRejectedValue(new Error("Always fail"));
+
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const control = startSync({ onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			control.stop();
+
+			expect(onSyncEnd).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: "Always fail",
+					isStalled: true,
+				})
+			);
+		});
+
+		it("retry manual dispara syncWithRetry quando não está sincronizando", async () => {
+			const onSyncStart = vi.fn();
+
+			let resolveFirst: () => void;
+			const firstDone = new Promise<void>((resolve) => {
+				resolveFirst = resolve;
+			});
+			const onSyncEnd = vi.fn(() => {
+				if (onSyncEnd.mock.calls.length === 1) resolveFirst();
+			});
+
+			const externalDetector = {
+				isOnline: true,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn(() => vi.fn()),
+			};
+
+			const { startSync } = await import("./engine");
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+
+			// Aguarda o sync inicial completar
+			await firstDone;
+			const callsAfterFirst = onSyncStart.mock.calls.length;
+
+			// Aciona retry manual
+			control.retry();
+			await vi.waitFor(() =>
+				expect(onSyncStart.mock.calls.length).toBeGreaterThan(callsAfterFirst)
+			);
+
+			control.stop();
 		});
 	});
 

@@ -22,6 +22,7 @@ function makeLead(overrides: Partial<Lead> = {}): Lead {
 		updatedAt: "2026-01-01T00:00:00.000Z",
 		deletedAt: null,
 		syncStatus: "synced",
+		uploadFailed: false,
 		...overrides,
 	};
 }
@@ -81,5 +82,39 @@ describe("updateLead", () => {
 
 		const payload = JSON.parse(queue[0].payload);
 		expect(payload.name).toBe("New Name");
+	});
+
+	it("inclui photoUrl: null no payload quando foto é removida (photo = null)", async () => {
+		await updateLead("lead-1", { name: "Same" }, null);
+
+		const queue = await db.syncQueue.toArray();
+		const payload = JSON.parse(queue[0].payload);
+		expect(payload.photoUrl).toBeNull();
+	});
+
+	it("limpa photoUrl localmente quando foto é removida (photo = null)", async () => {
+		await db.leads.update("lead-1", { photoUrl: "https://example.com/old.jpg" });
+
+		await updateLead("lead-1", { name: "Same" }, null);
+
+		const lead = await db.leads.get("lead-1");
+		expect(lead?.photoUrl).toBeNull();
+	});
+
+	it("não inclui photoUrl no payload quando photo é undefined (sem alteração)", async () => {
+		await updateLead("lead-1", { name: "New Name" });
+
+		const queue = await db.syncQueue.toArray();
+		const payload = JSON.parse(queue[0].payload);
+		expect(payload).not.toHaveProperty("photoUrl");
+	});
+
+	it("não inclui photoUrl no payload quando photo é um Blob (nova foto)", async () => {
+		const blob = new Blob(["img"], { type: "image/jpeg" });
+		await updateLead("lead-1", { name: "Same" }, blob);
+
+		const queue = await db.syncQueue.toArray();
+		const payload = JSON.parse(queue[0].payload);
+		expect(payload).not.toHaveProperty("photoUrl");
 	});
 });
