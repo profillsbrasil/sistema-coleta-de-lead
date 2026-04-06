@@ -1,7 +1,7 @@
 import { db } from "@dashboard-leads-profills/db";
 import { leads } from "@dashboard-leads-profills/db/schema/leads";
 import { TRPCError } from "@trpc/server";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
 import z from "zod";
 
 import { adminProcedure, router } from "../../index";
@@ -24,11 +24,11 @@ export const adminLeadsRouter = router({
 					.select()
 					.from(leads)
 					.where(and(eq(leads.userId, input.userId), isNull(leads.deletedAt)))
-					.orderBy(sql`${leads.createdAt} DESC`)
+					.orderBy(desc(leads.createdAt))
 					.limit(input.limit)
 					.offset(input.offset),
 				db
-					.select({ count: sql<number>`count(*)::int` })
+					.select({ count: count(leads.id) })
 					.from(leads)
 					.where(and(eq(leads.userId, input.userId), isNull(leads.deletedAt))),
 			]);
@@ -46,7 +46,7 @@ export const adminLeadsRouter = router({
 				.select()
 				.from(leads)
 				.where(and(eq(leads.userId, input.userId), isNull(leads.deletedAt)))
-				.orderBy(sql`${leads.createdAt} DESC`);
+				.orderBy(desc(leads.createdAt));
 
 			return {
 				leads: rows,
@@ -111,10 +111,18 @@ export const adminLeadsRouter = router({
 	delete: adminProcedure
 		.input(z.object({ localId: z.string() }))
 		.mutation(async ({ input }) => {
-			await db
+			const deleted = await db
 				.update(leads)
 				.set({ deletedAt: new Date() })
-				.where(eq(leads.localId, input.localId));
+				.where(eq(leads.localId, input.localId))
+				.returning({ localId: leads.localId });
+
+			if (deleted.length === 0) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: "Lead not found",
+				});
+			}
 
 			return { success: true };
 		}),

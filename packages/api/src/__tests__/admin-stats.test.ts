@@ -25,6 +25,13 @@ async function loadAdminStatsRouter(rankingRows: AdminStatsRankingRow[]) {
 					where: vi.fn(async () => []),
 				})),
 			})),
+			selectDistinct: vi.fn(() => ({
+				from: vi.fn(() => ({
+					where: vi.fn(() => ({
+						orderBy: vi.fn(async () => []),
+					})),
+				})),
+			})),
 			execute: vi.fn().mockResolvedValue({ rows: rankingRows }),
 		},
 	}));
@@ -44,6 +51,8 @@ async function loadAdminStatsRouter(rankingRows: AdminStatsRankingRow[]) {
 		and: (...conditions: unknown[]) => ({ kind: "and", conditions }),
 		eq: (left: unknown, right: unknown) => ({ kind: "eq", left, right }),
 		isNull: (value: unknown) => ({ kind: "isNull", value }),
+		isNotNull: (value: unknown) => ({ kind: "isNotNull", value }),
+		asc: (col: unknown) => ({ kind: "asc", col }),
 		sql: Object.assign(
 			(strings: TemplateStringsArray, ...values: unknown[]) => ({
 				kind: "sql",

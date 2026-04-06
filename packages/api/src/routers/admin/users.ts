@@ -2,7 +2,7 @@ import { db } from "@dashboard-leads-profills/db";
 import { userRoles } from "@dashboard-leads-profills/db/schema/auth";
 import { leads } from "@dashboard-leads-profills/db/schema/leads";
 import { TRPCError } from "@trpc/server";
-import { and, count, eq, sql } from "drizzle-orm";
+import { and, count, eq, inArray, isNull } from "drizzle-orm";
 import z from "zod";
 
 import { adminProcedure, router } from "../../index";
@@ -38,7 +38,7 @@ export const adminUsersRouter = router({
 							.select()
 							.from(userRoles)
 							.where(
-								sql`${userRoles.userId} = ANY(${sql.raw(`ARRAY['${userIds.join("','")}']::uuid[]`)})`
+								inArray(userRoles.userId, userIds)
 							)
 					: Promise.resolve([]),
 				userIds.length > 0
@@ -50,8 +50,8 @@ export const adminUsersRouter = router({
 							.from(leads)
 							.where(
 								and(
-									sql`${leads.userId} = ANY(${sql.raw(`ARRAY['${userIds.join("','")}']::uuid[]`)})`,
-									sql`${leads.deletedAt} IS NULL`
+									inArray(leads.userId, userIds),
+									isNull(leads.deletedAt)
 								)
 							)
 							.groupBy(leads.userId)
@@ -93,10 +93,10 @@ export const adminUsersRouter = router({
 			})
 		)
 		.mutation(async ({ input }) => {
-			await db.delete(userRoles).where(eq(userRoles.userId, input.userId));
-			await db
-				.insert(userRoles)
-				.values({ userId: input.userId, role: input.role });
+			await db.transaction(async (tx) => {
+				await tx.delete(userRoles).where(eq(userRoles.userId, input.userId));
+				await tx.insert(userRoles).values({ userId: input.userId, role: input.role });
+			});
 
 			return { success: true };
 		}),
@@ -124,10 +124,10 @@ export const adminUsersRouter = router({
 				});
 			}
 
-			await db.delete(userRoles).where(eq(userRoles.userId, input.userId));
-			await db
-				.insert(userRoles)
-				.values({ userId: input.userId, role: "vendedor" });
+			await db.transaction(async (tx) => {
+				await tx.delete(userRoles).where(eq(userRoles.userId, input.userId));
+				await tx.insert(userRoles).values({ userId: input.userId, role: "vendedor" });
+			});
 
 			return { success: true };
 		}),

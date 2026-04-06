@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@dashboard-leads-profills/api": "workspace:*",
-    "@dashboard-leads-profills/auth": "workspace:*",
     "@dashboard-leads-profills/env": "workspace:*",
     "@dashboard-leads-profills/ui": "workspace:*",
     "@supabase/ssr": "^0.9.0",
