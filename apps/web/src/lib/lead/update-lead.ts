@@ -1,4 +1,5 @@
 import { db } from "../db/index";
+import { checkStorageAndCompress } from "./compression";
 import type { LeadFormData } from "./validation";
 
 function emptyToNull(value: string | undefined): string | null {
@@ -11,6 +12,9 @@ export async function updateLead(
 	photo?: Blob | null
 ): Promise<void> {
 	const now = new Date().toISOString();
+
+	const processedPhoto =
+		photo instanceof Blob ? await checkStorageAndCompress(photo) : photo;
 
 	const updates: Record<string, unknown> = {
 		name: data.name,
@@ -25,10 +29,10 @@ export async function updateLead(
 		syncStatus: "pending" as const,
 	};
 
-	if (photo !== undefined) {
-		updates.photo = photo;
+	if (processedPhoto !== undefined) {
+		updates.photo = processedPhoto;
 	}
-	if (photo === null) {
+	if (processedPhoto === null) {
 		// Remoção explícita — limpa URL remota localmente também
 		updates.photoUrl = null;
 	}
@@ -43,7 +47,7 @@ export async function updateLead(
 		notes: emptyToNull(data.notes),
 		interestTag: data.interestTag,
 	};
-	if (photo === null) {
+	if (processedPhoto === null) {
 		// Propaga remoção ao servidor
 		syncPayload.photoUrl = null;
 	}
