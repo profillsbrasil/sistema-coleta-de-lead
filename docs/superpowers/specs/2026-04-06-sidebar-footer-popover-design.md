@@ -11,20 +11,22 @@ A mudança reorganiza o footer para seguir o padrão clássico de dashboards adm
 ### Footer (sempre visível)
 
 ```
-[Avatar OQ] [Othavio Quiliao / Admin] [🟢 Sync] [⌃ ChevronsUpDown]
+[ [Avatar OQ] [Othavio Quiliao / Admin] [⌃ ChevronsUpDown] ] [🟢 Sync]
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  DropdownMenuTrigger (clicável)                               Sibling (fora do trigger)
 ```
 
-- Toda a linha é um `DropdownMenuTrigger`
+- O `DropdownMenuTrigger` envolve Avatar + Nome/Role + Chevron
+- `SyncStatusIcon` fica como **sibling fora do trigger** (evita nesting de `<button>` dentro de `<button>` — `SyncStatusIcon` renderiza um `Button` via `TooltipTrigger render`)
 - Avatar com gravatar + fallback de iniciais (sem mudança)
 - Nome + role (sem mudança)
-- `SyncStatusIcon` permanece visível no footer (info crítica offline-first)
 - Ícone `ChevronsUpDown` de lucide-react indica interatividade
 
 ### DropdownMenu (ao clicar)
 
 ```
 ┌─────────────────────────┐
-│  👤  Minha Conta         │  → Link para /account
+│  👤  Minha Conta         │  → router.push("/account")
 │─────────────────────────│
 │  🌙  Tema Escuro         │  ← toggle light/dark
 │─────────────────────────│
@@ -33,9 +35,10 @@ A mudança reorganiza o footer para seguir o padrão clássico de dashboards adm
 ```
 
 - Abre com `side="top"`, `align="start"`
+- Largura explícita via className (ex: `w-56`) — não herdar `--anchor-width` do trigger
 - 3 itens separados por `DropdownMenuSeparator`
-- "Minha Conta" com ícone `User` — link para `/account` (rota futura, não será criada agora)
-- "Tema Escuro/Claro" com ícone `Moon`/`Sun` — toggle inline, label muda conforme tema
+- "Minha Conta" com ícone `User` — **usa `onClick` + `router.push("/account")`**, não `<Link>` (evita problemas de semântica `<a>` dentro de `menuitem`)
+- "Tema Escuro/Claro" com ícone `Moon`/`Sun` — toggle inline, label muda conforme tema. **Mantém `mounted` guard** para evitar flicker de SSR
 - "Sair" com ícone `LogOut` e `variant="destructive"`
 
 ## Componente a Usar
@@ -55,14 +58,16 @@ Motivos:
 
 ### Mudanças:
 
-1. Wrapping da linha do footer com `DropdownMenu` + `DropdownMenuTrigger`
-2. Remover `Button` de theme toggle e sign out da linha principal
-3. Adicionar `DropdownMenuContent` com `side="top"` contendo:
-   - `DropdownMenuItem` com link para `/account` (usa `Link` do Next.js)
-   - `DropdownMenuItem` para toggle de tema (onClick mantém lógica existente)
+1. Wrapping de Avatar + Nome + Chevron com `DropdownMenu` + `DropdownMenuTrigger`
+2. `SyncStatusIcon` fica como sibling do `DropdownMenu`, não dentro do trigger
+3. Remover `Button` de theme toggle e sign out da linha principal
+4. Adicionar `DropdownMenuContent` com `side="top"` e `className="w-56"` contendo:
+   - `DropdownMenuItem` "Minha Conta" com `onClick={() => router.push("/account")}`
+   - `DropdownMenuItem` para toggle de tema (`onClick` mantém lógica existente)
    - `DropdownMenuSeparator` entre itens
    - `DropdownMenuItem variant="destructive"` para sign out
-4. Adicionar ícone `ChevronsUpDown` de lucide-react no lugar dos botões removidos
+5. Adicionar ícone `ChevronsUpDown` de lucide-react dentro do trigger
+6. Manter `mounted` guard existente para o label do tema
 
 ### Imports Adicionados:
 
@@ -75,7 +80,6 @@ import {
   DropdownMenuTrigger,
 } from "@dashboard-leads-profills/ui/components/dropdown-menu";
 import { ChevronsUpDown, User } from "lucide-react";
-import Link from "next/link";
 ```
 
 ### Imports Removidos:
@@ -88,16 +92,28 @@ import { Button } from "@dashboard-leads-profills/ui/components/button";
 ## Rota /account
 
 - Não será criada neste escopo
-- O link aponta para `/account` — rota futura
+- O link usa `router.push("/account")` — rota futura
 - Não há necessidade de fallback ou 404 handler especial
+
+## Decisões do Review Adversarial
+
+| Issue | Decisão |
+|-------|---------|
+| `SyncStatusIcon` renderiza `Button` → nesting inválido | Mover para fora do trigger, como sibling |
+| `Link` dentro de `DropdownMenuItem` sem precedente | Usar `onClick` + `router.push` em vez de `<Link>` |
+| Largura do menu herda `--anchor-width` | Definir `className="w-56"` explicitamente |
+| `mounted` guard para tema | Manter existente |
+| `icon mode` da sidebar | Não tratar — app usa `collapsible="offcanvas"` |
+| Sign out limpa snapshot antes de signOut() | Fora de escopo desta task — bug preexistente, endereçar separadamente |
 
 ## Verificação
 
 1. `bun run dev:web` e abrir http://localhost:3001
-2. Verificar footer da sidebar mostra: Avatar + Nome + Sync + Chevron
-3. Clicar no footer → DropdownMenu abre acima
+2. Verificar footer da sidebar mostra: `[Trigger: Avatar + Nome + Chevron] [Sync]`
+3. Clicar no trigger → DropdownMenu abre acima com largura fixa
 4. "Minha Conta" navega para /account
 5. Theme toggle funciona (label muda entre "Tema Escuro"/"Tema Claro")
 6. "Sair" faz sign out e redireciona para /login
 7. Verificar em mobile (sheet sidebar) que o menu funciona
-8. `bun run check-types` passa sem erros
+8. Verificar que `SyncStatusIcon` tooltip funciona independente do menu
+9. `bun run check-types` passa sem erros
