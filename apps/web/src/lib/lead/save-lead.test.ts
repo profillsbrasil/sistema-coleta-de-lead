@@ -151,6 +151,28 @@ describe("saveLead", () => {
 		expect(lead?.userId).toBe("custom-user-456");
 	});
 
+	it("writes lead and syncQueue atomically (both exist after save)", async () => {
+		await saveLead(
+			{
+				name: "Atomic Test",
+				phone: "11222",
+				email: "",
+				interestTag: "quente",
+				company: "",
+				position: "",
+				segment: "",
+				notes: "",
+			},
+			TEST_USER_ID,
+			null,
+		);
+
+		const leadCount = await db.leads.count();
+		const queueCount = await db.syncQueue.count();
+		expect(leadCount).toBe(1);
+		expect(queueCount).toBe(1);
+	});
+
 	it("converts empty strings to null for optional fields", async () => {
 		await saveLead(
 			{

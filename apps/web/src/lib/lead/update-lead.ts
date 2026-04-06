@@ -29,22 +29,24 @@ export async function updateLead(
 		updates.photo = photo;
 	}
 
-	await db.leads.update(localId, updates);
+	await db.transaction("rw", db.leads, db.syncQueue, async () => {
+		await db.leads.update(localId, updates);
 
-	await db.syncQueue.add({
-		localId,
-		operation: "update",
-		payload: JSON.stringify({
-			name: data.name,
-			phone: emptyToNull(data.phone),
-			email: emptyToNull(data.email),
-			company: emptyToNull(data.company),
-			position: emptyToNull(data.position),
-			segment: emptyToNull(data.segment),
-			notes: emptyToNull(data.notes),
-			interestTag: data.interestTag,
-		}),
-		retryCount: 0,
-		timestamp: now,
+		await db.syncQueue.add({
+			localId,
+			operation: "update",
+			payload: JSON.stringify({
+				name: data.name,
+				phone: emptyToNull(data.phone),
+				email: emptyToNull(data.email),
+				company: emptyToNull(data.company),
+				position: emptyToNull(data.position),
+				segment: emptyToNull(data.segment),
+				notes: emptyToNull(data.notes),
+				interestTag: data.interestTag,
+			}),
+			retryCount: 0,
+			timestamp: now,
+		});
 	});
 }

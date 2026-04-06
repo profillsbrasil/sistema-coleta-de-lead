@@ -7,19 +7,21 @@ import { createConnectivityDetector } from "@/lib/sync/connectivity";
 import type { SyncEngineCallbacks } from "@/lib/sync/engine";
 
 interface SyncStatus {
-	isOnline: boolean;
-	isSyncing: boolean;
-	lastError: string | null;
-	lastSync: string | null;
-	pendingCount: number;
+    isOnline: boolean;
+    isSyncing: boolean;
+    lastError: string | null;
+    lastSync: string | null;
+    pendingCount: number;
+    authExpired: boolean;
 }
 
 const SyncStatusContext = createContext<SyncStatus>({
-	isOnline: true,
-	isSyncing: false,
-	pendingCount: 0,
-	lastSync: null,
-	lastError: null,
+    isOnline: true,
+    isSyncing: false,
+    pendingCount: 0,
+    lastSync: null,
+    lastError: null,
+    authExpired: false,
 });
 
 export function useSyncStatus(): SyncStatus {
@@ -27,9 +29,10 @@ export function useSyncStatus(): SyncStatus {
 }
 
 interface SyncState {
-	isSyncing: boolean;
-	lastError: string | null;
-	lastSync: string | null;
+    isSyncing: boolean;
+    lastError: string | null;
+    lastSync: string | null;
+    authExpired: boolean;
 }
 
 export function SyncStatusProvider({
@@ -39,9 +42,10 @@ export function SyncStatusProvider({
 }) {
 	const [isOnline, setIsOnline] = useState(true);
 	const [syncState, setSyncState] = useState<SyncState>({
-		isSyncing: false,
-		lastSync: null,
-		lastError: null,
+	    isSyncing: false,
+	    lastSync: null,
+	    lastError: null,
+	    authExpired: false,
 	});
 
 	const pendingCount = useLiveQuery(() => db.syncQueue.count(), [], 0);
@@ -62,11 +66,12 @@ export function SyncStatusProvider({
 		const callbacks: SyncEngineCallbacks = {
 			onSyncStart: () => setSyncState((prev) => ({ ...prev, isSyncing: true })),
 			onSyncEnd: (result) =>
-				setSyncState({
-					isSyncing: false,
-					lastSync: result.lastSync,
-					lastError: result.error,
-				}),
+			    setSyncState({
+			        isSyncing: false,
+			        lastSync: result.lastSync,
+			        lastError: result.error,
+			        authExpired: result.authExpired ?? false,
+			    }),
 		};
 
 		let cleanup: (() => void) | undefined;
