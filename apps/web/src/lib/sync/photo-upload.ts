@@ -45,6 +45,9 @@ export async function uploadPendingPhotos(): Promise<void> {
 			timestamp: now,
 		});
 
-		await db.leads.update(lead.localId, { photo: null });
+		await db.leads.update(lead.localId, {
+			photo: null,
+			photoUrl: data.publicUrl,
+		});
 	}
 }

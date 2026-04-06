@@ -23,6 +23,7 @@ describe("Dexie database", () => {
 			notes: null,
 			interestTag: "quente",
 			photo: null,
+			photoUrl: null,
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
@@ -53,6 +54,34 @@ describe("Dexie database", () => {
 		expect(item).toBeDefined();
 		expect(item?.operation).toBe("create");
 		expect(item?.retryCount).toBe(0);
+	});
+
+	it("can store and retrieve photoUrl on a lead", async () => {
+		const { db } = await import("@/lib/db/index");
+		const localId = crypto.randomUUID();
+
+		await db.leads.add({
+			localId,
+			serverId: 42,
+			name: "Photo URL Lead",
+			phone: null,
+			email: null,
+			company: null,
+			position: null,
+			segment: null,
+			notes: null,
+			interestTag: "quente",
+			photo: null,
+			photoUrl: "https://storage.example.com/photos/test.jpg",
+			createdAt: new Date().toISOString(),
+			updatedAt: new Date().toISOString(),
+			deletedAt: null,
+			syncStatus: "synced",
+			userId: crypto.randomUUID(),
+		});
+
+		const lead = await db.leads.get(localId);
+		expect(lead?.photoUrl).toBe("https://storage.example.com/photos/test.jpg");
 	});
 
 	it("exports Lead and SyncQueueItem types", async () => {

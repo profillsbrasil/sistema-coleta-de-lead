@@ -27,6 +27,7 @@ export async function saveLead(
 			notes: emptyToNull(data.notes),
 			interestTag: data.interestTag,
 			photo,
+			photoUrl: null,
 			createdAt: now,
 			updatedAt: now,
 			deletedAt: null,
