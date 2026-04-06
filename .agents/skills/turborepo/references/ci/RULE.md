@@ -45,13 +45,8 @@ This requires Git history to compute what changed.
 
 `--affected` needs access to the merge base. Shallow clones break this.
 
-```yaml
-# GitHub Actions
-- uses: actions/checkout@v4
-  with:
-    fetch-depth: 2 # Minimum for --affected
-    # Use 0 for full history if merge base is far
-```
+Make sure your CI checkout strategy fetches enough history to compute the base commit.
+Use depth `2` at minimum, or full history when the merge base may be far away.
 
 ### Why Shallow Clones Break --affected
 
@@ -74,6 +69,5 @@ fetch-depth: 0 # Full history
 
 ## See Also
 
-- [github-actions.md](./github-actions.md) - GitHub Actions setup
 - [vercel.md](./vercel.md) - Vercel deployment
 - [patterns.md](./patterns.md) - CI optimization patterns

@@ -30,9 +30,8 @@ turbo run build --affected --affected-head=HEAD~5
 
 ### Common CI Pattern
 
-```yaml
-# .github/workflows/ci.yml
-- run: turbo run build test lint --affected
+```bash
+turbo run build test lint --affected
 ```
 
 This is the most efficient CI setup - only run tasks for what actually changed.

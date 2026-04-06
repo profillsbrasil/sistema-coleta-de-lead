@@ -36,14 +36,10 @@ TURBO_TEAM=<your-team-slug>
 
 Get your token from Vercel dashboard → Settings → Tokens.
 
-**GitHub Actions example:**
+**CI example:**
 
-```yaml
-- name: Build
-  run: npx turbo build
-  env:
-    TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-    TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+```bash
+TURBO_TOKEN="$TURBO_TOKEN" TURBO_TEAM="$TURBO_TEAM" npx turbo build
 ```
 
 ## Configuration in turbo.json

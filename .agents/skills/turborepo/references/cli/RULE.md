@@ -17,7 +17,7 @@ turbo <tasks>
 **Always use `turbo run` when the command is written into code:**
 
 - `package.json` scripts
-- CI/CD workflows (GitHub Actions, etc.)
+- CI/CD workflows
 - Shell scripts
 - Documentation
 - Any static/committed configuration
@@ -39,10 +39,10 @@ turbo <tasks>
 }
 ```
 
-```yaml
+```bash
 # CI workflow - ALWAYS use "turbo run"
-- run: turbo run build --affected
-- run: turbo run test --affected
+turbo run build --affected
+turbo run test --affected
 ```
 
 ```bash

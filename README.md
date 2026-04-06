@@ -1,100 +1,73 @@
-# dashboard-leads-profills
+# Sistema Coleta de Lead
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Self, TRPC, and more.
+Aplicacao offline-first para captacao rapida de leads em eventos e congressos.
 
-## Features
+## Stack
 
-- **TypeScript** - For type safety and improved developer experience
-- **Next.js** - Full-stack React framework
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **tRPC** - End-to-end type-safe APIs
-- **Drizzle** - TypeScript-first ORM
-- **PostgreSQL** - Database engine
-- **Authentication** - Better-Auth
-- **Biome** - Linting and formatting
-- **Turborepo** - Optimized monorepo build system
+- Next.js 16 + React 19
+- tRPC 11
+- Supabase Auth
+- PostgreSQL + Drizzle ORM
+- Dexie + `dexie-react-hooks`
+- Turborepo + Bun workspaces
+- shadcn/ui em `packages/ui`
+- Ultracite / Biome
 
-## Getting Started
+## Estrutura
 
-First, install the dependencies:
+```text
+apps/web        Aplicacao web
+packages/api    Routers tRPC e regras de negocio
+packages/db     Schema Drizzle e migrations
+packages/env    Validacao de env
+packages/ui     Componentes compartilhados
+packages/auth   Pacote legado/utilitario, fora da superficie ativa do runtime
+packages/config Base compartilhada de TypeScript
+```
+
+## Ambiente
+
+Crie `apps/web/.env` com:
+
+```bash
+DATABASE_URL=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+## Comandos
 
 ```bash
 bun install
-```
-
-## Database Setup
-
-This project uses PostgreSQL with Drizzle ORM.
-
-1. Make sure you have a PostgreSQL database set up.
-2. Update your `apps/web/.env` file with your PostgreSQL connection details.
-
-3. Apply the schema to your database:
-
-```bash
-bun run db:push
-```
-
-Then, run the development server:
-
-```bash
 bun run dev
+bun run dev:web
+bun run build
+bun run check-types
+bun run test
+bun run check
+bun run fix
+bun run db:push
+bun run db:generate
+bun run db:migrate
+bun run db:studio
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the fullstack application.
+O app web roda em `http://localhost:3001`.
 
-## UI Customization
+## Arquitetura
 
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
+- Auth ativa via Supabase em `apps/web/src/lib/supabase/*` e `packages/api/src/context.ts`
+- Persistencia local via Dexie em `apps/web/src/lib/db`
+- Sync offline-first via `apps/web/src/lib/sync`
+- Service worker apenas para cache de navegacao offline, sem PWA completa
 
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
-- Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
+## UI Compartilhada
 
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
-
-```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
-```
-
-Import shared components like this:
+- Ajuste tokens e estilos globais em `packages/ui/src/styles/globals.css`
+- Reutilize componentes de `packages/ui/src/components/*`
+- Use imports path-based, por exemplo:
 
 ```tsx
 import { Button } from "@dashboard-leads-profills/ui/components/button";
 ```
-
-### Add app-specific blocks
-
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
-
-## Git Hooks and Formatting
-
-- Format and lint fix: `bun run check`
-
-## Project Structure
-
-```
-dashboard-leads-profills/
-├── apps/
-│   └── web/         # Fullstack application (Next.js)
-├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
-```
-
-## Available Scripts
-
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run db:push`: Push schema changes to database
-- `bun run db:generate`: Generate database client/types
-- `bun run db:migrate`: Run database migrations
-- `bun run db:studio`: Open database studio UI
-- `bun run check`: Run Biome formatting and linting
