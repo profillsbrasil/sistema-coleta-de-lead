@@ -53,74 +53,87 @@ export const syncRouter = router({
 			const idMappings: Array<{ localId: string; serverId: string }> = [];
 
 			for (const op of input.operations) {
-				switch (op.operation) {
-					case "create": {
-						const fields = sanitizePayload(op.payload);
-						const result = await db
-							.insert(leads)
-							.values({
-								localId: op.localId,
-								userId,
-								name: (fields.name as string) ?? "",
-								interestTag:
-									(fields.interestTag as "quente" | "morno" | "frio") ?? "frio",
-								phone: (fields.phone as string) ?? null,
-								email: (fields.email as string) ?? null,
-								company: (fields.company as string) ?? null,
-								position: (fields.position as string) ?? null,
-								segment: (fields.segment as string) ?? null,
-								notes: (fields.notes as string) ?? null,
-								photoUrl: (fields.photoUrl as string) ?? null,
-							})
-							.onConflictDoUpdate({
-								target: leads.localId,
-								set: {
-									...fields,
-									updatedAt: new Date(),
-								},
-							})
-							.returning({ id: leads.id });
+				try {
+					switch (op.operation) {
+						case "create": {
+							const fields = sanitizePayload(op.payload);
+							const result = await db
+								.insert(leads)
+								.values({
+									localId: op.localId,
+									userId,
+									name: (fields.name as string) ?? "",
+									interestTag:
+										(fields.interestTag as "quente" | "morno" | "frio") ?? "frio",
+									phone: (fields.phone as string) ?? null,
+									email: (fields.email as string) ?? null,
+									company: (fields.company as string) ?? null,
+									position: (fields.position as string) ?? null,
+									segment: (fields.segment as string) ?? null,
+									notes: (fields.notes as string) ?? null,
+									photoUrl: (fields.photoUrl as string) ?? null,
+								})
+								.onConflictDoUpdate({
+									target: leads.localId,
+									set: {
+										...fields,
+										updatedAt: new Date(),
+									},
+								})
+								.returning({ id: leads.id });
 
-						const serverId = result[0]?.id;
-						acknowledged.push({
-							localId: op.localId,
-							queueId: op.clientTimestamp,
-						});
-						if (serverId != null) {
-							idMappings.push({
+							const serverId = result[0]?.id;
+							acknowledged.push({
 								localId: op.localId,
-								serverId: serverId.toString(),
+								queueId: op.clientTimestamp,
 							});
+							if (serverId != null) {
+								idMappings.push({
+									localId: op.localId,
+									serverId: serverId.toString(),
+								});
+							}
+							break;
 						}
-						break;
+						case "update": {
+							const fields = sanitizePayload(op.payload);
+							await db
+								.update(leads)
+								.set({ ...fields, updatedAt: new Date() })
+								.where(
+									and(eq(leads.localId, op.localId), eq(leads.userId, userId))
+								);
+							acknowledged.push({
+								localId: op.localId,
+								queueId: op.clientTimestamp,
+							});
+							break;
+						}
+						case "delete": {
+							await db
+								.update(leads)
+								.set({ deletedAt: new Date() })
+								.where(
+									and(eq(leads.localId, op.localId), eq(leads.userId, userId))
+								);
+							acknowledged.push({
+								localId: op.localId,
+								queueId: op.clientTimestamp,
+							});
+							break;
+						}
 					}
-					case "update": {
-						const fields = sanitizePayload(op.payload);
-						await db
-							.update(leads)
-							.set({ ...fields, updatedAt: new Date() })
-							.where(
-								and(eq(leads.localId, op.localId), eq(leads.userId, userId))
-							);
-						acknowledged.push({
+				} catch (err) {
+					// Fail-fast: para ao primeiro erro, retorna ACKs parciais + operação falhada
+					return {
+						acknowledged,
+						idMappings,
+						failedOperation: {
 							localId: op.localId,
 							queueId: op.clientTimestamp,
-						});
-						break;
-					}
-					case "delete": {
-						await db
-							.update(leads)
-							.set({ deletedAt: new Date() })
-							.where(
-								and(eq(leads.localId, op.localId), eq(leads.userId, userId))
-							);
-						acknowledged.push({
-							localId: op.localId,
-							queueId: op.clientTimestamp,
-						});
-						break;
-					}
+							message: err instanceof Error ? err.message : "Erro desconhecido",
+						},
+					};
 				}
 			}
 

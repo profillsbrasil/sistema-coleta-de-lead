@@ -193,13 +193,25 @@ git commit -m "fix(lead): propagar photoUrl: null ao servidor quando foto é rem
 
 ---
 
-## Task 2: P1-9 — Backend retorna ACK parcial em batch com falha
+## Task 2: P1-9 — Backend fail-fast com ACK parcial e `failedOperation`
 
-**Problema:** O loop `for (const op of input.operations)` não tem try-catch por operação. Se uma operação falha no meio do batch, nenhum ACK é retornado — o cliente faz retry de TODAS as operações (inclusive as já processadas), causando dados inconsistentes em `update`/`delete`.
+**Problema:** O loop `for (const op of input.operations)` não tem tratamento de erro. Se uma operação falha, o servidor lança exceção sem retornar ACK nenhum — o cliente faz retry de TODAS as operações já processadas.
+
+**Solução (fail-fast):**
+- Processar operações em ordem; ao **primeiro erro**, parar o loop imediatamente
+- Retornar `{ acknowledged, idMappings, failedOperation? }` onde:
+  - `acknowledged`: somente ops bem-sucedidas antes da falha
+  - `idMappings`: somente creates bem-sucedidos antes da falha
+  - `failedOperation?: { localId, queueId, message }` — a op que falhou
+- Ops posteriores à falha **não são processadas**
+- No cliente: aplicar `bulkDelete(ackIds)` + `idMappings` **antes** de reagir ao `failedOperation`
+- Reação ao `failedOperation`: incrementar `retryCount` do item correspondente no `syncQueue`
 
 **Files:**
 - Modify: `packages/api/src/routers/sync.ts`
 - Create: `packages/api/src/__tests__/sync.test.ts`
+- Modify: `apps/web/src/lib/sync/engine.ts`
+- Test: `apps/web/src/lib/sync/engine.test.ts`
 
 ---
 
