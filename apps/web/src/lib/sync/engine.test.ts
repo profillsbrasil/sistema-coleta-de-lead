@@ -95,19 +95,20 @@ describe("sync engine", () => {
 	});
 
 	describe("startSync", () => {
-		it("returns a cleanup function", async () => {
+		it("returns stop and retry functions", async () => {
 			const { startSync } = await import("./engine");
-			const cleanup = startSync();
-			expect(typeof cleanup).toBe("function");
-			cleanup();
+			const control = startSync();
+			expect(typeof control.stop).toBe("function");
+			expect(typeof control.retry).toBe("function");
+			control.stop();
 		});
 
 		it("subscribes to connectivity detector", async () => {
 			const { startSync } = await import("./engine");
-			const cleanup = startSync();
+			const control = startSync();
 			expect(mockDetector.subscribe).toHaveBeenCalled();
 			expect(mockDetector.start).toHaveBeenCalled();
-			cleanup();
+			control.stop();
 		});
 	});
 
@@ -894,19 +895,20 @@ describe("sync engine", () => {
 	});
 
 	describe("startSync callbacks", () => {
-		it("startSync(callbacks, detector) returns cleanup function", async () => {
+		it("startSync(callbacks, detector) retorna { stop, retry }", async () => {
 			const { startSync } = await import("./engine");
 			const callbacks = { onSyncStart: vi.fn(), onSyncEnd: vi.fn() };
-			const cleanup = startSync(callbacks, mockDetector);
-			expect(typeof cleanup).toBe("function");
-			cleanup();
+			const control = startSync(callbacks, mockDetector);
+			expect(typeof control.stop).toBe("function");
+			expect(typeof control.retry).toBe("function");
+			control.stop();
 		});
 
 		it("startSync() without arguments still works (backward compatible)", async () => {
 			const { startSync } = await import("./engine");
-			const cleanup = startSync();
-			expect(typeof cleanup).toBe("function");
-			cleanup();
+			const control = startSync();
+			expect(typeof control.stop).toBe("function");
+			control.stop();
 		});
 
 		it("uses external detector when provided instead of creating new one", async () => {
@@ -917,10 +919,10 @@ describe("sync engine", () => {
 				subscribe: vi.fn((_fn: (online: boolean) => void) => vi.fn()),
 			};
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({}, externalDetector);
+			const control = startSync({}, externalDetector);
 			expect(externalDetector.subscribe).toHaveBeenCalled();
 			expect(externalDetector.start).toHaveBeenCalled();
-			cleanup();
+			control.stop();
 		});
 
 		it("calls onSyncStart when sync triggers", async () => {
@@ -945,14 +947,14 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
 
 			connectivityCallback?.(true);
 			await syncDone;
 
 			expect(onSyncStart).toHaveBeenCalled();
 
-			cleanup();
+			control.stop();
 		});
 
 		it("calls onSyncEnd with { lastSync, error: null } on successful sync", async () => {
@@ -977,7 +979,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
 
 			connectivityCallback?.(true);
 			await syncDone;
@@ -989,7 +991,7 @@ describe("sync engine", () => {
 				})
 			);
 
-			cleanup();
+			control.stop();
 		});
 
 		it("calls onSyncEnd with error only after all 5 retries fail (D-11)", async () => {
@@ -1033,7 +1035,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync(
+			const control = startSync(
 				{ onSyncStart, onSyncEnd: wrappedOnSyncEnd },
 				externalDetector
 			);
@@ -1052,7 +1054,7 @@ describe("sync engine", () => {
 				})
 			);
 
-			cleanup();
+			control.stop();
 		});
 
 		it("calls onSyncEnd with error: null on 401 (auth error stops cleanly)", async () => {
@@ -1092,7 +1094,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
 
 			connectivityCallback?.(true);
 			await syncDone;
@@ -1103,7 +1105,7 @@ describe("sync engine", () => {
 				})
 			);
 
-			cleanup();
+			control.stop();
 		});
 
 		it("calls onSyncEnd with authExpired: true on 401 error", async () => {
@@ -1139,7 +1141,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncEnd }, externalDetector);
 
 			await syncDone;
 
@@ -1150,7 +1152,7 @@ describe("sync engine", () => {
 				}),
 			);
 
-			cleanup();
+			control.stop();
 		});
 
 		it("transient error then success does NOT fire onSyncEnd with error", async () => {
@@ -1196,7 +1198,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
 
 			connectivityCallback?.(true);
 			await syncDone;
@@ -1207,7 +1209,7 @@ describe("sync engine", () => {
 				})
 			);
 
-			cleanup();
+			control.stop();
 		});
 
 		it("re-schedules sync via periodic timer after retries exhausted", async () => {
@@ -1246,7 +1248,7 @@ describe("sync engine", () => {
 			};
 
 			const { startSync } = await import("./engine");
-			const cleanup = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
 
 			// Wait for initial syncWithRetry to exhaust all retries (backoff mocked to 0ms)
 			await firstRoundDone;
@@ -1265,8 +1267,141 @@ describe("sync engine", () => {
 
 			expect(onSyncStart.mock.calls.length).toBeGreaterThan(callsAfterFirstRound);
 
-			cleanup();
+			control.stop();
 			Object.assign(constants.SYNC_CONFIG, originalConfig);
+		});
+
+		it("startSync retorna objeto com stop e retry", async () => {
+			const { startSync } = await import("./engine");
+			const control = startSync({}, mockDetector);
+
+			expect(typeof control.stop).toBe("function");
+			expect(typeof control.retry).toBe("function");
+
+			control.stop();
+		});
+
+		it("chama onRetry com attempt e total durante retries", async () => {
+			await db.syncQueue.add({
+				localId: "retry-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Retry Test" }),
+				retryCount: 0,
+			});
+
+			// Primeira falha, segunda sucesso → onRetry chamado 1×
+			mockPushChanges.mutate
+				.mockRejectedValueOnce(new Error("Network fail"))
+				.mockResolvedValue({ acknowledged: [], idMappings: [] });
+
+			const onRetry = vi.fn();
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const control = startSync({ onRetry, onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			control.stop();
+
+			// Após 1 falha, onRetry deve ter sido chamado com attempt=2, total=5
+			expect(onRetry).toHaveBeenCalledTimes(1);
+			expect(onRetry).toHaveBeenCalledWith(2, 5);
+		});
+
+		it("chama onSyncEnd com isStalled: true quando todos retries esgotados", async () => {
+			await db.syncQueue.add({
+				localId: "stalled-uuid",
+				operation: "create",
+				timestamp: new Date().toISOString(),
+				payload: JSON.stringify({ name: "Stalled Test" }),
+				retryCount: 0,
+			});
+
+			mockPushChanges.mutate.mockRejectedValue(new Error("Always fail"));
+
+			let resolveSync: () => void;
+			const syncDone = new Promise<void>((resolve) => {
+				resolveSync = resolve;
+			});
+			const onSyncEnd = vi.fn(() => resolveSync());
+
+			let connectivityCallback: ((online: boolean) => void) | undefined;
+			const externalDetector = {
+				isOnline: false,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn((fn: (online: boolean) => void) => {
+					connectivityCallback = fn;
+					return vi.fn();
+				}),
+			};
+
+			const { startSync } = await import("./engine");
+			const control = startSync({ onSyncEnd }, externalDetector);
+
+			connectivityCallback?.(true);
+			await syncDone;
+
+			control.stop();
+
+			expect(onSyncEnd).toHaveBeenCalledWith(
+				expect.objectContaining({
+					error: "Always fail",
+					isStalled: true,
+				})
+			);
+		});
+
+		it("retry manual dispara syncWithRetry quando não está sincronizando", async () => {
+			const onSyncStart = vi.fn();
+
+			let resolveFirst: () => void;
+			const firstDone = new Promise<void>((resolve) => {
+				resolveFirst = resolve;
+			});
+			const onSyncEnd = vi.fn(() => {
+				if (onSyncEnd.mock.calls.length === 1) resolveFirst();
+			});
+
+			const externalDetector = {
+				isOnline: true,
+				start: vi.fn(),
+				stop: vi.fn(),
+				subscribe: vi.fn(() => vi.fn()),
+			};
+
+			const { startSync } = await import("./engine");
+			const control = startSync({ onSyncStart, onSyncEnd }, externalDetector);
+
+			// Aguarda o sync inicial completar
+			await firstDone;
+			const callsAfterFirst = onSyncStart.mock.calls.length;
+
+			// Aciona retry manual
+			control.retry();
+			await vi.waitFor(() =>
+				expect(onSyncStart.mock.calls.length).toBeGreaterThan(callsAfterFirst)
+			);
+
+			control.stop();
 		});
 	});
 

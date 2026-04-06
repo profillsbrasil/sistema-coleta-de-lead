@@ -14,8 +14,10 @@ export interface SyncEngineCallbacks {
 		lastSync: string;
 		error: string | null;
 		authExpired?: boolean;
+		isStalled?: boolean;
 	}) => void;
 	onSyncStart?: () => void;
+	onRetry?: (attempt: number, totalAttempts: number) => void;
 }
 
 function fetchWithTimeout(
@@ -278,6 +280,8 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 			}
 			lastError = error instanceof Error ? error.message : "Erro desconhecido";
 			if (attempt < SYNC_CONFIG.maxRetries - 1) {
+				// Notificar UI antes do backoff (attempt é 0-indexed; mostrar próximo attempt)
+				callbacks?.onRetry?.(attempt + 2, SYNC_CONFIG.maxRetries);
 				await new Promise((resolve) => {
 					setTimeout(resolve, getBackoffDelay(attempt));
 				});
@@ -288,13 +292,13 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 	// All retries exhausted (D-11)
 	const syncMetaEntry = await db.syncMeta.get("lastSyncTimestamp");
 	const lastSync = syncMetaEntry?.value ?? "";
-	callbacks?.onSyncEnd?.({ lastSync, error: lastError });
+	callbacks?.onSyncEnd?.({ lastSync, error: lastError, isStalled: true });
 }
 
 export function startSync(
 	callbacks?: SyncEngineCallbacks,
 	detector?: ConnectivityDetector,
-): () => void {
+): { stop: () => void; retry: () => void } {
 	const _detector = detector ?? createConnectivityDetector();
 	let periodicTimerId: ReturnType<typeof setTimeout> | null = null;
 
@@ -321,12 +325,20 @@ export function startSync(
 
 	schedulePeriodicSync();
 
-	return () => {
+	function stop(): void {
 		unsubscribe();
 		_detector.stop();
 		if (periodicTimerId !== null) {
 			clearTimeout(periodicTimerId);
 			periodicTimerId = null;
 		}
-	};
+	}
+
+	function retry(): void {
+		if (_detector.isOnline && !isSyncing) {
+			syncWithRetry(callbacks);
+		}
+	}
+
+	return { stop, retry };
 }
