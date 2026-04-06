@@ -5,7 +5,12 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": ["dist/**", ".next/**", "public/sw-manifest.json", "public/sw-build.js"]
+      "outputs": ["dist/**", ".next/**", "public/sw-manifest.json", "public/sw-build.js"],
+      "env": [
+        "DATABASE_URL",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "NODE_ENV"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
