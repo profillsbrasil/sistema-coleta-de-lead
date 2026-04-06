@@ -1,0 +1,126 @@
+<h2>Layout do Footer da Sidebar</h2>
+<p class="subtitle">Como o footer deve ficar após mover Theme Toggle e Sign Out para o Popover?</p>
+
+<div class="cards">
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:8px;padding:16px;font-family:system-ui;color:#e0e0e0;">
+        <!-- Sidebar footer mockup A -->
+        <div style="border-top:1px solid #333;padding-top:12px;">
+          <div style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px;border-radius:6px;background:#252540;">
+            <!-- Avatar -->
+            <div style="width:36px;height:36px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;flex-shrink:0;">OQ</div>
+            <!-- Name + Role -->
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Othavio Quiliao</div>
+              <div style="font-size:11px;color:#888;">Admin</div>
+            </div>
+            <!-- Sync icon stays visible -->
+            <div style="width:18px;height:18px;border-radius:50%;background:#22c55e;flex-shrink:0;" title="Sync"></div>
+            <!-- Chevron -->
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+
+          <!-- Popover preview -->
+          <div style="margin-top:8px;background:#2a2a45;border:1px solid #444;border-radius:8px;padding:8px 0;box-shadow:0 4px 12px rgba(0,0,0,.3);">
+            <div style="padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;border-radius:4px;margin:0 4px;">
+              <span style="opacity:.7;">🌙</span> Tema Escuro
+            </div>
+            <div style="height:1px;background:#444;margin:4px 0;"></div>
+            <div style="padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:13px;color:#f87171;cursor:pointer;border-radius:4px;margin:0 4px;">
+              <span>↩</span> Sair
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Popover com Chevron</h3>
+      <p>Toda a linha do footer é clicável e abre o popover para cima. Sync status fica visível ao lado do nome. Padrão shadcn/ui sidebar.</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:8px;padding:16px;font-family:system-ui;color:#e0e0e0;">
+        <!-- Sidebar footer mockup B -->
+        <div style="border-top:1px solid #333;padding-top:12px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px;">
+            <!-- Avatar clickable -->
+            <div style="width:36px;height:36px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;flex-shrink:0;cursor:pointer;outline:2px solid #818cf8;outline-offset:2px;">OQ</div>
+            <!-- Name + Role -->
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Othavio Quiliao</div>
+              <div style="font-size:11px;color:#888;">Admin</div>
+            </div>
+            <!-- Sync icon stays visible -->
+            <div style="width:18px;height:18px;border-radius:50%;background:#22c55e;flex-shrink:0;" title="Sync"></div>
+          </div>
+
+          <!-- Popover preview (from avatar click) -->
+          <div style="margin-top:8px;background:#2a2a45;border:1px solid #444;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.3);">
+            <!-- User header inside popover -->
+            <div style="padding:12px;border-bottom:1px solid #444;">
+              <div style="font-size:13px;font-weight:600;">Othavio Quiliao</div>
+              <div style="font-size:11px;color:#888;">othavio@profills.com</div>
+            </div>
+            <div style="padding:4px 0;">
+              <div style="padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin:0 4px;border-radius:4px;">
+                <span style="opacity:.7;">🌙</span> Tema Escuro
+              </div>
+              <div style="height:1px;background:#444;margin:4px 0;"></div>
+              <div style="padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:13px;color:#f87171;cursor:pointer;margin:0 4px;border-radius:4px;">
+                <span>↩</span> Sair
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Avatar como Trigger</h3>
+      <p>Somente o avatar abre o popover. O popover inclui header com nome + email e as ações abaixo. Sync status fica ao lado no footer. Estilo mais compacto.</p>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:8px;padding:16px;font-family:system-ui;color:#e0e0e0;">
+        <!-- Sidebar footer mockup C -->
+        <div style="border-top:1px solid #333;padding-top:12px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px;">
+            <!-- Avatar -->
+            <div style="width:36px;height:36px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:13px;flex-shrink:0;">OQ</div>
+            <!-- Name + Role -->
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Othavio Quiliao</div>
+              <div style="font-size:11px;color:#888;">Admin</div>
+            </div>
+            <!-- Sync icon -->
+            <div style="width:18px;height:18px;border-radius:50%;background:#22c55e;flex-shrink:0;" title="Sync"></div>
+            <!-- Three dot menu -->
+            <div style="cursor:pointer;padding:4px 6px;border-radius:4px;background:#252540;font-size:16px;letter-spacing:2px;">⋯</div>
+          </div>
+
+          <!-- Popover preview (from dots) -->
+          <div style="margin-top:8px;margin-left:auto;width:180px;background:#2a2a45;border:1px solid #444;border-radius:8px;padding:4px 0;box-shadow:0 4px 12px rgba(0,0,0,.3);">
+            <div style="padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin:0 4px;border-radius:4px;">
+              <span style="opacity:.7;">🌙</span> Tema Escuro
+            </div>
+            <div style="height:1px;background:#444;margin:4px 0;"></div>
+            <div style="padding:8px 12px;display:flex;align-items:center;gap:8px;font-size:13px;color:#f87171;cursor:pointer;margin:0 4px;border-radius:4px;">
+              <span>↩</span> Sair
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Botão ⋯ (More)</h3>
+      <p>Um botão "more" (três pontos) à direita abre um popover menor só com as ações. Footer mantém avatar, nome, sync. Estilo mais discreto.</p>
+    </div>
+  </div>
+</div>

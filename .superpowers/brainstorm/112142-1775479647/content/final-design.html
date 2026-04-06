@@ -1,0 +1,96 @@
+<h2>Design Final — Sidebar Footer + Popover</h2>
+<p class="subtitle">Validação final do layout antes de escrever a spec</p>
+
+<div class="split">
+  <!-- BEFORE -->
+  <div class="mockup">
+    <div class="mockup-header">ANTES — Footer Atual</div>
+    <div class="mockup-body">
+      <div style="background:#1a1a2e;border-radius:8px;padding:16px;font-family:system-ui;color:#e0e0e0;">
+        <div style="border-top:1px solid #333;padding-top:12px;">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;flex-shrink:0;">OQ</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Othavio Quiliao</div>
+              <div style="font-size:10px;color:#888;">Admin</div>
+            </div>
+            <div style="width:16px;height:16px;border-radius:50%;background:#22c55e;flex-shrink:0;" title="Sync"></div>
+            <div style="width:28px;height:28px;border-radius:4px;background:#252540;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🌙</div>
+            <div style="width:28px;height:28px;border-radius:4px;background:#252540;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;color:#f87171;">↩</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:8px 12px;background:#1e1e35;border-radius:6px;border:1px dashed #444;">
+          <div style="font-size:11px;color:#f87171;text-align:center;">5 elementos comprimidos na mesma linha</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AFTER -->
+  <div class="mockup">
+    <div class="mockup-header">DEPOIS — Novo Layout</div>
+    <div class="mockup-body">
+      <div style="background:#1a1a2e;border-radius:8px;padding:16px;font-family:system-ui;color:#e0e0e0;">
+        <div style="border-top:1px solid #333;padding-top:12px;">
+          <!-- Footer row (trigger) -->
+          <div style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px;border-radius:6px;background:#252540;transition:background .15s;">
+            <div style="width:36px;height:36px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:12px;flex-shrink:0;">OQ</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Othavio Quiliao</div>
+              <div style="font-size:10px;color:#888;">Admin</div>
+            </div>
+            <div style="width:16px;height:16px;border-radius:50%;background:#22c55e;flex-shrink:0;" title="Sync"></div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2.5"><path d="M18 15l-6-6-6 6"/></svg>
+          </div>
+
+          <!-- Popover -->
+          <div style="margin-top:8px;background:#2a2a45;border:1px solid #444;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.4);overflow:hidden;">
+            <!-- Minha Conta -->
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-4 3.5-7 7-7s7 3 7 7"/></svg>
+              Minha Conta
+            </div>
+            <div style="height:1px;background:#3a3a55;margin:0;"></div>
+            <!-- Theme toggle -->
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+              Tema Escuro
+            </div>
+            <div style="height:1px;background:#3a3a55;margin:0;"></div>
+            <!-- Sign out -->
+            <div style="padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;color:#f87171;cursor:pointer;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Sair
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:12px;padding:8px 12px;background:#1e3524;border-radius:6px;border:1px dashed #22c55e;">
+          <div style="font-size:11px;color:#22c55e;text-align:center;">Footer limpo + ações organizadas no popover</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <h3>Resumo das Mudanças</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
+    <div>
+      <div class="label">Footer (sempre visível)</div>
+      <ul style="font-size:14px;line-height:1.8;padding-left:20px;">
+        <li>Avatar + Initials</li>
+        <li>Nome + Role</li>
+        <li>Sync Status</li>
+        <li>Chevron (ChevronsUpDown)</li>
+      </ul>
+    </div>
+    <div>
+      <div class="label">Popover (ao clicar)</div>
+      <ul style="font-size:14px;line-height:1.8;padding-left:20px;">
+        <li>👤 Minha Conta → /account</li>
+        <li>🌙 Theme Toggle (light/dark)</li>
+        <li style="color:#f87171;">↩ Sair (sign out)</li>
+      </ul>
+    </div>
+  </div>
+</div>
