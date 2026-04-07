@@ -74,9 +74,9 @@ import { AdminLeadCard } from "./admin-lead-card";
 const PAGE_SIZE = 20;
 
 const TAG_COLORS: Record<string, string> = {
-	quente: "oklch(0.45 0.18 17)",
-	morno: "oklch(0.5 0.13 85)",
-	frio: "oklch(0.45 0.15 240)",
+	quente: "var(--tag-quente-text)",
+	morno: "var(--tag-morno-text)",
+	frio: "var(--tag-frio-text)",
 };
 
 const TAG_LABELS: Record<string, string> = {

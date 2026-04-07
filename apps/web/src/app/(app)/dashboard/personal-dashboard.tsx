@@ -22,15 +22,15 @@ import { getPersonalStats, type PersonalStats } from "@/lib/lead/stats";
 const chartConfig: ChartConfig = {
 	quente: {
 		label: "Quente",
-		theme: { light: "oklch(0.45 0.18 17)", dark: "oklch(0.85 0.12 17)" },
+		color: "var(--tag-quente-text)",
 	},
 	morno: {
 		label: "Morno",
-		theme: { light: "oklch(0.5 0.13 85)", dark: "oklch(0.85 0.1 85)" },
+		color: "var(--tag-morno-text)",
 	},
 	frio: {
 		label: "Frio",
-		theme: { light: "oklch(0.45 0.15 240)", dark: "oklch(0.85 0.1 240)" },
+		color: "var(--tag-frio-text)",
 	},
 };
 
@@ -78,12 +78,12 @@ export default function PersonalDashboard({
 				<StatCard label="Total de Leads" value={stats.total} />
 				<StatCard label="Leads Hoje" value={stats.hoje} />
 				<StatCard
-					className="[&_span:first-child]:text-[oklch(0.45_0.18_17)] dark:[&_span:first-child]:text-[oklch(0.85_0.12_17)]"
+					className="[&_span:first-child]:text-tag-quente-text"
 					label="Quentes"
 					value={stats.quente}
 				/>
 				<StatCard
-					className="[&_span:first-child]:text-[oklch(0.5_0.13_85)] dark:[&_span:first-child]:text-[oklch(0.85_0.1_85)]"
+					className="[&_span:first-child]:text-tag-morno-text"
 					label="Mornos"
 					value={stats.morno}
 				/>
@@ -91,7 +91,7 @@ export default function PersonalDashboard({
 
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 				<StatCard
-					className="[&_span:first-child]:text-[oklch(0.45_0.15_240)] dark:[&_span:first-child]:text-[oklch(0.85_0.1_240)]"
+					className="[&_span:first-child]:text-tag-frio-text"
 					label="Frios"
 					value={stats.frio}
 				/>
