@@ -116,7 +116,7 @@ const STATE_CONFIG = {
 	syncing: { icon: RefreshCw, className: "text-primary animate-spin" },
 	error: { icon: AlertTriangle, className: "text-amber-500" },
 	pending: { icon: CloudUpload, className: "text-muted-foreground" },
-	synced: { icon: CloudCheck, className: "text-emerald-500" },
+	synced: { icon: CloudCheck, className: "text-primary" },
 } as const satisfies Record<SyncState, { icon: LucideIcon; className: string }>;
 
 export function SyncStatusIcon() {

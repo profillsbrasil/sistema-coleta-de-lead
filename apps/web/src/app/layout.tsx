@@ -1,19 +1,17 @@
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, Source_Code_Pro } from "next/font/google";
 import Providers from "@/components/providers";
 import "../index.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-
-const geistSans = Geist({
-	variable: "--font-geist-sans",
+const jakarta = Plus_Jakarta_Sans({
 	subsets: ["latin"],
+	variable: "--font-sans",
 });
 
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
+const sourceCode = Source_Code_Pro({
 	subsets: ["latin"],
+	variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -28,13 +26,11 @@ export default function RootLayout({
 }>) {
 	return (
 		<html
-			className={cn("font-sans", inter.variable)}
+			className={cn("font-sans", jakarta.variable, sourceCode.variable)}
 			lang="en"
 			suppressHydrationWarning
 		>
-			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-			>
+			<body className="antialiased">
 				<Providers>{children}</Providers>
 			</body>
 		</html>

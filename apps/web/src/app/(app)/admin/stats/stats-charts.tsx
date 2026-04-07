@@ -25,15 +25,15 @@ const tagChartConfig: ChartConfig = {
 	count: { label: "Leads" },
 	quente: {
 		label: "Quente",
-		theme: { light: "oklch(0.45 0.18 17)", dark: "oklch(0.85 0.12 17)" },
+		color: "var(--tag-quente-text)",
 	},
 	morno: {
 		label: "Morno",
-		theme: { light: "oklch(0.5 0.13 85)", dark: "oklch(0.85 0.1 85)" },
+		color: "var(--tag-morno-text)",
 	},
 	frio: {
 		label: "Frio",
-		theme: { light: "oklch(0.45 0.15 240)", dark: "oklch(0.85 0.1 240)" },
+		color: "var(--tag-frio-text)",
 	},
 };
 
