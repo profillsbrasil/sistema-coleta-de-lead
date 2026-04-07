@@ -11,11 +11,11 @@ vi.mock("@dashboard-leads-profills/env/server", () => ({
 }));
 
 interface MockLeaderboardRow {
-	userId: string;
 	name: string;
-	totalLeads: number;
-	score: number;
 	rank: number;
+	score: number;
+	totalLeads: number;
+	userId: string;
 }
 
 async function loadLeaderboardRouter(mockRows: MockLeaderboardRow[]) {
@@ -52,7 +52,13 @@ describe("leaderboardRouter", () => {
 
 	it("retorna 'Vendedor #1' para usuario sem nome na posicao 1", async () => {
 		const { caller } = await loadLeaderboardRouter([
-			{ userId: "user-abc", name: "Vendedor #1", totalLeads: 5, score: 10, rank: 1 },
+			{
+				userId: "user-abc",
+				name: "Vendedor #1",
+				totalLeads: 5,
+				score: 10,
+				rank: 1,
+			},
 		]);
 		const result = await caller.getRanking();
 		const first = result.ranking[0];
@@ -62,8 +68,20 @@ describe("leaderboardRouter", () => {
 
 	it("retorna 'Vendedor #2' para usuario sem nome na posicao 2", async () => {
 		const { caller } = await loadLeaderboardRouter([
-			{ userId: "user-abc", name: "Vendedor #1", totalLeads: 5, score: 10, rank: 1 },
-			{ userId: "user-xyz", name: "Vendedor #2", totalLeads: 3, score: 6, rank: 2 },
+			{
+				userId: "user-abc",
+				name: "Vendedor #1",
+				totalLeads: 5,
+				score: 10,
+				rank: 1,
+			},
+			{
+				userId: "user-xyz",
+				name: "Vendedor #2",
+				totalLeads: 3,
+				score: 6,
+				rank: 2,
+			},
 		]);
 		const result = await caller.getRanking();
 		const second = result.ranking[1];
@@ -73,7 +91,13 @@ describe("leaderboardRouter", () => {
 
 	it("retorna o nome real para usuario com raw_user_meta_data.name = 'Maria Silva'", async () => {
 		const { caller } = await loadLeaderboardRouter([
-			{ userId: "user-maria", name: "Maria Silva", totalLeads: 8, score: 20, rank: 1 },
+			{
+				userId: "user-maria",
+				name: "Maria Silva",
+				totalLeads: 8,
+				score: 20,
+				rank: 1,
+			},
 		]);
 		const result = await caller.getRanking();
 		expect(result.ranking[0]?.name).toBe("Maria Silva");
@@ -111,7 +135,13 @@ describe("leaderboardRouter", () => {
 
 	it("inclui campo rank em cada entrada do ranking", async () => {
 		const { caller } = await loadLeaderboardRouter([
-			{ userId: "user-abc", name: "Vendedor #1", totalLeads: 5, score: 10, rank: 1 },
+			{
+				userId: "user-abc",
+				name: "Vendedor #1",
+				totalLeads: 5,
+				score: 10,
+				rank: 1,
+			},
 			{ userId: "user-xyz", name: "Pedro", totalLeads: 2, score: 4, rank: 2 },
 		]);
 		const result = await caller.getRanking();

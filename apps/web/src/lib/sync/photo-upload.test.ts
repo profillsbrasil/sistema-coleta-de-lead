@@ -353,7 +353,10 @@ describe("uploadPendingPhotos", () => {
 		});
 
 		// Tinha 3 tentativas anteriores
-		await db.photoUploadMeta.put({ localId: "local-success-meta", retryCount: 3 });
+		await db.photoUploadMeta.put({
+			localId: "local-success-meta",
+			retryCount: 3,
+		});
 
 		const { uploadPendingPhotos } = await import("./photo-upload");
 		await uploadPendingPhotos();

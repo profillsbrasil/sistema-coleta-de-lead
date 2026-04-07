@@ -93,7 +93,9 @@ describe("updateLead", () => {
 	});
 
 	it("limpa photoUrl localmente quando foto é removida (photo = null)", async () => {
-		await db.leads.update("lead-1", { photoUrl: "https://example.com/old.jpg" });
+		await db.leads.update("lead-1", {
+			photoUrl: "https://example.com/old.jpg",
+		});
 
 		await updateLead("lead-1", { name: "Same" }, null);
 

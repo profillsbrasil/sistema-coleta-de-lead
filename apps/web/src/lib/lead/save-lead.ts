@@ -1,8 +1,7 @@
 import { db } from "../db/index";
 import { checkStorageAndCompress } from "./compression";
-import type { LeadFormData } from "./validation";
-
 import { emptyToNull } from "./helpers";
+import type { LeadFormData } from "./validation";
 
 export async function saveLead(
 	data: LeadFormData,

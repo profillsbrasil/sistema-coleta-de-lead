@@ -150,7 +150,9 @@ describe("sync engine", () => {
 			});
 
 			mockPushChanges.mutate.mockResolvedValue({
-				acknowledged: [{ localId: "test-uuid-1", queueId: "2026-01-01T00:00:00Z" }],
+				acknowledged: [
+					{ localId: "test-uuid-1", queueId: "2026-01-01T00:00:00Z" },
+				],
 				idMappings: [],
 			});
 
@@ -176,14 +178,12 @@ describe("sync engine", () => {
 						setTimeout(
 							() =>
 								resolve({
-									acknowledged: [
-										{ localId: "timeout-uuid", queueId: "q1" },
-									],
+									acknowledged: [{ localId: "timeout-uuid", queueId: "q1" }],
 									idMappings: [],
 								}),
-							10,
-						),
-					),
+							10
+						)
+					)
 			);
 
 			const { syncCycle } = await import("./engine");
@@ -276,7 +276,9 @@ describe("sync engine", () => {
 					localId: "photo-push-uuid",
 					operation: "update",
 					timestamp: new Date().toISOString(),
-					payload: JSON.stringify({ photoUrl: "https://example.com/photo.jpg" }),
+					payload: JSON.stringify({
+						photoUrl: "https://example.com/photo.jpg",
+					}),
 					retryCount: 0,
 				});
 				return 1;
@@ -577,7 +579,10 @@ describe("sync engine", () => {
 
 	describe("pull phase", () => {
 		it("queries server for changes since last sync timestamp", async () => {
-			await db.syncMeta.put({ key: "lastSyncTimestamp", value: "2026-01-01T00:00:00Z" });
+			await db.syncMeta.put({
+				key: "lastSyncTimestamp",
+				value: "2026-01-01T00:00:00Z",
+			});
 
 			mockPullChanges.query.mockResolvedValue({
 				leads: [],
@@ -878,7 +883,10 @@ describe("sync engine", () => {
 		});
 
 		it("lê lastSyncTimestamp de Dexie syncMeta na próxima chamada", async () => {
-			await db.syncMeta.put({ key: "lastSyncTimestamp", value: "2026-03-01T08:00:00.000Z" });
+			await db.syncMeta.put({
+				key: "lastSyncTimestamp",
+				value: "2026-03-01T08:00:00.000Z",
+			});
 
 			mockPullChanges.query.mockResolvedValue({
 				leads: [],
@@ -1149,7 +1157,7 @@ describe("sync engine", () => {
 				expect.objectContaining({
 					authExpired: true,
 					error: null,
-				}),
+				})
 			);
 
 			control.stop();
@@ -1265,7 +1273,9 @@ describe("sync engine", () => {
 			// Wait for the periodic timer to fire (50ms interval)
 			await new Promise((resolve) => setTimeout(resolve, 200));
 
-			expect(onSyncStart.mock.calls.length).toBeGreaterThan(callsAfterFirstRound);
+			expect(onSyncStart.mock.calls.length).toBeGreaterThan(
+				callsAfterFirstRound
+			);
 
 			control.stop();
 			Object.assign(constants.SYNC_CONFIG, originalConfig);
@@ -1378,7 +1388,9 @@ describe("sync engine", () => {
 				resolveFirst = resolve;
 			});
 			const onSyncEnd = vi.fn(() => {
-				if (onSyncEnd.mock.calls.length === 1) resolveFirst();
+				if (onSyncEnd.mock.calls.length === 1) {
+					resolveFirst();
+				}
 			});
 
 			const externalDetector = {
@@ -1504,20 +1516,27 @@ describe("sync engine", () => {
 				localId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
 				operation: "create",
 				timestamp: "2026-01-01T00:00:00.000Z",
-				payload: JSON.stringify({ name: "Pull Fail Test", interestTag: "morno" }),
+				payload: JSON.stringify({
+					name: "Pull Fail Test",
+					interestTag: "morno",
+				}),
 				retryCount: 0,
 			});
 
 			// Push tem sucesso e ACKa a operação
 			mockPushChanges.mutate.mockResolvedValue({
-				acknowledged: [{
-					localId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-					queueId: "2026-01-01T00:00:00.000Z",
-				}],
+				acknowledged: [
+					{
+						localId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+						queueId: "2026-01-01T00:00:00.000Z",
+					},
+				],
 				idMappings: [],
 			});
 			// Pull falha
-			mockPullChanges.query.mockRejectedValue(new Error("Network error during pull"));
+			mockPullChanges.query.mockRejectedValue(
+				new Error("Network error during pull")
+			);
 
 			let resolveSync: () => void;
 			const syncDone = new Promise<void>((resolve) => {
@@ -1580,23 +1599,25 @@ describe("sync engine", () => {
 
 			// Servidor retorna o mesmo lead com nome diferente e timestamp idêntico
 			mockPullChanges.query.mockResolvedValue({
-				leads: [{
-					localId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
-					id: 42,
-					userId: "user-123",
-					name: "Server Name",
-					updatedAt: sharedTimestamp,
-					createdAt: sharedTimestamp,
-					interestTag: "quente",
-					phone: null,
-					email: null,
-					company: null,
-					position: null,
-					segment: null,
-					notes: null,
-					photoUrl: null,
-					deletedAt: null,
-				}],
+				leads: [
+					{
+						localId: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+						id: 42,
+						userId: "user-123",
+						name: "Server Name",
+						updatedAt: sharedTimestamp,
+						createdAt: sharedTimestamp,
+						interestTag: "quente",
+						phone: null,
+						email: null,
+						company: null,
+						position: null,
+						segment: null,
+						notes: null,
+						photoUrl: null,
+						deletedAt: null,
+					},
+				],
 				serverTimestamp: new Date().toISOString(),
 			});
 

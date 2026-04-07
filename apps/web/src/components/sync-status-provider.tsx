@@ -7,16 +7,16 @@ import { createConnectivityDetector } from "@/lib/sync/connectivity";
 import type { SyncEngineCallbacks } from "@/lib/sync/engine";
 
 interface SyncStatus {
+	authExpired: boolean;
 	isOnline: boolean;
+	isStalled: boolean;
 	isSyncing: boolean;
 	lastError: string | null;
 	lastSync: string | null;
+	manualRetry: () => void;
 	pendingCount: number;
-	authExpired: boolean;
 	retryAttempt: number | null;
 	totalRetries: number;
-	isStalled: boolean;
-	manualRetry: () => void;
 }
 
 const SyncStatusContext = createContext<SyncStatus>({
@@ -37,13 +37,13 @@ export function useSyncStatus(): SyncStatus {
 }
 
 interface SyncState {
+	authExpired: boolean;
+	isStalled: boolean;
 	isSyncing: boolean;
 	lastError: string | null;
 	lastSync: string | null;
-	authExpired: boolean;
 	retryAttempt: number | null;
 	totalRetries: number;
-	isStalled: boolean;
 }
 
 export function SyncStatusProvider({

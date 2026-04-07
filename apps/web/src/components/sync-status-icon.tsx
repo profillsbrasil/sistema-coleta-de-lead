@@ -32,48 +32,79 @@ export type SyncState =
 	| "synced";
 
 interface SyncStatus {
+	authExpired: boolean;
 	isOnline: boolean;
+	isStalled: boolean;
 	isSyncing: boolean;
 	lastError: string | null;
 	lastSync: string | null;
 	pendingCount: number;
-	authExpired: boolean;
 	retryAttempt: number | null;
 	totalRetries: number;
-	isStalled: boolean;
 }
 
 export function deriveSyncState(status: SyncStatus): SyncState {
-	if (!status.isOnline) return "offline";
-	if (status.authExpired) return "authExpired";
-	if (status.isStalled) return "stalled";
-	if (status.retryAttempt != null) return "retrying";
-	if (status.isSyncing) return "syncing";
-	if (status.lastError !== null) return "error";
-	if (status.pendingCount > 0) return "pending";
+	if (!status.isOnline) {
+		return "offline";
+	}
+	if (status.authExpired) {
+		return "authExpired";
+	}
+	if (status.isStalled) {
+		return "stalled";
+	}
+	if (status.retryAttempt != null) {
+		return "retrying";
+	}
+	if (status.isSyncing) {
+		return "syncing";
+	}
+	if (status.lastError !== null) {
+		return "error";
+	}
+	if (status.pendingCount > 0) {
+		return "pending";
+	}
 	return "synced";
 }
 
 export function getTooltipText(state: SyncState, status: SyncStatus): string {
-	if (state === "offline") return "Sem conexao";
-	if (state === "authExpired") return "Sessao expirada — faca login";
-	if (state === "stalled") return "Sync falhou — clique para tentar de novo";
-	if (state === "retrying")
+	if (state === "offline") {
+		return "Sem conexao";
+	}
+	if (state === "authExpired") {
+		return "Sessao expirada — faca login";
+	}
+	if (state === "stalled") {
+		return "Sync falhou — clique para tentar de novo";
+	}
+	if (state === "retrying") {
 		return `Tentando novamente... (${status.retryAttempt}/${status.totalRetries})`;
-	if (state === "syncing") return "Sincronizando...";
-	if (state === "error") return "Erro no ultimo sync";
+	}
+	if (state === "syncing") {
+		return "Sincronizando...";
+	}
+	if (state === "error") {
+		return "Erro no ultimo sync";
+	}
 	if (state === "pending") {
 		return status.pendingCount === 1
 			? "1 alteracao pendente"
 			: `${status.pendingCount} alteracoes pendentes`;
 	}
-	if (status.lastSync) return `Atualizado ${relativeTime(status.lastSync)}`;
+	if (status.lastSync) {
+		return `Atualizado ${relativeTime(status.lastSync)}`;
+	}
 	return "Sincronizado";
 }
 
 export function formatBadgeCount(count: number): string | null {
-	if (count <= 0) return null;
-	if (count > 99) return "99+";
+	if (count <= 0) {
+		return null;
+	}
+	if (count > 99) {
+		return "99+";
+	}
 	return String(count);
 }
 

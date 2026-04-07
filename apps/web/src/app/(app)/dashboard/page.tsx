@@ -1,7 +1,7 @@
 "use client";
 
-import FAB from "@/components/fab";
 import { useRequiredAppAuth } from "@/components/app-auth-provider";
+import FAB from "@/components/fab";
 
 import Dashboard from "./dashboard";
 

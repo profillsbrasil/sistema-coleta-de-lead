@@ -176,7 +176,9 @@ export default function LeadsPanel() {
 			});
 
 			exportLeadsCsv(result.leads, filename);
-			toast.success(`Exportados ${result.total} leads de ${selectedVendorName}`);
+			toast.success(
+				`Exportados ${result.total} leads de ${selectedVendorName}`
+			);
 		} finally {
 			isExportingRef.current = false;
 			setIsExporting(false);

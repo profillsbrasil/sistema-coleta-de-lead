@@ -64,7 +64,8 @@ export const syncRouter = router({
 									userId,
 									name: (fields.name as string) ?? "",
 									interestTag:
-										(fields.interestTag as "quente" | "morno" | "frio") ?? "frio",
+										(fields.interestTag as "quente" | "morno" | "frio") ??
+										"frio",
 									phone: (fields.phone as string) ?? null,
 									email: (fields.email as string) ?? null,
 									company: (fields.company as string) ?? null,
@@ -106,7 +107,7 @@ export const syncRouter = router({
 									and(
 										eq(leads.localId, op.localId),
 										eq(leads.userId, userId),
-										isNull(leads.deletedAt),
+										isNull(leads.deletedAt)
 									)
 								)
 								.returning({ localId: leads.localId });

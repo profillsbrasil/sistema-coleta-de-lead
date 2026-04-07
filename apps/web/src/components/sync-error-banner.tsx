@@ -16,8 +16,8 @@ export function SyncErrorBanner() {
 
 	return (
 		<div
+			className="sticky top-0 z-50 flex items-center justify-between border-destructive/20 border-b bg-destructive/10 px-4 py-2"
 			role="alert"
-			className="sticky top-0 z-50 flex items-center justify-between border-b border-destructive/20 bg-destructive/10 px-4 py-2"
 		>
 			<div className="flex items-center gap-2 text-destructive">
 				{state === "authExpired" ? (
@@ -33,17 +33,17 @@ export function SyncErrorBanner() {
 			</div>
 			{state === "stalled" && (
 				<Button
+					className="ml-4 shrink-0"
 					onClick={status.manualRetry}
 					size="sm"
 					variant="outline"
-					className="ml-4 shrink-0"
 				>
 					<RefreshCw className="mr-1.5 size-3.5" />
 					Tentar novamente
 				</Button>
 			)}
 			{state === "authExpired" && (
-				<Button asChild size="sm" variant="outline" className="ml-4 shrink-0">
+				<Button asChild className="ml-4 shrink-0" size="sm" variant="outline">
 					<Link href="/login">Fazer login</Link>
 				</Button>
 			)}

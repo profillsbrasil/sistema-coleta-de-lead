@@ -60,7 +60,9 @@ describe("syncRouter.pushChanges", () => {
 		const updateChain = {
 			set: vi.fn().mockReturnThis(),
 			where: vi.fn().mockReturnValue({
-				returning: vi.fn().mockRejectedValueOnce(new Error("DB constraint violation")),
+				returning: vi
+					.fn()
+					.mockRejectedValueOnce(new Error("DB constraint violation")),
 			}),
 		};
 
@@ -97,13 +99,19 @@ describe("syncRouter.pushChanges", () => {
 
 		// Op 1 foi ACKada; op 2 falhou; op 3 nunca foi processada
 		expect(result.acknowledged).toHaveLength(1);
-		expect(result.acknowledged[0]?.localId).toBe("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+		expect(result.acknowledged[0]?.localId).toBe(
+			"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+		);
 
 		// failedOperation aponta para op 2
 		expect(result.failedOperation).toBeDefined();
-		expect(result.failedOperation?.localId).toBe("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb");
+		expect(result.failedOperation?.localId).toBe(
+			"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+		);
 		expect(result.failedOperation?.queueId).toBe("2026-01-01T00:00:01.000Z");
-		expect(result.failedOperation?.message).toContain("DB constraint violation");
+		expect(result.failedOperation?.message).toContain(
+			"DB constraint violation"
+		);
 
 		// Op 3 não foi processada (update.where chamado apenas 1x para op 2)
 		expect(mockDb.update).toHaveBeenCalledTimes(1);
@@ -138,7 +146,9 @@ describe("syncRouter.pushChanges", () => {
 		expect(result.acknowledged).toHaveLength(0);
 		expect(result.idMappings).toHaveLength(0);
 		expect(result.failedOperation).toBeDefined();
-		expect(result.failedOperation?.localId).toBe("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+		expect(result.failedOperation?.localId).toBe(
+			"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+		);
 		expect(result.failedOperation?.message).toBe("DB down");
 	});
 
@@ -214,8 +224,12 @@ describe("syncRouter.pushChanges", () => {
 		});
 
 		expect(result.idMappings).toHaveLength(1);
-		expect(result.idMappings[0]?.localId).toBe("ffffffff-ffff-4fff-8fff-ffffffffffff");
-		expect(result.failedOperation?.localId).toBe("11111111-1111-4111-8111-111111111111");
+		expect(result.idMappings[0]?.localId).toBe(
+			"ffffffff-ffff-4fff-8fff-ffffffffffff"
+		);
+		expect(result.failedOperation?.localId).toBe(
+			"11111111-1111-4111-8111-111111111111"
+		);
 	});
 
 	it("ACKa silenciosamente update de lead tombstoned ou inexistente (rowcount=0)", async () => {
@@ -247,7 +261,9 @@ describe("syncRouter.pushChanges", () => {
 
 		// Deve ACKar silenciosamente — sem failedOperation
 		expect(result.acknowledged).toHaveLength(1);
-		expect(result.acknowledged[0]?.localId).toBe("44444444-4444-4444-8444-444444444444");
+		expect(result.acknowledged[0]?.localId).toBe(
+			"44444444-4444-4444-8444-444444444444"
+		);
 		expect(result.failedOperation).toBeUndefined();
 	});
 
@@ -278,7 +294,9 @@ describe("syncRouter.pushChanges", () => {
 
 		// Deve ACKar independente de rowcount
 		expect(result.acknowledged).toHaveLength(1);
-		expect(result.acknowledged[0]?.localId).toBe("55555555-5555-4555-8555-555555555555");
+		expect(result.acknowledged[0]?.localId).toBe(
+			"55555555-5555-4555-8555-555555555555"
+		);
 		expect(result.failedOperation).toBeUndefined();
 	});
 });

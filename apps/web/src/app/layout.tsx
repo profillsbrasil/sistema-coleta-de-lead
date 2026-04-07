@@ -1,7 +1,7 @@
-import Providers from "@/components/providers";
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
+import Providers from "@/components/providers";
 import "../index.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
