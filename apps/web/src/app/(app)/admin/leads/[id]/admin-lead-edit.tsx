@@ -35,6 +35,8 @@ function mapServerLeadToLocal(serverLead: Record<string, unknown>): Lead {
 		notes: (serverLead.notes as string | null) ?? null,
 		interestTag: serverLead.interestTag as "quente" | "morno" | "frio",
 		photo: null,
+		photoUrl: (serverLead.photoUrl as string | null) ?? null,
+		uploadFailed: false,
 		createdAt: new Date(serverLead.createdAt as string).toISOString(),
 		updatedAt: new Date(serverLead.updatedAt as string).toISOString(),
 		deletedAt: serverLead.deletedAt
