@@ -1,5 +1,11 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Lead, LeaderboardEntry, PhotoUploadMeta, SyncMeta, SyncQueueItem } from "./types";
+import type {
+	Lead,
+	LeaderboardEntry,
+	PhotoUploadMeta,
+	SyncMeta,
+	SyncQueueItem,
+} from "./types";
 
 const db = new Dexie("dashboard-leads") as Dexie & {
 	leads: EntityTable<Lead, "localId">;
@@ -109,5 +115,11 @@ db.version(8).stores({
 	syncMeta: "key",
 });
 
-export type { Lead, LeaderboardEntry, PhotoUploadMeta, SyncMeta, SyncQueueItem };
+export type {
+	Lead,
+	LeaderboardEntry,
+	PhotoUploadMeta,
+	SyncMeta,
+	SyncQueueItem,
+};
 export { db };

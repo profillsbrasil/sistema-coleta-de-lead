@@ -11,10 +11,10 @@ vi.mock("@dashboard-leads-profills/env/server", () => ({
 }));
 
 interface AdminStatsRankingRow {
-	userId: string;
 	name: string;
-	totalLeads: number;
 	score: number;
+	totalLeads: number;
+	userId: string;
 }
 
 async function loadAdminStatsRouter(rankingRows: AdminStatsRankingRow[]) {

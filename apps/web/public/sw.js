@@ -70,8 +70,8 @@ self.addEventListener("activate", (event) => {
 				const cache = await caches.open(STATIC_CACHE);
 				const keys = await cache.keys();
 				const validUrls = new Set(
-					manifest.assets.map(
-						(a) => new URL(a, self.location.origin).toString()
+					manifest.assets.map((a) =>
+						new URL(a, self.location.origin).toString()
 					)
 				);
 				for (const key of keys) {
@@ -116,8 +116,7 @@ const rscUrlNormalizerPlugin = {
 // Detectar pelo header RSC: 1 que o App Router envia em toda navegacao client-side
 registerRoute(
 	({ request }) =>
-		request.headers.get("RSC") === "1" ||
-		request.headers.get("Rsc") === "1",
+		request.headers.get("RSC") === "1" || request.headers.get("Rsc") === "1",
 	new NetworkFirst({
 		cacheName: RSC_CACHE,
 		networkTimeoutSeconds: 3,

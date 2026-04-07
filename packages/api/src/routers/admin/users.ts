@@ -37,9 +37,7 @@ export const adminUsersRouter = router({
 					? db
 							.select()
 							.from(userRoles)
-							.where(
-								inArray(userRoles.userId, userIds)
-							)
+							.where(inArray(userRoles.userId, userIds))
 					: Promise.resolve([]),
 				userIds.length > 0
 					? db
@@ -49,10 +47,7 @@ export const adminUsersRouter = router({
 							})
 							.from(leads)
 							.where(
-								and(
-									inArray(leads.userId, userIds),
-									isNull(leads.deletedAt)
-								)
+								and(inArray(leads.userId, userIds), isNull(leads.deletedAt))
 							)
 							.groupBy(leads.userId)
 					: Promise.resolve([]),
@@ -95,7 +90,9 @@ export const adminUsersRouter = router({
 		.mutation(async ({ input }) => {
 			await db.transaction(async (tx) => {
 				await tx.delete(userRoles).where(eq(userRoles.userId, input.userId));
-				await tx.insert(userRoles).values({ userId: input.userId, role: input.role });
+				await tx
+					.insert(userRoles)
+					.values({ userId: input.userId, role: input.role });
 			});
 
 			return { success: true };
@@ -126,7 +123,9 @@ export const adminUsersRouter = router({
 
 			await db.transaction(async (tx) => {
 				await tx.delete(userRoles).where(eq(userRoles.userId, input.userId));
-				await tx.insert(userRoles).values({ userId: input.userId, role: "vendedor" });
+				await tx
+					.insert(userRoles)
+					.values({ userId: input.userId, role: "vendedor" });
 			});
 
 			return { success: true };

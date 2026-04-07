@@ -13,7 +13,7 @@ export async function uploadPendingPhotos(): Promise<number> {
 			(lead) =>
 				lead.photo !== null &&
 				lead.serverId !== null &&
-				lead.uploadFailed !== true,
+				lead.uploadFailed !== true
 		)
 		.toArray();
 

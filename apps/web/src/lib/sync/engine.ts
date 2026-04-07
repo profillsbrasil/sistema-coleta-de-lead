@@ -10,6 +10,7 @@ import { getBackoffDelay, SYNC_CONFIG } from "./constants";
 import { uploadPendingPhotos } from "./photo-upload";
 
 export interface SyncEngineCallbacks {
+	onRetry?: (attempt: number, totalAttempts: number) => void;
 	onSyncEnd?: (result: {
 		lastSync: string;
 		error: string | null;
@@ -17,17 +18,16 @@ export interface SyncEngineCallbacks {
 		isStalled?: boolean;
 	}) => void;
 	onSyncStart?: () => void;
-	onRetry?: (attempt: number, totalAttempts: number) => void;
 }
 
 function fetchWithTimeout(
 	url: URL | RequestInfo,
-	options?: RequestInit,
+	options?: RequestInit
 ): Promise<Response> {
 	const controller = new AbortController();
 	const timeoutId = setTimeout(
 		() => controller.abort(),
-		SYNC_CONFIG.pushPullTimeoutMs,
+		SYNC_CONFIG.pushPullTimeoutMs
 	);
 	return fetch(url, {
 		...options,
@@ -86,7 +86,7 @@ async function pushChanges(): Promise<void> {
 	const ackIds = result.acknowledged
 		.map((a) => {
 			const queueItem = pendingOps.find(
-				(p) => p.localId === a.localId && p.timestamp === a.queueId,
+				(p) => p.localId === a.localId && p.timestamp === a.queueId
 			);
 			return queueItem?.id;
 		})
@@ -113,7 +113,7 @@ async function pushChanges(): Promise<void> {
 		const failedItem = pendingOps.find(
 			(p) =>
 				p.localId === result.failedOperation!.localId &&
-				p.timestamp === result.failedOperation!.queueId,
+				p.timestamp === result.failedOperation!.queueId
 		);
 		if (failedItem?.id != null) {
 			await db.syncQueue.update(failedItem.id, {
@@ -197,7 +197,10 @@ async function pullChanges(): Promise<void> {
 		});
 	}
 
-	await db.syncMeta.put({ key: "lastSyncTimestamp", value: result.serverTimestamp });
+	await db.syncMeta.put({
+		key: "lastSyncTimestamp",
+		value: result.serverTimestamp,
+	});
 
 	if (conflictCount > 0) {
 		toast.info(`${conflictCount} lead(s) atualizado(s) pelo servidor`);
@@ -297,7 +300,7 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 
 export function startSync(
 	callbacks?: SyncEngineCallbacks,
-	detector?: ConnectivityDetector,
+	detector?: ConnectivityDetector
 ): { stop: () => void; retry: () => void } {
 	const _detector = detector ?? createConnectivityDetector();
 	let periodicTimerId: ReturnType<typeof setTimeout> | null = null;

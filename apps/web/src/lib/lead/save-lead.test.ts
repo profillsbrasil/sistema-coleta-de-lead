@@ -164,7 +164,7 @@ describe("saveLead", () => {
 				notes: "",
 			},
 			TEST_USER_ID,
-			null,
+			null
 		);
 
 		const leadCount = await db.leads.count();

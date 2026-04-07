@@ -3,15 +3,13 @@ import { normalizeRscUrl } from "../rsc-url-normalizer";
 
 describe("normalizeRscUrl", () => {
 	it("remove o parametro _rsc de uma URL com apenas _rsc", () => {
-		const result = normalizeRscUrl(
-			"https://example.com/dashboard?_rsc=abc123",
-		);
+		const result = normalizeRscUrl("https://example.com/dashboard?_rsc=abc123");
 		expect(result).toBe("https://example.com/dashboard");
 	});
 
 	it("remove apenas _rsc e mantem outros parametros intactos", () => {
 		const result = normalizeRscUrl(
-			"https://example.com/leads?_rsc=xyz&other=1",
+			"https://example.com/leads?_rsc=xyz&other=1"
 		);
 		expect(result).toBe("https://example.com/leads?other=1");
 	});
@@ -22,9 +20,7 @@ describe("normalizeRscUrl", () => {
 	});
 
 	it("remove _rsc de rotas com segmentos dinamicos", () => {
-		const result = normalizeRscUrl(
-			"https://example.com/leads/new?_rsc=abc",
-		);
+		const result = normalizeRscUrl("https://example.com/leads/new?_rsc=abc");
 		expect(result).toBe("https://example.com/leads/new");
 	});
 

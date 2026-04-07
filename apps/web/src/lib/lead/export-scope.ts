@@ -1,11 +1,11 @@
 import { db } from "../db";
 import type { Lead } from "../db/types";
-import { type FilterTag } from "./queries";
+import type { FilterTag } from "./queries";
 
 export interface LeadExportScopeInput {
-	userId: string;
-	tag: FilterTag;
 	searchTerm: string;
+	tag: FilterTag;
+	userId: string;
 }
 
 export interface LeadExportScopeResult {
