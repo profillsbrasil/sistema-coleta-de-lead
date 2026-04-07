@@ -53,7 +53,7 @@ function StatusBadge({ isBanned }: { isBanned: boolean }) {
 		return <Badge variant="destructive">Desativado</Badge>;
 	}
 	return (
-		<Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+		<Badge className="bg-primary/10 text-primary">
 			Ativo
 		</Badge>
 	);
