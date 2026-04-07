@@ -18,7 +18,7 @@ O app usa um tema shadcn/ui padrão com cores teal/cyan em oklch(). O DESIGN.md 
 | Borders | Expandir para 4 níveis (subtle/default/prominent/accent) |
 | Escopo | Fase 1: tokens + tema (sem mexer em componentes shadcn) |
 | Brand color | Adotar verde Supabase (#3ecf8e) |
-| Abordagem | Migração em Camadas (3 PRs sequenciais) |
+| Abordagem | Migração em Camadas (4 PRs sequenciais, cada um com single mode de falha) |
 
 ## Arquitetura
 
@@ -39,9 +39,9 @@ O `@theme inline` é agnóstico ao color space — ele faz `var(--background)` e
 
 Os 55 componentes usam classes como `bg-background`, `text-foreground`, `border-border`. Eles herdam cores automaticamente dos tokens CSS. **Nenhum componente precisa ser editado** (exceto o bug fix no sidebar.tsx).
 
-## PR 1: Infraestrutura + Bug Fix
+## PR 1: Bug Fix Sidebar
 
-**Impacto visual: zero.**
+**Impacto visual: fix de cor inválida. Single mode de falha: bugfix.**
 
 ### 1.1 Bug fix — sidebar.tsx
 
@@ -51,7 +51,15 @@ Os 55 componentes usam classes como `bg-background`, `text-foreground`, `border-
 
 **Fix**: Trocar `hsl(var(--sidebar-border))` por `var(--sidebar-border)` (e mesmo para `hsl(var(--sidebar-accent))` no hover).
 
-### 1.2 Novos tokens de border
+### Arquivos modificados (PR 1)
+
+- `packages/ui/src/components/sidebar.tsx` — fix hsl() bug
+
+## PR 2: Infraestrutura de Tokens + Centralização Tag Colors
+
+**Impacto visual: pixel-identical ao atual. Single mode de falha: refactor com paridade.**
+
+### 2.1 Novos tokens de border
 
 Adicionar ao `globals.css` (`:root` e `.dark`) e ao `@theme inline`:
 
@@ -74,24 +82,24 @@ Adicionar ao `globals.css` (`:root` e `.dark`) e ao `@theme inline`:
 
 ### 1.3 Novos tokens de tag color
 
-Adicionar ao `globals.css` e `@theme inline`:
+Conversões oklch→hex **exatas** (computadas via CSS Color Level 4):
 
 ```css
-/* Em .dark */
---tag-quente-bg: #4a1515;
---tag-quente-text: #fca5a5;
---tag-morno-bg: #4a3415;
---tag-morno-text: #fcd34d;
---tag-frio-bg: #1e2a4a;
---tag-frio-text: #93c5fd;
+/* Em :root (light) — equivalentes exatos dos oklch atuais */
+--tag-quente-bg: #ffe2e2;     /* oklch(0.936 0.032 17) */
+--tag-quente-text: #a1002f;   /* oklch(0.45 0.18 17) */
+--tag-morno-bg: #f9ebcf;      /* oklch(0.945 0.04 85) */
+--tag-morno-text: #855b00;    /* oklch(0.5 0.13 85) */
+--tag-frio-bg: #daeefe;       /* oklch(0.94 0.03 240) */
+--tag-frio-text: #005b9f;     /* oklch(0.45 0.15 240) */
 
-/* Em :root (light) */
---tag-quente-bg: #fde8e8;
---tag-quente-text: #b91c1c;
---tag-morno-bg: #fef3c7;
---tag-morno-text: #92400e;
---tag-frio-bg: #dbeafe;
---tag-frio-text: #1e40af;
+/* Em .dark — equivalentes exatos dos oklch atuais */
+--tag-quente-bg: #472023;     /* oklch(0.3 0.06 17) */
+--tag-quente-text: #ffadb2;   /* oklch(0.85 0.12 17) */
+--tag-morno-bg: #3c2b02;      /* oklch(0.3 0.06 85) */
+--tag-morno-text: #ecc980;    /* oklch(0.85 0.1 85) */
+--tag-frio-bg: #133144;       /* oklch(0.3 0.05 240) */
+--tag-frio-text: #90d7ff;     /* oklch(0.85 0.1 240) */
 
 /* Em @theme inline */
 --color-tag-quente-bg: var(--tag-quente-bg);
@@ -102,16 +110,15 @@ Adicionar ao `globals.css` e `@theme inline`:
 --color-tag-frio-text: var(--tag-frio-text);
 ```
 
-### Arquivos modificados (PR 1)
-
-- `packages/ui/src/styles/globals.css` — adicionar tokens
-- `packages/ui/src/components/sidebar.tsx` — fix hsl() bug
-
-## PR 2: Centralização das Tag Colors
-
-**Impacto visual: idêntico ao atual** (os novos tokens terão valores equivalentes aos oklch hardcoded).
+**Nota**: Estes são equivalentes exatos dos oklch atuais para garantir paridade visual pixel-perfect na centralização (PR 2). Na virada visual (PR 3), estes valores podem ser ajustados para a nova paleta.
 
 ### Arquivos modificados (PR 2)
+
+- `packages/ui/src/styles/globals.css` — adicionar todos os novos tokens
+
+### 2.3 Centralização das Tag Colors
+
+### Arquivos de tag modificados (PR 2)
 
 | Arquivo | Mudança |
 |---------|---------|
@@ -259,7 +266,32 @@ const sourceCode = Source_Code_Pro({ subsets: ["latin"], variable: "--font-mono"
 --font-heading: var(--font-sans);
 ```
 
-### 3.7 Theme default — providers.tsx
+### 3.7 Hardcoded colors residuais — inventário completo
+
+| Arquivo | Linha | Antes | Depois | Justificativa |
+|---------|-------|-------|--------|---------------|
+| `sync-status-icon.tsx` | 115 | `text-amber-500` (retrying) | manter | Semântico: warning state |
+| `sync-status-icon.tsx` | 117 | `text-amber-500` (error) | manter | Semântico: warning state |
+| `sync-status-icon.tsx` | 119 | `text-emerald-500` (synced) | `text-primary` | Brand green |
+| `sync-status-icon.tsx` | 146 | `bg-amber-500` (badge) | manter | Semântico: attention badge |
+| `users-panel.tsx` | 628 | `bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200` | `bg-primary/10 text-primary` | Brand green |
+| `admin-user-card.tsx` | 56 | mesmo | `bg-primary/10 text-primary` | Brand green |
+
+## PR 4: Migração de Tema Padrão
+
+**Separado do PR 3 para isolar o modo de falha.**
+
+### 4.1 Estratégia de tema persistido
+
+`next-themes` persiste a escolha do usuário em `localStorage` (key: `theme`).
+
+- **Usuário com preferência salva**: mantém sua escolha. `defaultTheme` não afeta.
+- **Novo usuário** (sem localStorage): recebe `dark` como padrão.
+- **Rollback**: reverter para `system` não afeta quem já escolheu.
+
+Não é necessário migrar, resetar ou limpar preferências existentes.
+
+### 4.2 Theme default — providers.tsx
 
 ```tsx
 <ThemeProvider
@@ -269,17 +301,6 @@ const sourceCode = Source_Code_Pro({ subsets: ["latin"], variable: "--font-mono"
   disableTransitionOnChange
 >
 ```
-
-### 3.8 Hardcoded colors residuais
-
-Atualizar 4 instâncias de cores Tailwind raw:
-
-| Arquivo | Antes | Depois |
-|---------|-------|--------|
-| `sync-status-icon.tsx:119` | `text-emerald-500` | `text-primary` |
-| `sync-status-icon.tsx:146` | `bg-amber-500` | manter (semantic: warning) |
-| `users-panel.tsx:628` | `bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200` | `bg-primary/10 text-primary` |
-| `admin-user-card.tsx:56` | mesmo | `bg-primary/10 text-primary` |
 
 ### Arquivos modificados (PR 3)
 
@@ -301,14 +322,26 @@ Atualizar 4 instâncias de cores Tailwind raw:
 
 ## Verificação
 
-1. `bun run build` — sem erros de tipo ou compilação
-2. `bun run dev:web` — verificar visualmente:
-   - Dashboard (dark mode padrão)
-   - Toggle para light mode
-   - Login page
-   - Sidebar
-   - Lead cards com tags quente/morno/frio
-   - Charts no dashboard
-   - Admin pages
-3. `bun run check-types` — sem regressões de tipo
-4. Verificar WCAG AA contrast ratios nos tokens derivados do light mode
+### Por PR
+
+| PR | Comando | Verificação Visual |
+|----|---------|-------------------|
+| PR 1 | `bun run build` | Sidebar outline variant renderiza borda |
+| PR 2 | `bun run build` | Tags quente/morno/frio pixel-identical em light e dark |
+| PR 3 | `bun run build` + `bun run check-types` | Matriz completa abaixo |
+| PR 4 | `bun run dev:web` | Janela anônima abre em dark; localStorage preservado |
+
+### Matriz de Verificação Visual (PR 3)
+
+- [ ] Login page (light e dark)
+- [ ] Dashboard pessoal (charts, stat cards, tags)
+- [ ] Sidebar (brand name, navegação, hover states)
+- [ ] Lead cards (tags quente/morno/frio)
+- [ ] Admin > Leads (cards, charts)
+- [ ] Admin > Usuários (badges de status)
+- [ ] Admin > Stats Globais (charts)
+- [ ] Toasts (sonner)
+- [ ] Sync status icon (synced, retrying, error, offline)
+- [ ] Popover/dropdown menus
+- [ ] Mode toggle (switch light↔dark)
+- [ ] WCAG AA contrast ratios nos tokens light mode
