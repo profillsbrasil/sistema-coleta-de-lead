@@ -17,18 +17,15 @@ import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
 const TAG_CONFIG: Record<string, { label: string; className: string }> = {
 	quente: {
 		label: "Quente",
-		className:
-			"bg-[oklch(0.936_0.032_17)] text-[oklch(0.45_0.18_17)] dark:bg-[oklch(0.3_0.06_17)] dark:text-[oklch(0.85_0.12_17)]",
+		className: "bg-tag-quente-bg text-tag-quente-text",
 	},
 	morno: {
 		label: "Morno",
-		className:
-			"bg-[oklch(0.945_0.04_85)] text-[oklch(0.5_0.13_85)] dark:bg-[oklch(0.3_0.06_85)] dark:text-[oklch(0.85_0.1_85)]",
+		className: "bg-tag-morno-bg text-tag-morno-text",
 	},
 	frio: {
 		label: "Frio",
-		className:
-			"bg-[oklch(0.94_0.03_240)] text-[oklch(0.45_0.15_240)] dark:bg-[oklch(0.3_0.05_240)] dark:text-[oklch(0.85_0.1_240)]",
+		className: "bg-tag-frio-bg text-tag-frio-text",
 	},
 };
 

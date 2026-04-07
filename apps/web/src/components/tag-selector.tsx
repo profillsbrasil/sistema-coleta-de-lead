@@ -23,20 +23,17 @@ const TAG_CONFIG: Record<
 	quente: {
 		icon: ThermometerSun,
 		label: "Quente",
-		selectedClass:
-			"bg-[oklch(0.936_0.032_17)] text-[oklch(0.45_0.18_17)] dark:bg-[oklch(0.3_0.06_17)] dark:text-[oklch(0.85_0.12_17)]",
+		selectedClass: "bg-tag-quente-bg text-tag-quente-text",
 	},
 	morno: {
 		icon: Thermometer,
 		label: "Morno",
-		selectedClass:
-			"bg-[oklch(0.945_0.04_85)] text-[oklch(0.5_0.13_85)] dark:bg-[oklch(0.3_0.06_85)] dark:text-[oklch(0.85_0.1_85)]",
+		selectedClass: "bg-tag-morno-bg text-tag-morno-text",
 	},
 	frio: {
 		icon: ThermometerSnowflake,
 		label: "Frio",
-		selectedClass:
-			"bg-[oklch(0.94_0.03_240)] text-[oklch(0.45_0.15_240)] dark:bg-[oklch(0.3_0.05_240)] dark:text-[oklch(0.85_0.1_240)]",
+		selectedClass: "bg-tag-frio-bg text-tag-frio-text",
 	},
 };
 

@@ -39,6 +39,17 @@
 	--sidebar-accent-foreground: oklch(0.205 0 0);
 	--sidebar-border: oklch(0.922 0 0);
 	--sidebar-ring: oklch(0.708 0 0);
+	/* Border hierarchy */
+	--border-subtle: #f0f0f0;
+	--border-prominent: #d4d4d4;
+	--border-accent: rgba(0, 197, 115, 0.3);
+	/* Tag colors — equivalentes exatos dos oklch hardcoded (CSS Color Level 4) */
+	--tag-quente-bg: #ffe2e2;     /* oklch(0.936 0.032 17) */
+	--tag-quente-text: #a1002f;   /* oklch(0.45 0.18 17) */
+	--tag-morno-bg: #f9ebcf;      /* oklch(0.945 0.04 85) */
+	--tag-morno-text: #855b00;    /* oklch(0.5 0.13 85) */
+	--tag-frio-bg: #daeefe;       /* oklch(0.94 0.03 240) */
+	--tag-frio-text: #005b9f;     /* oklch(0.45 0.15 240) */
 }
 
 .dark {
@@ -73,10 +84,32 @@
 	--sidebar-accent-foreground: oklch(0.985 0 0);
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.556 0 0);
+	/* Border hierarchy */
+	--border-subtle: #242424;
+	--border-prominent: #363636;
+	--border-accent: rgba(62, 207, 142, 0.3);
+	/* Tag colors — equivalentes exatos dos oklch hardcoded (CSS Color Level 4) */
+	--tag-quente-bg: #472023;     /* oklch(0.3 0.06 17) */
+	--tag-quente-text: #ffadb2;   /* oklch(0.85 0.12 17) */
+	--tag-morno-bg: #3c2b02;      /* oklch(0.3 0.06 85) */
+	--tag-morno-text: #ecc980;    /* oklch(0.85 0.1 85) */
+	--tag-frio-bg: #133144;       /* oklch(0.3 0.05 240) */
+	--tag-frio-text: #90d7ff;     /* oklch(0.85 0.1 240) */
 }
 
 @theme inline {
 	--font-sans: "Inter Variable", sans-serif;
+	/* Border hierarchy */
+	--color-border-subtle: var(--border-subtle);
+	--color-border-prominent: var(--border-prominent);
+	--color-border-accent: var(--border-accent);
+	/* Tag colors */
+	--color-tag-quente-bg: var(--tag-quente-bg);
+	--color-tag-quente-text: var(--tag-quente-text);
+	--color-tag-morno-bg: var(--tag-morno-bg);
+	--color-tag-morno-text: var(--tag-morno-text);
+	--color-tag-frio-bg: var(--tag-frio-bg);
+	--color-tag-frio-text: var(--tag-frio-text);
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
