@@ -109,11 +109,12 @@ async function pushChanges(): Promise<void> {
 	}
 
 	// 3. React to failed operation — increment retryCount so persistent failures are visible
-	if (result.failedOperation) {
+	const failedOperation = "failedOperation" in result ? result.failedOperation : undefined;
+	if (failedOperation) {
 		const failedItem = pendingOps.find(
 			(p) =>
-				p.localId === result.failedOperation!.localId &&
-				p.timestamp === result.failedOperation!.queueId
+				p.localId === failedOperation.localId &&
+				p.timestamp === failedOperation.queueId
 		);
 		if (failedItem?.id != null) {
 			await db.syncQueue.update(failedItem.id, {
