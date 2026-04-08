@@ -53,7 +53,7 @@ export default function TagFilter({ value, onChange }: TagFilterProps) {
 							"inline-flex min-h-[44px] flex-1 select-none items-center justify-center rounded-md border border-transparent px-2 font-medium text-xs outline-none transition-all focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
 							isSelected
 								? option.className
-								: "border-border bg-background hover:bg-muted hover:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50"
+								: "border-border bg-input hover:bg-input/80"
 						)}
 						key={option.value}
 						onClick={() => {
