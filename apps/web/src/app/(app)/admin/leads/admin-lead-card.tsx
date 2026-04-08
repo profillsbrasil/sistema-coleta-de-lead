@@ -51,14 +51,14 @@ export function AdminLeadCard({
 	const tagConfig = TAG_CONFIG[lead.interestTag] ?? TAG_CONFIG.morno;
 
 	return (
-		<Card className="p-4">
+		<Card className="p-3.5">
 			<div className="flex items-start justify-between gap-2">
 				<div className="flex min-w-0 flex-col gap-1">
 					<div className="flex items-center gap-2">
-						<span className="truncate font-semibold text-sm">{lead.name}</span>
+						<span className="truncate font-medium text-[13px]">{lead.name}</span>
 						<span
 							className={cn(
-								"inline-flex shrink-0 items-center rounded-md px-2 py-0.5 font-medium text-xs",
+								"inline-flex shrink-0 items-center rounded-lg px-2 py-0.5 font-medium text-xs",
 								tagConfig.className
 							)}
 						>
