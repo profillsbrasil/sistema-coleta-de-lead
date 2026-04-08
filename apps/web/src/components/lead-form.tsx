@@ -176,7 +176,7 @@ export default function LeadForm({
 				<CardContent>
 					<form
 						aria-busy={isSubmitting}
-						className="grid grid-cols-1 gap-4 md:grid-cols-2"
+						className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4"
 						onSubmit={handleSubmit}
 					>
 						<div className="flex flex-col gap-2">
