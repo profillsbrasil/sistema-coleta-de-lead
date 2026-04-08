@@ -11,12 +11,6 @@ interface TagSelectorProps {
 
 const TAGS: InterestTag[] = ["quente", "morno", "frio"];
 
-const TAG_TEXT_COLOR: Record<InterestTag, string> = {
-	quente: "text-tag-quente-text",
-	morno: "text-tag-morno-text",
-	frio: "text-tag-frio-text",
-};
-
 export default function TagSelector({
 	value,
 	onChange,
@@ -49,7 +43,7 @@ export default function TagSelector({
 						<span
 							className={cn(
 								"font-medium text-xs transition-colors",
-								isSelected ? TAG_TEXT_COLOR[tag] : "text-muted-foreground",
+								isSelected ? config.textClass : "text-muted-foreground",
 							)}
 						>
 							{config.label}
