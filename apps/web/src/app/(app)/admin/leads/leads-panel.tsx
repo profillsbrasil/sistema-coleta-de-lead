@@ -10,7 +10,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@dashboard-leads-profills/ui/components/alert-dialog";
-import { Badge } from "@dashboard-leads-profills/ui/components/badge";
 import {
 	Button,
 	buttonVariants,
@@ -65,6 +64,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
+import InterestIcon from "@/components/interest-icon";
 import { StatCard } from "@/components/stat-card";
 import { buildExportFilename, exportLeadsCsv } from "@/lib/lead/export-csv";
 import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
@@ -73,17 +73,6 @@ import { AdminLeadCard } from "./admin-lead-card";
 
 const PAGE_SIZE = 20;
 
-const TAG_COLORS: Record<string, string> = {
-	quente: "var(--tag-quente-text)",
-	morno: "var(--tag-morno-text)",
-	frio: "var(--tag-frio-text)",
-};
-
-const TAG_LABELS: Record<string, string> = {
-	quente: "Quente",
-	morno: "Morno",
-	frio: "Frio",
-};
 
 function formatDate(dateStr: string | Date): string {
 	const date = new Date(dateStr);
@@ -284,7 +273,7 @@ export default function LeadsPanel() {
 					</div>
 
 					{/* Mobile: card list */}
-					<div className="flex flex-col gap-4 md:hidden">
+					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:hidden">
 						{leads.map((lead) => (
 							<AdminLeadCard
 								key={lead.localId}
@@ -336,15 +325,10 @@ export default function LeadsPanel() {
 											</span>
 										</TableCell>
 										<TableCell>
-											<Badge
-												className="text-white"
-												style={{
-													backgroundColor:
-														TAG_COLORS[lead.interestTag] ?? TAG_COLORS.morno,
-												}}
-											>
-												{TAG_LABELS[lead.interestTag] ?? lead.interestTag}
-											</Badge>
+											<InterestIcon
+												size="sm"
+												tag={lead.interestTag as "quente" | "morno" | "frio"}
+											/>
 										</TableCell>
 										<TableCell>{lead.segment ?? "-"}</TableCell>
 										<TableCell>{formatDate(lead.createdAt)}</TableCell>
