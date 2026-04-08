@@ -8,8 +8,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import AppSidebar from "@/components/app-sidebar";
-import { AppTopbar } from "@/components/app-topbar";
 import BottomNav from "@/components/bottom-nav";
+import { GlobalHeader } from "@/components/global-header";
 import { ServiceWorkerRegistrar } from "@/components/service-worker-registrar";
 import { SyncStatusProvider } from "@/components/sync-status-provider";
 import { AppAuthProvider, useAppAuth } from "./app-auth-provider";
@@ -83,26 +83,22 @@ function AuthenticatedAppShellContent({
 	return (
 		<SyncStatusProvider>
 			<ServiceWorkerRegistrar />
-			{/* Desktop: sidebar estática */}
-			<div className="hidden md:flex md:min-h-svh">
-				<SidebarProvider defaultOpen>
-					<AppSidebar
-						gravatarUrl={snapshot.gravatarUrl}
-						isAdmin={isAdmin && isOnline}
-						userEmail={snapshot.userEmail}
-						userName={snapshot.userName}
-						userRole={snapshot.userRole}
-					/>
-					<SidebarInset>
-						<AppTopbar />
-						<div className="flex-1 p-6">{children}</div>
-					</SidebarInset>
-				</SidebarProvider>
-			</div>
-			{/* Mobile: bottom nav */}
-			<div className="flex min-h-svh flex-col md:hidden">
-				<div className="flex-1 p-4 pb-24">{children}</div>
-				<BottomNav />
+			<div className="flex min-h-svh flex-col">
+				<GlobalHeader />
+				{/* Desktop: sidebar + content */}
+				<div className="hidden min-h-0 flex-1 md:flex">
+					<SidebarProvider defaultOpen>
+						<AppSidebar isAdmin={isAdmin && isOnline} />
+						<SidebarInset>
+							<div className="flex-1 p-6">{children}</div>
+						</SidebarInset>
+					</SidebarProvider>
+				</div>
+				{/* Mobile: content + bottom nav */}
+				<div className="flex flex-1 flex-col md:hidden">
+					<div className="flex-1 p-4 pb-24">{children}</div>
+					<BottomNav />
+				</div>
 			</div>
 		</SyncStatusProvider>
 	);

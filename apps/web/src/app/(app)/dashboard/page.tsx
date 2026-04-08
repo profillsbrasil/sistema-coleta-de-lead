@@ -6,11 +6,5 @@ import Dashboard from "./dashboard";
 export default function DashboardPage() {
 	const { snapshot } = useRequiredAppAuth();
 
-	return (
-		<Dashboard
-			gravatarUrl={snapshot.gravatarUrl}
-			userId={snapshot.userId}
-			userName={snapshot.userName}
-		/>
-	);
+	return <Dashboard userId={snapshot.userId} />;
 }
