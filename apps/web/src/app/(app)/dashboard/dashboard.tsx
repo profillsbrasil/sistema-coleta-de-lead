@@ -1,99 +1,128 @@
 "use client";
 
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@dashboard-leads-profills/ui/components/select";
-import {
-	Tabs,
-	TabsContent,
-	TabsList,
-	TabsTrigger,
-} from "@dashboard-leads-profills/ui/components/tabs";
+	Empty,
+	EmptyDescription,
+} from "@dashboard-leads-profills/ui/components/empty";
+import { Skeleton } from "@dashboard-leads-profills/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import type { PersonalStats } from "@/lib/lead/stats";
+import { useLiveQuery } from "dexie-react-hooks";
+import { useEffect, useState } from "react";
+import { PersonalStatsBar } from "@/components/personal-stats-bar";
+import { Podium } from "@/components/podium";
+import { RankingList } from "@/components/ranking-list";
+import { db } from "@/lib/db/index";
+import { getPersonalStats } from "@/lib/lead/stats";
 import { trpc } from "@/utils/trpc";
-import LeaderboardTab from "./leaderboard-tab";
-import PersonalDashboard from "./personal-dashboard";
 
 interface DashboardProps {
-	isAdmin?: boolean;
+	gravatarUrl: string;
 	userId: string;
+	userName: string;
 }
 
-export default function Dashboard({ userId, isAdmin }: DashboardProps) {
-	const [selectedVendor, setSelectedVendor] = useState<string | undefined>(
-		undefined
+export default function Dashboard({
+	gravatarUrl,
+	userId,
+	userName,
+}: DashboardProps) {
+	const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+
+	const personalStats = useLiveQuery(
+		() => getPersonalStats(userId),
+		[userId]
 	);
 
-	const vendorsQuery = useQuery(
-		trpc.admin.leads.listVendors.queryOptions(undefined, {
-			enabled: !!isAdmin,
-		})
+	const { data: serverData, isLoading } = useQuery(
+		trpc.leaderboard.getRanking.queryOptions()
 	);
 
-	const adminVendorStatsQuery = useQuery(
-		trpc.admin.stats.getGlobalStats.queryOptions(
-			{ userId: selectedVendor },
-			{ enabled: !!isAdmin && !!selectedVendor }
-		)
+	const cachedEntries = useLiveQuery(
+		() => db.leaderboardCache.orderBy("rank").toArray(),
+		[]
 	);
 
-	const adminVendorStats: PersonalStats | null =
-		isAdmin && selectedVendor && adminVendorStatsQuery.data
-			? {
-					total: adminVendorStatsQuery.data.total,
-					hoje: adminVendorStatsQuery.data.today,
-					quente: adminVendorStatsQuery.data.quente,
-					morno: adminVendorStatsQuery.data.morno,
-					frio: adminVendorStatsQuery.data.frio,
-					score: adminVendorStatsQuery.data.score,
-				}
-			: null;
+	useEffect(() => {
+		if (!serverData) {
+			return;
+		}
 
-	const effectiveUserId = selectedVendor ?? userId;
+		const cacheData = async () => {
+			await db.leaderboardCache.clear();
+			const entries = serverData.ranking.map((r) => ({
+				userId: r.userId,
+				name: r.name,
+				totalLeads: r.totalLeads,
+				score: r.score,
+				rank: r.rank,
+				lastSyncAt: serverData.serverTimestamp,
+			}));
+			await db.leaderboardCache.bulkPut(entries);
+			setLastSyncAt(serverData.serverTimestamp);
+		};
+
+		cacheData();
+	}, [serverData]);
+
+	useEffect(() => {
+		if (cachedEntries && cachedEntries.length > 0 && !lastSyncAt) {
+			setLastSyncAt(cachedEntries[0].lastSyncAt);
+		}
+	}, [cachedEntries, lastSyncAt]);
+
+	const displayEntries = serverData
+		? serverData.ranking.map((r) => ({
+				...r,
+				lastSyncAt: serverData.serverTimestamp,
+			}))
+		: (cachedEntries ?? []);
+
+	const currentUserRank =
+		displayEntries.find((e) => e.userId === userId)?.rank ?? null;
+
+	const maxLeads =
+		displayEntries.length > 0
+			? Math.max(...displayEntries.map((e) => e.totalLeads))
+			: 0;
+
+	if (isLoading && (!cachedEntries || cachedEntries.length === 0)) {
+		return (
+			<div aria-busy="true" className="flex flex-col gap-4 p-4">
+				<Skeleton className="h-16 w-full" />
+				<Skeleton className="h-48 w-full" />
+				<Skeleton className="h-12 w-full" />
+				<Skeleton className="h-12 w-full" />
+				<Skeleton className="h-12 w-full" />
+			</div>
+		);
+	}
+
+	if (displayEntries.length === 0) {
+		return (
+			<Empty className="py-16">
+				<EmptyDescription>
+					Conecte-se a internet para ver o ranking da equipe.
+				</EmptyDescription>
+			</Empty>
+		);
+	}
 
 	return (
-		<Tabs defaultValue="dashboard">
-			<div className="flex items-center justify-between gap-4">
-				<TabsList>
-					<TabsTrigger value="dashboard">Meu Dashboard</TabsTrigger>
-					<TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-				</TabsList>
-				{isAdmin && vendorsQuery.data ? (
-					<Select
-						onValueChange={(v) =>
-							setSelectedVendor(v === "self" || !v ? undefined : v)
-						}
-						value={selectedVendor ?? "self"}
-					>
-						<SelectTrigger className="w-[200px]">
-							<SelectValue placeholder="Selecionar vendedor" />
-						</SelectTrigger>
-						<SelectContent>
-							<SelectItem value="self">Meu Dashboard</SelectItem>
-							{vendorsQuery.data.map((v) => (
-								<SelectItem key={v.userId} value={v.userId}>
-									{v.name}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-				) : null}
-			</div>
-			<TabsContent className="mt-4" value="dashboard">
-				<PersonalDashboard
-					overrideStats={adminVendorStats}
-					userId={effectiveUserId}
-				/>
-			</TabsContent>
-			<TabsContent className="mt-4" value="leaderboard">
-				<LeaderboardTab isAdmin={isAdmin} userId={userId} />
-			</TabsContent>
-		</Tabs>
+		<div className="flex flex-col">
+			<PersonalStatsBar
+				gravatarUrl={gravatarUrl}
+				leads={personalStats?.total ?? 0}
+				leadsToday={personalStats?.hoje ?? 0}
+				rank={currentUserRank}
+				userName={userName}
+			/>
+			<Podium entries={displayEntries} />
+			<div className="mx-4 border-t border-border-subtle" />
+			<RankingList
+				currentUserId={userId}
+				entries={displayEntries}
+				maxLeads={maxLeads}
+			/>
+		</div>
 	);
 }

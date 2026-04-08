@@ -1,18 +1,16 @@
 "use client";
 
 import { useRequiredAppAuth } from "@/components/app-auth-provider";
-import FAB from "@/components/fab";
-
 import Dashboard from "./dashboard";
 
 export default function DashboardPage() {
 	const { snapshot } = useRequiredAppAuth();
-	const isAdmin = snapshot.userRole === "admin";
 
 	return (
-		<div className="w-full">
-			<Dashboard isAdmin={isAdmin} userId={snapshot.userId} />
-			<FAB />
-		</div>
+		<Dashboard
+			gravatarUrl={snapshot.gravatarUrl}
+			userId={snapshot.userId}
+			userName={snapshot.userName}
+		/>
 	);
 }
