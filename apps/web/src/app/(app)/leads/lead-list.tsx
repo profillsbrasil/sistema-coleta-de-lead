@@ -88,7 +88,7 @@ function LeadResults({
 	sentinelRef: React.RefObject<HTMLLIElement | null>;
 }) {
 	return (
-		<ul className="flex list-none flex-col gap-4">
+		<ul className="grid list-none grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 			{leads.map((lead) => (
 				<li key={lead.localId}>
 					<LeadCard lead={lead} onClick={() => onNavigate(lead.localId)} />
@@ -225,10 +225,13 @@ export default function LeadList({ userId }: LeadListProps) {
 	function renderContent() {
 		if (filteredLeads === undefined) {
 			return (
-				<div aria-busy="true" className="flex flex-col gap-4">
+				<div aria-busy="true" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 					<Skeleton className="h-[72px] w-full rounded-lg" />
 					<Skeleton className="h-[72px] w-full rounded-lg" />
 					<Skeleton className="h-[72px] w-full rounded-lg" />
+					<Skeleton className="hidden h-[72px] w-full rounded-lg sm:block" />
+					<Skeleton className="hidden h-[72px] w-full rounded-lg sm:block" />
+					<Skeleton className="hidden h-[72px] w-full rounded-lg lg:block" />
 				</div>
 			);
 		}

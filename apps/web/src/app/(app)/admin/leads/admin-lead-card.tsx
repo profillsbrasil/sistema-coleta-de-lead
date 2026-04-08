@@ -13,21 +13,7 @@ import { cn } from "@dashboard-leads-profills/ui/lib/utils";
 import { MessageCircle, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
-
-const TAG_CONFIG: Record<string, { label: string; className: string }> = {
-	quente: {
-		label: "Quente",
-		className: "bg-tag-quente-bg text-tag-quente-text",
-	},
-	morno: {
-		label: "Morno",
-		className: "bg-tag-morno-bg text-tag-morno-text",
-	},
-	frio: {
-		label: "Frio",
-		className: "bg-tag-frio-bg text-tag-frio-text",
-	},
-};
+import InterestIcon from "@/components/interest-icon";
 
 interface AdminLeadCardProps {
 	lead: {
@@ -48,22 +34,16 @@ export function AdminLeadCard({
 	vendorName,
 	onDelete,
 }: AdminLeadCardProps) {
-	const tagConfig = TAG_CONFIG[lead.interestTag] ?? TAG_CONFIG.morno;
-
 	return (
 		<Card className="p-3.5">
 			<div className="flex items-start justify-between gap-2">
 				<div className="flex min-w-0 flex-col gap-1">
 					<div className="flex items-center gap-2">
 						<span className="truncate font-medium text-[13px]">{lead.name}</span>
-						<span
-							className={cn(
-								"inline-flex shrink-0 items-center rounded-lg px-2 py-0.5 font-medium text-xs",
-								tagConfig.className
-							)}
-						>
-							{tagConfig.label}
-						</span>
+						<InterestIcon
+							size="sm"
+							tag={lead.interestTag as "quente" | "morno" | "frio"}
+						/>
 					</div>
 					<span className="text-muted-foreground text-sm">
 						Vendedor: {vendorName}
