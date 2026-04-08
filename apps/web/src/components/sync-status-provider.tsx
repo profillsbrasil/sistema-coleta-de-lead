@@ -108,6 +108,8 @@ export function SyncStatusProvider({
 
 		let syncControl: { stop: () => void; retry: () => void } | undefined;
 
+		const handleLeadSaved = () => syncControl?.retry();
+
 		async function init() {
 			const { startSync } = await import("@/lib/sync/engine");
 			syncControl = startSync(callbacks, detector);
@@ -115,11 +117,13 @@ export function SyncStatusProvider({
 		}
 
 		init();
+		window.addEventListener("lead-saved", handleLeadSaved);
 
 		return () => {
 			syncControl?.stop();
 			unsubscribeDetector();
 			detector.stop();
+			window.removeEventListener("lead-saved", handleLeadSaved);
 		};
 	}, []);
 

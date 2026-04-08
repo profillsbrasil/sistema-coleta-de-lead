@@ -1,7 +1,49 @@
 import { db } from "../db/index";
+import type { LeaderboardEntry } from "../db/types";
 import { checkStorageAndCompress } from "./compression";
 import { emptyToNull } from "./helpers";
 import type { LeadFormData } from "./validation";
+
+const SCORE_MAP: Record<string, number> = { quente: 3, morno: 2, frio: 1 };
+
+async function updateLeaderboardOptimistically(
+	userId: string,
+	interestTag: string
+): Promise<void> {
+	try {
+		const cached = await db.leaderboardCache.toArray();
+		if (cached.length === 0) return;
+
+		const scoreIncrement = SCORE_MAP[interestTag] ?? 1;
+		const now = new Date().toISOString();
+		let found = false;
+
+		const updated: LeaderboardEntry[] = cached.map((entry) => {
+			if (entry.userId === userId) {
+				found = true;
+				return {
+					...entry,
+					totalLeads: entry.totalLeads + 1,
+					score: entry.score + scoreIncrement,
+					lastSyncAt: now,
+				};
+			}
+			return entry;
+		});
+
+		if (!found) return;
+
+		updated.sort((a, b) => b.score - a.score || b.totalLeads - a.totalLeads);
+		for (let i = 0; i < updated.length; i++) {
+			updated[i] = { ...updated[i], rank: i + 1 };
+		}
+
+		await db.leaderboardCache.clear();
+		await db.leaderboardCache.bulkPut(updated);
+	} catch {
+		// Optimistic update failure must not break lead save
+	}
+}
 
 export async function saveLead(
 	data: LeadFormData,
@@ -52,6 +94,9 @@ export async function saveLead(
 			timestamp: now,
 		});
 	});
+
+	await updateLeaderboardOptimistically(userId, data.interestTag);
+	window.dispatchEvent(new Event("lead-saved"));
 
 	return localId;
 }
