@@ -105,7 +105,7 @@ export default function SidebarUserMenu({
 								{userRole === "admin" ? "Admin" : "Vendedor"}
 							</span>
 						</div>
-						<SyncStatusIcon />
+						{userRole === "admin" && <SyncStatusIcon />}
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
 						align="start"
