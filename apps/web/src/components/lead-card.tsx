@@ -49,7 +49,7 @@ export default function LeadCard({ lead, onClick }: LeadCardProps) {
 		>
 			<div className="flex items-center justify-between">
 				<div className="flex min-w-0 flex-col gap-1">
-					<span className="truncate font-semibold text-sm">{lead.name}</span>
+					<span className="truncate font-medium text-sm">{lead.name}</span>
 					{contact ? (
 						<span className="flex items-center gap-1 text-muted-foreground text-sm">
 							<span className="truncate">{contact}</span>
@@ -74,7 +74,7 @@ export default function LeadCard({ lead, onClick }: LeadCardProps) {
 					<div className="flex items-center gap-1.5">
 						<span
 							className={cn(
-								"inline-flex items-center rounded-md px-2 py-0.5 font-medium text-xs",
+								"inline-flex items-center rounded-lg px-2 py-0.5 font-medium text-xs",
 								tagConfig.className
 							)}
 						>
