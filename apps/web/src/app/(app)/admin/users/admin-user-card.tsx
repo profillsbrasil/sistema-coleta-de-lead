@@ -73,11 +73,11 @@ export function AdminUserCard({
 	const displayName = user.name || user.email;
 
 	return (
-		<Card className="p-4">
+		<Card className="p-3.5">
 			<div className="flex items-start justify-between gap-2">
 				<div className="flex min-w-0 flex-col gap-1">
 					<div className="flex items-center gap-2">
-						<span className="truncate font-semibold text-sm">
+						<span className="truncate font-medium text-[13px]">
 							{displayName}
 						</span>
 						{isEditing ? (
@@ -102,8 +102,11 @@ export function AdminUserCard({
 							<RoleBadge role={user.role} />
 						)}
 					</div>
+					<span className="truncate text-[13px] text-muted-foreground">
+						{user.email}
+					</span>
 					<div className="flex items-center gap-2">
-						<span className="text-muted-foreground text-sm">
+						<span className="text-muted-foreground text-xs">
 							{user.leadCount} leads
 						</span>
 						<StatusBadge isBanned={user.isBanned} />

@@ -95,7 +95,7 @@ export default function StatsFilters({
 	return (
 		<Card className="mb-6">
 			<CardContent>
-				<div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+				<div className="flex flex-col gap-2.5 lg:grid lg:grid-cols-5 lg:gap-3">
 					<Select
 						onValueChange={(v) => setSelectedVendor(v ?? "")}
 						value={selectedVendor}
@@ -117,7 +117,7 @@ export default function StatsFilters({
 						onValueChange={(v) => setSelectedTag(v ?? "")}
 						value={selectedTag}
 					>
-						<SelectTrigger>
+						<SelectTrigger className="hidden lg:flex">
 							<SelectValue placeholder="Todas as tags" />
 						</SelectTrigger>
 						<SelectContent>
@@ -132,7 +132,7 @@ export default function StatsFilters({
 						onValueChange={(v) => setSelectedSegment(v ?? "")}
 						value={selectedSegment}
 					>
-						<SelectTrigger>
+						<SelectTrigger className="hidden lg:flex">
 							<SelectValue placeholder="Todos os segmentos" />
 						</SelectTrigger>
 						<SelectContent>
@@ -149,7 +149,7 @@ export default function StatsFilters({
 						<PopoverTrigger
 							render={
 								<Button
-									className="w-full justify-start font-normal"
+									className="hidden w-full justify-start font-normal lg:inline-flex"
 									variant="outline"
 								/>
 							}
@@ -198,7 +198,7 @@ export default function StatsFilters({
 						</PopoverContent>
 					</Popover>
 
-					<Button disabled={isLoading} onClick={handleApply}>
+					<Button className="w-full lg:w-auto" disabled={isLoading} onClick={handleApply}>
 						Aplicar filtros
 					</Button>
 				</div>
