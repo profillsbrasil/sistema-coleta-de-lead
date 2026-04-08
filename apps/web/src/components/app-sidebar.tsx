@@ -11,7 +11,6 @@ import {
 	SidebarFooter,
 	SidebarGroup,
 	SidebarGroupLabel,
-	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
@@ -19,14 +18,13 @@ import {
 import {
 	BarChart3,
 	ClipboardList,
-	LayoutDashboard,
 	PlusCircle,
 	Trophy,
 	Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import SidebarUserMenu from "@/components/sidebar-user-menu";
+import { SyncStatusIndicator } from "@/components/sync-status-indicator";
 
 const VENDEDOR_ITEMS = [
 	{ href: "/dashboard", label: "Ranking", icon: Trophy },
@@ -41,11 +39,7 @@ const ADMIN_ITEMS = [
 ] as const;
 
 interface AppSidebarProps {
-	gravatarUrl: string;
 	isAdmin: boolean;
-	userEmail: string;
-	userName: string;
-	userRole: string;
 }
 
 function isItemActive(href: string, pathname: string): boolean {
@@ -55,25 +49,12 @@ function isItemActive(href: string, pathname: string): boolean {
 	return pathname.startsWith(href);
 }
 
-export default function AppSidebar({
-	gravatarUrl,
-	isAdmin,
-	userEmail,
-	userName,
-	userRole,
-}: AppSidebarProps) {
+export default function AppSidebar({ isAdmin }: AppSidebarProps) {
 	const pathname = usePathname();
 
 	return (
 		<Sidebar collapsible="none">
-			<SidebarHeader>
-				<div className="flex h-14 items-center px-4">
-					<span className="font-semibold text-base text-sidebar-primary">
-						Leads Profills
-					</span>
-				</div>
-			</SidebarHeader>
-			<SidebarContent>
+			<SidebarContent className="pt-2">
 				<SidebarGroup>
 					<SidebarGroupLabel>Vendedor</SidebarGroupLabel>
 					<SidebarMenu>
@@ -118,12 +99,7 @@ export default function AppSidebar({
 				)}
 			</SidebarContent>
 			<SidebarFooter>
-				<SidebarUserMenu
-					gravatarUrl={gravatarUrl}
-					userEmail={userEmail}
-					userName={userName}
-					userRole={userRole}
-				/>
+				<SyncStatusIndicator />
 			</SidebarFooter>
 		</Sidebar>
 	);

@@ -10,8 +10,8 @@ function getTimeLeft(target: Date): number {
 
 function formatTimeLeft(ms: number): string {
 	const totalSeconds = Math.floor(ms / 1000);
-	const days = Math.floor(totalSeconds / 86400);
-	const hours = Math.floor((totalSeconds % 86400) / 3600);
+	const days = Math.floor(totalSeconds / 86_400);
+	const hours = Math.floor((totalSeconds % 86_400) / 3600);
 	const minutes = Math.floor((totalSeconds % 3600) / 60);
 	const seconds = totalSeconds % 60;
 
@@ -27,13 +27,19 @@ export function EventCountdown() {
 	const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
 	useEffect(() => {
-		if (!EVENT_END) return;
+		if (!EVENT_END) {
+			return;
+		}
 
 		const target = new Date(EVENT_END);
-		if (Number.isNaN(target.getTime())) return;
+		if (Number.isNaN(target.getTime())) {
+			return;
+		}
 
 		const initial = getTimeLeft(target);
-		if (initial <= 0) return;
+		if (initial <= 0) {
+			return;
+		}
 
 		setTimeLeft(initial);
 
@@ -50,10 +56,12 @@ export function EventCountdown() {
 		return () => clearInterval(id);
 	}, []);
 
-	if (timeLeft === null) return null;
+	if (timeLeft === null) {
+		return null;
+	}
 
 	return (
-		<span className="font-mono text-xs text-muted-foreground">
+		<span className="font-medium font-mono text-[13px] text-amber-500">
 			{formatTimeLeft(timeLeft)}
 		</span>
 	);
