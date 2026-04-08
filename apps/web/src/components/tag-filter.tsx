@@ -40,7 +40,7 @@ export default function TagFilter({ value, onChange }: TagFilterProps) {
 					// biome-ignore lint/a11y/useSemanticElements: custom toggle buttons per UI-SPEC require role="radio" for radiogroup pattern
 					<button
 						aria-checked={isSelected}
-						className="outline-none transition-all focus-visible:ring-3 focus-visible:ring-ring/50 rounded-full"
+						className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full outline-none transition-all focus-visible:ring-3 focus-visible:ring-ring/50"
 						key={tag}
 						onClick={() => {
 							if (isSelected) {

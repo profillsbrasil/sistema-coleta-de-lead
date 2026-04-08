@@ -7,18 +7,21 @@ const TAG_CONFIG = {
 	quente: {
 		icon: Flame,
 		label: "Quente",
+		textClass: "text-tag-quente-text",
 		activeClasses: "border-tag-quente-text bg-tag-quente-bg text-tag-quente-text",
 		inactiveClasses: "border-border bg-background text-muted-foreground",
 	},
 	morno: {
 		icon: Sun,
 		label: "Morno",
+		textClass: "text-tag-morno-text",
 		activeClasses: "border-tag-morno-text bg-tag-morno-bg text-tag-morno-text",
 		inactiveClasses: "border-border bg-background text-muted-foreground",
 	},
 	frio: {
 		icon: Snowflake,
 		label: "Frio",
+		textClass: "text-tag-frio-text",
 		activeClasses: "border-tag-frio-text bg-tag-frio-bg text-tag-frio-text",
 		inactiveClasses: "border-border bg-background text-muted-foreground",
 	},
@@ -49,7 +52,7 @@ export default function InterestIcon({
 	selected = true,
 	className,
 }: InterestIconProps) {
-	const config = TAG_CONFIG[tag];
+	const config = TAG_CONFIG[tag] ?? TAG_CONFIG.morno;
 	const sizeConfig = SIZE_CONFIG[size];
 	const Icon = config.icon;
 
