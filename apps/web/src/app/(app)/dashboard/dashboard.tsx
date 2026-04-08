@@ -92,7 +92,7 @@ export default function Dashboard({ userId, isAdmin }: DashboardProps) {
 				/>
 			</TabsContent>
 			<TabsContent className="mt-4" value="leaderboard">
-				<LeaderboardTab userId={userId} />
+				<LeaderboardTab isAdmin={isAdmin} userId={userId} />
 			</TabsContent>
 		</Tabs>
 	);
