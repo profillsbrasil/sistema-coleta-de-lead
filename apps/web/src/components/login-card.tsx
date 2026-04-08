@@ -112,7 +112,7 @@ export default function LoginCard() {
 					Acesse sua conta para comecar a coletar leads
 				</CardDescription>
 			</CardHeader>
-			<CardContent className="flex flex-col gap-4">
+			<CardContent className="flex flex-col gap-3">
 				{localSnapshotName ? (
 					<Button
 						className="w-full"
