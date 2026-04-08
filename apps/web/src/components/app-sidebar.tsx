@@ -15,23 +15,22 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	useSidebar,
 } from "@dashboard-leads-profills/ui/components/sidebar";
 import {
 	BarChart3,
 	ClipboardList,
 	LayoutDashboard,
 	PlusCircle,
+	Trophy,
 	Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
 import SidebarUserMenu from "@/components/sidebar-user-menu";
 
 const VENDEDOR_ITEMS = [
-	{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-	{ href: "/leads", label: "Leads", icon: ClipboardList },
+	{ href: "/dashboard", label: "Ranking", icon: Trophy },
+	{ href: "/leads", label: "Meus Leads", icon: ClipboardList },
 	{ href: "/leads/new", label: "Novo Lead", icon: PlusCircle },
 ] as const;
 
@@ -64,18 +63,9 @@ export default function AppSidebar({
 	userRole,
 }: AppSidebarProps) {
 	const pathname = usePathname();
-	const { setOpenMobile } = useSidebar();
-	const prevPathRef = useRef(pathname);
-
-	useEffect(() => {
-		if (prevPathRef.current !== pathname) {
-			prevPathRef.current = pathname;
-			setOpenMobile(false);
-		}
-	});
 
 	return (
-		<Sidebar collapsible="offcanvas">
+		<Sidebar collapsible="none">
 			<SidebarHeader>
 				<div className="flex h-14 items-center px-4">
 					<span className="font-semibold text-base text-sidebar-primary">

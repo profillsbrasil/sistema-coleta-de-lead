@@ -13,7 +13,10 @@ import { StalenessIndicator } from "@/components/staleness-indicator";
 import { db } from "@/lib/db/index";
 import { trpc } from "@/utils/trpc";
 
-export default function LeaderboardTab({ userId }: { userId: string }) {
+export default function LeaderboardTab({
+	userId,
+	isAdmin = false,
+}: { userId: string; isAdmin?: boolean }) {
 	const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
 
 	const { data: serverData, isLoading } = useQuery(
@@ -89,7 +92,7 @@ export default function LeaderboardTab({ userId }: { userId: string }) {
 
 	return (
 		<div className="flex flex-col gap-2">
-			<StalenessIndicator lastSyncAt={lastSyncAt} />
+			{isAdmin && <StalenessIndicator lastSyncAt={lastSyncAt} />}
 			<ol className="flex flex-col gap-2">
 				{displayEntries.map((entry) => (
 					<li key={entry.userId}>
