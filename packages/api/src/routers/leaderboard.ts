@@ -9,27 +9,34 @@ export const leaderboardRouter = router({
 		const result = await db.execute(sql`
 			WITH ranked AS (
 				SELECT
-					l.user_id AS "userId",
+					u.id::text AS "userId",
 					u.raw_user_meta_data->>'name' AS "rawName",
-					COUNT(*)::int AS "totalLeads",
-					SUM(CASE
+					COUNT(l.id)::int AS "totalLeads",
+					COALESCE(SUM(CASE
 						WHEN l.interest_tag = 'quente' THEN 3
 						WHEN l.interest_tag = 'morno' THEN 2
-						ELSE 1
-					END)::int AS score,
+						WHEN l.id IS NOT NULL THEN 1
+						ELSE 0
+					END), 0)::int AS score,
 					ROW_NUMBER() OVER (
 						ORDER BY
-							SUM(CASE
+							COALESCE(SUM(CASE
 								WHEN l.interest_tag = 'quente' THEN 3
 								WHEN l.interest_tag = 'morno' THEN 2
-								ELSE 1
-							END) DESC,
-							COUNT(*) DESC
-					) AS rank
-				FROM leads l
-				JOIN auth.users u ON u.id = l.user_id::uuid
-				WHERE l.deleted_at IS NULL
-				GROUP BY l.user_id, u.raw_user_meta_data->>'name'
+								WHEN l.id IS NOT NULL THEN 1
+								ELSE 0
+							END), 0) DESC,
+							COUNT(l.id) DESC
+					)::int AS rank
+				FROM auth.users u
+				LEFT JOIN leads l ON l.user_id = u.id AND l.deleted_at IS NULL
+				GROUP BY u.id, u.raw_user_meta_data->>'name'
+				HAVING
+					NOT EXISTS (
+						SELECT 1 FROM user_roles ur
+						WHERE ur.user_id = u.id AND ur.role = 'admin'
+					)
+					OR COUNT(l.id) > 0
 			)
 			SELECT
 				"userId",

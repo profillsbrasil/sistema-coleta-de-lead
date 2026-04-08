@@ -212,12 +212,12 @@ async function fetchLeaderboard(): Promise<void> {
 	try {
 		const result = await syncClient.leaderboard.getRanking.query();
 		await db.leaderboardCache.clear();
-		const entries = result.ranking.map((r, i) => ({
+		const entries = result.ranking.map((r) => ({
 			userId: r.userId,
 			name: r.name,
 			totalLeads: r.totalLeads,
 			score: r.score,
-			rank: i + 1,
+			rank: r.rank,
 			lastSyncAt: result.serverTimestamp,
 		}));
 		if (entries.length > 0) {
