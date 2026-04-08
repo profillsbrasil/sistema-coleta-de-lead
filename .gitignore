@@ -60,3 +60,4 @@ coverage
 tmp
 temp
 .claude/worktrees/
+.superpowers/
