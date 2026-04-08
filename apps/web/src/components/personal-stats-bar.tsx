@@ -6,6 +6,7 @@ import {
 	AvatarImage,
 } from "@dashboard-leads-profills/ui/components/avatar";
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
+import { EventCountdown } from "@/components/event-countdown";
 
 interface PersonalStatsBarProps {
 	className?: string;
@@ -55,6 +56,9 @@ export function PersonalStatsBar({
 						</span>
 					</p>
 				</div>
+			</div>
+			<div className="flex-1 text-center">
+				<EventCountdown />
 			</div>
 			<div className="flex items-center gap-6">
 				<div className="text-center">
