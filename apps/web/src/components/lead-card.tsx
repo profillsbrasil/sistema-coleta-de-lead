@@ -7,21 +7,7 @@ import { MessageCircle } from "lucide-react";
 import type { Lead } from "@/lib/db/types";
 import { relativeTime } from "@/lib/lead/relative-time";
 import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
-
-const TAG_CONFIG = {
-	quente: {
-		label: "Quente",
-		className: "bg-tag-quente-bg text-tag-quente-text",
-	},
-	morno: {
-		label: "Morno",
-		className: "bg-tag-morno-bg text-tag-morno-text",
-	},
-	frio: {
-		label: "Frio",
-		className: "bg-tag-frio-bg text-tag-frio-text",
-	},
-} as const;
+import InterestIcon from "./interest-icon";
 
 interface LeadCardProps {
 	lead: Lead;
@@ -30,7 +16,6 @@ interface LeadCardProps {
 
 export default function LeadCard({ lead, onClick }: LeadCardProps) {
 	const contact = lead.phone ? formatPhone(lead.phone) : lead.email;
-	const tagConfig = TAG_CONFIG[lead.interestTag];
 
 	function handleKeyDown(e: React.KeyboardEvent) {
 		if (e.key === "Enter" || e.key === " ") {
@@ -71,16 +56,7 @@ export default function LeadCard({ lead, onClick }: LeadCardProps) {
 					) : null}
 				</div>
 				<div className="flex flex-col items-end gap-1">
-					<div className="flex items-center gap-1.5">
-						<span
-							className={cn(
-								"inline-flex items-center rounded-lg px-2 py-0.5 font-medium text-xs",
-								tagConfig.className
-							)}
-						>
-							{tagConfig.label}
-						</span>
-					</div>
+					<InterestIcon size="sm" tag={lead.interestTag} />
 					<span className="text-muted-foreground text-xs">
 						{relativeTime(lead.createdAt)}
 					</span>
