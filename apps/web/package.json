@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3001",
+    "dev": "bun scripts/dev-with-port.ts",
     "build": "next build",
     "postbuild": "bun scripts/generate-sw-manifest.ts",
     "start": "next start",
