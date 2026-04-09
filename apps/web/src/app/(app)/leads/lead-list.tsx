@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import FAB from "@/components/fab";
 import LeadCard from "@/components/lead-card";
 import TagFilter from "@/components/tag-filter";
 import type { Lead } from "@/lib/db/types";
@@ -313,8 +312,6 @@ export default function LeadList({ userId }: LeadListProps) {
 			</div>
 
 			{renderContent()}
-
-			<FAB />
 		</div>
 	);
 }
