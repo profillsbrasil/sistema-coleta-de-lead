@@ -9,6 +9,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import AppSidebar from "@/components/app-sidebar";
 import BottomNav from "@/components/bottom-nav";
+import FAB from "@/components/fab";
 import { GlobalHeader } from "@/components/global-header";
 import { ServiceWorkerRegistrar } from "@/components/service-worker-registrar";
 import { SyncStatusProvider } from "@/components/sync-status-provider";
@@ -99,6 +100,7 @@ function AuthenticatedAppShellContent({
 					<div className="flex-1 p-4 pb-24">{children}</div>
 					<BottomNav />
 				</div>
+				<FAB />
 			</div>
 		</SyncStatusProvider>
 	);
