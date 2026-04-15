@@ -37,7 +37,7 @@ export default function BottomNav() {
 					/>
 					<span
 						className={cn(
-							"text-[10px]",
+							"text-xs",
 							pathname === "/dashboard"
 								? "font-medium text-primary"
 								: "text-muted-foreground"
@@ -73,7 +73,7 @@ export default function BottomNav() {
 					/>
 					<span
 						className={cn(
-							"text-[10px]",
+							"text-xs",
 							pathname === "/leads"
 								? "font-medium text-primary"
 								: "text-muted-foreground"

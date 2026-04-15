@@ -42,13 +42,13 @@ const PODIUM_CONFIG = {
 	1: {
 		avatarSize: "size-12",
 		avatarText: "text-base",
-		border: "border-2 border-primary shadow-[0_0_16px_rgba(62,207,142,0.25)]",
+		border: "border-2 border-primary shadow-glow-primary",
 		barHeight: "h-[88px]",
 		barBg: "bg-gradient-to-b from-primary/10 to-primary/[0.02] border border-primary/20",
 		numberColor: "text-primary",
 		numberSize: "text-3xl",
 		nameColor: "text-foreground font-medium",
-		statsColor: "text-primary text-[11px] font-medium",
+		statsColor: "text-primary text-xs font-medium",
 	},
 	2: {
 		avatarSize: "size-10",
@@ -59,7 +59,7 @@ const PODIUM_CONFIG = {
 		numberColor: "text-secondary-foreground",
 		numberSize: "text-2xl",
 		nameColor: "text-foreground",
-		statsColor: "text-muted-foreground text-[10px]",
+		statsColor: "text-muted-foreground text-xs",
 	},
 	3: {
 		avatarSize: "size-9",
@@ -70,7 +70,7 @@ const PODIUM_CONFIG = {
 		numberColor: "text-muted-foreground",
 		numberSize: "text-xl",
 		nameColor: "text-foreground",
-		statsColor: "text-muted-foreground text-[10px]",
+		statsColor: "text-muted-foreground text-xs",
 	},
 } as const;
 
@@ -95,7 +95,7 @@ function PodiumSlot({
 		>
 			{position === 1 && (
 				<Star
-					className="mb-1 size-5 animate-pulse fill-yellow-500 text-yellow-500"
+					className="mb-1 size-5 animate-pulse fill-gold text-gold"
 				/>
 			)}
 			<Avatar
@@ -109,7 +109,7 @@ function PodiumSlot({
 					{getInitials(entry.name)}
 				</AvatarFallback>
 			</Avatar>
-			<p className={cn("text-[11px]", config.nameColor)}>
+			<p className={cn("text-xs", config.nameColor)}>
 				{getShortName(entry.name)}
 			</p>
 			<p className={config.statsColor}>
@@ -145,7 +145,7 @@ export function Podium({ entries, eventName }: PodiumProps) {
 		<div className="relative bg-linear-to-b from-transparent via-primary/3 to-transparent px-4 pt-6 pb-3">
 			{eventName && (
 				<div className="mb-6 text-center">
-					<p className="font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
+					<p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
 						{eventName}
 					</p>
 					<p className="mt-1 text-lg text-foreground">

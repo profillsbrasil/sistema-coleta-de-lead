@@ -112,9 +112,9 @@ const STATE_CONFIG = {
 	offline: { icon: WifiOff, className: "text-destructive" },
 	authExpired: { icon: Lock, className: "text-destructive" },
 	stalled: { icon: XCircle, className: "text-destructive" },
-	retrying: { icon: RefreshCw, className: "text-amber-500 animate-spin" },
+	retrying: { icon: RefreshCw, className: "text-warning animate-spin" },
 	syncing: { icon: RefreshCw, className: "text-primary animate-spin" },
-	error: { icon: AlertTriangle, className: "text-amber-500" },
+	error: { icon: AlertTriangle, className: "text-warning" },
 	pending: { icon: CloudUpload, className: "text-muted-foreground" },
 	synced: { icon: CloudCheck, className: "text-primary" },
 } as const satisfies Record<SyncState, { icon: LucideIcon; className: string }>;
@@ -143,7 +143,7 @@ export function SyncStatusIcon() {
 					<span className="relative inline-flex items-center justify-center">
 						<Icon aria-hidden="true" className={cn("size-4", iconClassName)} />
 						{badgeText !== null && (
-							<span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-0.5 font-semibold text-[10px] text-white tabular-nums">
+							<span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-0.5 font-semibold text-xs text-warning-foreground tabular-nums">
 								{badgeText}
 							</span>
 						)}
