@@ -19,10 +19,9 @@ export default function TagFilter({ value, onChange }: TagFilterProps) {
 		<ToggleGroup
 			aria-label="Filtrar por interesse"
 			className="items-center gap-2"
-			onValueChange={(val) => onChange((val as FilterTag) || "todos")}
+			onValueChange={(values) => onChange((values[0] as FilterTag) ?? "todos")}
 			spacing={8}
-			type="single"
-			value={value}
+			value={[value]}
 		>
 			<ToggleGroupItem
 				className="min-h-11 rounded-md border border-transparent px-3 font-medium text-xs hover:bg-input/80 data-[state=off]:border-border data-[state=off]:bg-input data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
