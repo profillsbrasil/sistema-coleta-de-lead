@@ -75,7 +75,7 @@ export function AdminLeadCard({
 						render={
 							<Button
 								aria-label="Abrir menu de acoes"
-								className="size-11 shrink-0"
+								className="shrink-0"
 								size="icon-lg"
 								type="button"
 								variant="ghost"
