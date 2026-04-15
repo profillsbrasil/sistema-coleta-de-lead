@@ -4,12 +4,12 @@ import { deriveSyncState, getTooltipText } from "@/components/sync-status-icon";
 import { useSyncStatus } from "@/components/sync-status-provider";
 
 const STATE_DOT_COLORS: Record<string, string> = {
-	synced: "bg-emerald-500",
+	synced: "bg-success",
 	syncing: "bg-primary animate-pulse",
-	pending: "bg-amber-500",
+	pending: "bg-warning",
 	offline: "bg-destructive",
-	error: "bg-amber-500",
-	retrying: "bg-amber-500 animate-pulse",
+	error: "bg-warning",
+	retrying: "bg-warning animate-pulse",
 	authExpired: "bg-destructive",
 	stalled: "bg-destructive",
 };
@@ -22,8 +22,8 @@ export function SyncStatusIndicator() {
 
 	return (
 		<div className="flex items-center justify-center gap-1.5 px-4 py-2.5">
-			<span className={`size-[5px] shrink-0 rounded-full ${dotColor}`} />
-			<span className="text-[10px] text-muted-foreground">{label}</span>
+			<span className={`size-1.5 shrink-0 rounded-full ${dotColor}`} />
+			<span className="text-xs text-muted-foreground">{label}</span>
 		</div>
 	);
 }

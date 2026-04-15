@@ -335,10 +335,11 @@ export default function LeadsPanel() {
 											<DropdownMenu>
 												<DropdownMenuTrigger
 													render={
-														<button
+														<Button
 															aria-label="Abrir menu de acoes"
-															className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg hover:bg-muted"
+															size="icon-lg"
 															type="button"
+															variant="ghost"
 														/>
 													}
 												>
@@ -456,7 +457,7 @@ export default function LeadsPanel() {
 					<AlertDialogFooter>
 						<AlertDialogCancel>Cancelar</AlertDialogCancel>
 						<AlertDialogAction
-							className="bg-destructive text-white hover:bg-destructive/90"
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							disabled={deleteMutation.isPending}
 							onClick={handleDelete}
 						>

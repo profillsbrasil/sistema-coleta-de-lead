@@ -2,7 +2,10 @@
 
 import InterestIcon from "@/components/interest-icon";
 import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
-import { buttonVariants } from "@dashboard-leads-profills/ui/components/button";
+import {
+	Button,
+	buttonVariants,
+} from "@dashboard-leads-profills/ui/components/button";
 import { Card } from "@dashboard-leads-profills/ui/components/card";
 import {
   DropdownMenu,
@@ -39,7 +42,7 @@ export function AdminLeadCard({
 			<div className="flex items-start justify-between gap-2">
 				<div className="flex min-w-0 flex-col gap-1">
 					<div className="flex items-center gap-2">
-						<span className="truncate font-medium text-[13px]">{lead.name}</span>
+						<span className="truncate font-medium text-sm">{lead.name}</span>
 						<InterestIcon
 							size="sm"
 							tag={lead.interestTag as "quente" | "morno" | "frio"}
@@ -70,10 +73,12 @@ export function AdminLeadCard({
 				<DropdownMenu>
 					<DropdownMenuTrigger
 						render={
-							<button
+							<Button
 								aria-label="Abrir menu de acoes"
-								className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg hover:bg-muted"
+								className="shrink-0"
+								size="icon-lg"
 								type="button"
+								variant="ghost"
 							/>
 						}
 					>
