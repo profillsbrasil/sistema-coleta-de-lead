@@ -50,6 +50,16 @@
 	--tag-morno-text: #eab308;
 	--tag-frio-bg: #3b82f61a;
 	--tag-frio-text: #60a5fa;
+	/* Status colors */
+	--warning: #eab308;
+	--warning-foreground: #fefce8;
+	--success: #22c55e;
+	--success-foreground: #f0fdf4;
+	/* Accents semanticos */
+	--gold: #eab308;
+	--rank-accent: #818cf8;
+	/* Effects */
+	--glow-primary: 0 0 16px rgba(62, 207, 142, 0.25);
 }
 
 .dark {
@@ -95,6 +105,16 @@
 	--tag-morno-text: #eab308;
 	--tag-frio-bg: #3b82f61a;
 	--tag-frio-text: #60a5fa;
+	/* Status colors */
+	--warning: #fbbf24;
+	--warning-foreground: #0f0f0f;
+	--success: #34d399;
+	--success-foreground: #0f0f0f;
+	/* Accents semanticos */
+	--gold: #facc15;
+	--rank-accent: #a5b4fc;
+	/* Effects */
+	--glow-primary: 0 0 16px rgba(62, 207, 142, 0.3);
 }
 
 @theme inline {
@@ -112,6 +132,16 @@
 	--color-tag-morno-text: var(--tag-morno-text);
 	--color-tag-frio-bg: var(--tag-frio-bg);
 	--color-tag-frio-text: var(--tag-frio-text);
+	/* Status colors */
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	/* Accents */
+	--color-gold: var(--gold);
+	--color-rank-accent: var(--rank-accent);
+	/* Effects */
+	--shadow-glow-primary: var(--glow-primary);
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
