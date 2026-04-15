@@ -48,7 +48,7 @@ const PODIUM_CONFIG = {
 		numberColor: "text-primary",
 		numberSize: "text-3xl",
 		nameColor: "text-foreground font-medium",
-		statsColor: "text-primary text-[11px] font-medium",
+		statsColor: "text-primary text-xs font-medium",
 	},
 	2: {
 		avatarSize: "size-10",
@@ -59,7 +59,7 @@ const PODIUM_CONFIG = {
 		numberColor: "text-secondary-foreground",
 		numberSize: "text-2xl",
 		nameColor: "text-foreground",
-		statsColor: "text-muted-foreground text-[10px]",
+		statsColor: "text-muted-foreground text-xs",
 	},
 	3: {
 		avatarSize: "size-9",
@@ -70,7 +70,7 @@ const PODIUM_CONFIG = {
 		numberColor: "text-muted-foreground",
 		numberSize: "text-xl",
 		nameColor: "text-foreground",
-		statsColor: "text-muted-foreground text-[10px]",
+		statsColor: "text-muted-foreground text-xs",
 	},
 } as const;
 
@@ -109,7 +109,7 @@ function PodiumSlot({
 					{getInitials(entry.name)}
 				</AvatarFallback>
 			</Avatar>
-			<p className={cn("text-[11px]", config.nameColor)}>
+			<p className={cn("text-xs", config.nameColor)}>
 				{getShortName(entry.name)}
 			</p>
 			<p className={config.statsColor}>
@@ -145,7 +145,7 @@ export function Podium({ entries, eventName }: PodiumProps) {
 		<div className="relative bg-gradient-to-b from-transparent via-primary/[0.03] to-transparent px-4 py-6">
 			{eventName && (
 				<div className="mb-6 text-center">
-					<p className="font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
+					<p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
 						{eventName}
 					</p>
 					<p className="mt-1 text-lg text-foreground">

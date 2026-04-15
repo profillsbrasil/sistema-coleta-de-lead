@@ -143,7 +143,7 @@ export function SyncStatusIcon() {
 					<span className="relative inline-flex items-center justify-center">
 						<Icon aria-hidden="true" className={cn("size-4", iconClassName)} />
 						{badgeText !== null && (
-							<span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-0.5 font-semibold text-[10px] text-warning-foreground tabular-nums">
+							<span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-warning px-0.5 font-semibold text-xs text-warning-foreground tabular-nums">
 								{badgeText}
 							</span>
 						)}

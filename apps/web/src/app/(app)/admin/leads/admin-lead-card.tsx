@@ -42,7 +42,7 @@ export function AdminLeadCard({
 			<div className="flex items-start justify-between gap-2">
 				<div className="flex min-w-0 flex-col gap-1">
 					<div className="flex items-center gap-2">
-						<span className="truncate font-medium text-[13px]">{lead.name}</span>
+						<span className="truncate font-medium text-sm">{lead.name}</span>
 						<InterestIcon
 							size="sm"
 							tag={lead.interestTag as "quente" | "morno" | "frio"}

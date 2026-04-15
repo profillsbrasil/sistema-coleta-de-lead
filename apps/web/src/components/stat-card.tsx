@@ -17,7 +17,7 @@ export function StatCard({ label, value, className }: StatCardProps) {
 		<Card className={cn(className)}>
 			<CardContent className="flex flex-col gap-1">
 				<span className="text-muted-foreground text-sm">{label}</span>
-				<span className="font-semibold text-[28px] text-foreground leading-[1.2]">
+				<span className="font-semibold text-3xl text-foreground leading-[1.2]">
 					{value}
 				</span>
 			</CardContent>

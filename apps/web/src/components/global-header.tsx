@@ -84,16 +84,16 @@ function HeaderStats({
 	return (
 		<div className="flex items-baseline gap-4">
 			<div className="flex items-baseline gap-1">
-				<span className="font-semibold text-[15px] text-foreground">
+				<span className="font-semibold text-base text-foreground">
 					{total}
 				</span>
-				<span className="text-[10px] text-muted-foreground">leads</span>
+				<span className="text-xs text-muted-foreground">leads</span>
 			</div>
 			<div className="flex items-baseline gap-1">
-				<span className="font-semibold text-[15px] text-success">
+				<span className="font-semibold text-base text-success">
 					{secondary}
 				</span>
-				<span className="text-[10px] text-muted-foreground">
+				<span className="text-xs text-muted-foreground">
 					{secondaryLabel}
 				</span>
 			</div>
@@ -135,12 +135,12 @@ function HeaderIdentity({
 				{showName && (
 					<div className="text-right">
 						<p className="font-medium text-foreground text-sm">{userName}</p>
-						<p className="text-[10px] text-rank-accent">#{rank ?? "\u2014"}</p>
+						<p className="text-xs text-rank-accent">#{rank ?? "\u2014"}</p>
 					</div>
 				)}
 				<Avatar className={showName ? "size-[30px]" : "size-7"}>
 					<AvatarImage alt={userName} src={gravatarUrl} />
-					<AvatarFallback className="text-[11px]">
+					<AvatarFallback className="text-xs">
 						{getInitials(userName)}
 					</AvatarFallback>
 				</Avatar>
@@ -201,7 +201,7 @@ export function GlobalHeader() {
 						userId={snapshot.userId}
 					/>
 					<div className="flex items-center gap-1.5">
-						<span className="size-[5px] shrink-0 animate-pulse rounded-full bg-warning" />
+						<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-warning" />
 						<EventCountdown />
 					</div>
 					<HeaderIdentity
