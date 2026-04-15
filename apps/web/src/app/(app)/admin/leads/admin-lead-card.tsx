@@ -1,6 +1,9 @@
 "use client";
 
-import { buttonVariants } from "@dashboard-leads-profills/ui/components/button";
+import {
+	Button,
+	buttonVariants,
+} from "@dashboard-leads-profills/ui/components/button";
 import { Card } from "@dashboard-leads-profills/ui/components/card";
 import {
 	DropdownMenu,
@@ -12,8 +15,8 @@ import {
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
 import { MessageCircle, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
 import InterestIcon from "@/components/interest-icon";
+import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
 
 interface AdminLeadCardProps {
 	lead: {
@@ -70,10 +73,12 @@ export function AdminLeadCard({
 				<DropdownMenu>
 					<DropdownMenuTrigger
 						render={
-							<button
+							<Button
 								aria-label="Abrir menu de acoes"
-								className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg hover:bg-muted"
+								className="size-11 shrink-0"
+								size="icon-lg"
 								type="button"
+								variant="ghost"
 							/>
 						}
 					>
