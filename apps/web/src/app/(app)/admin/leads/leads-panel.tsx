@@ -335,10 +335,12 @@ export default function LeadsPanel() {
 											<DropdownMenu>
 												<DropdownMenuTrigger
 													render={
-														<button
+														<Button
 															aria-label="Abrir menu de acoes"
-															className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg hover:bg-muted"
+															className="size-11"
+															size="icon-lg"
 															type="button"
+															variant="ghost"
 														/>
 													}
 												>

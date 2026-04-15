@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@dashboard-leads-profills/ui/components/badge";
+import { Button } from "@dashboard-leads-profills/ui/components/button";
 import { Card } from "@dashboard-leads-profills/ui/components/card";
 import {
 	DropdownMenu,
@@ -115,10 +116,12 @@ export function AdminUserCard({
 				<DropdownMenu>
 					<DropdownMenuTrigger
 						render={
-							<button
+							<Button
 								aria-label="Abrir menu de acoes"
-								className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg hover:bg-muted"
+								className="size-11 shrink-0"
+								size="icon-lg"
 								type="button"
+								variant="ghost"
 							/>
 						}
 					>

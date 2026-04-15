@@ -1,7 +1,11 @@
 "use client";
 
+import {
+	ToggleGroup,
+	ToggleGroupItem,
+} from "@dashboard-leads-profills/ui/components/toggle-group";
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
-import InterestIcon, { type InterestTag, getTagConfig } from "./interest-icon";
+import InterestIcon, { getTagConfig, type InterestTag } from "./interest-icon";
 
 interface TagSelectorProps {
 	disabled?: boolean;
@@ -17,40 +21,41 @@ export default function TagSelector({
 	disabled = false,
 }: TagSelectorProps) {
 	return (
-		<div aria-label="Tag de interesse" className="flex gap-5" role="radiogroup">
+		<ToggleGroup
+			aria-label="Tag de interesse"
+			className="gap-5"
+			disabled={disabled}
+			onValueChange={(val) => {
+				if (val) {
+					onChange(val as InterestTag);
+				}
+			}}
+			spacing={20}
+			type="single"
+			value={value}
+		>
 			{TAGS.map((tag) => {
 				const config = getTagConfig(tag);
 				const isSelected = value === tag;
 
 				return (
-					// biome-ignore lint/a11y/useSemanticElements: custom toggle buttons per UI-SPEC require role="radio" for radiogroup pattern
-					<button
-						aria-checked={isSelected}
-						className={cn(
-							"flex flex-col items-center gap-1.5 outline-none transition-all focus-visible:ring-3 focus-visible:ring-ring/50 rounded-xl p-1 disabled:pointer-events-none disabled:opacity-50",
-						)}
-						disabled={disabled}
+					<ToggleGroupItem
+						className="flex h-auto min-w-0 flex-col items-center gap-1.5 rounded-xl p-1 hover:bg-transparent data-[state=on]:bg-transparent"
 						key={tag}
-						onClick={() => onChange(tag)}
-						role="radio"
-						type="button"
+						value={tag}
 					>
-						<InterestIcon
-							selected={isSelected}
-							size="lg"
-							tag={tag}
-						/>
+						<InterestIcon selected={isSelected} size="lg" tag={tag} />
 						<span
 							className={cn(
 								"font-medium text-xs transition-colors",
-								isSelected ? config.textClass : "text-muted-foreground",
+								isSelected ? config.textClass : "text-muted-foreground"
 							)}
 						>
 							{config.label}
 						</span>
-					</button>
+					</ToggleGroupItem>
 				);
 			})}
-		</div>
+		</ToggleGroup>
 	);
 }

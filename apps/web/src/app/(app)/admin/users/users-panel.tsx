@@ -11,6 +11,7 @@ import {
 	AlertDialogTitle,
 } from "@dashboard-leads-profills/ui/components/alert-dialog";
 import { Badge } from "@dashboard-leads-profills/ui/components/badge";
+import { Button } from "@dashboard-leads-profills/ui/components/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -432,10 +433,12 @@ function UserRow({
 				<DropdownMenu>
 					<DropdownMenuTrigger
 						render={
-							<button
+							<Button
 								aria-label="Abrir menu de acoes"
-								className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg hover:bg-muted"
+								className="size-11"
+								size="icon-lg"
 								type="button"
+								variant="ghost"
 							/>
 						}
 					>
