@@ -4,12 +4,12 @@ import { deriveSyncState, getTooltipText } from "@/components/sync-status-icon";
 import { useSyncStatus } from "@/components/sync-status-provider";
 
 const STATE_DOT_COLORS: Record<string, string> = {
-	synced: "bg-emerald-500",
+	synced: "bg-success",
 	syncing: "bg-primary animate-pulse",
-	pending: "bg-amber-500",
+	pending: "bg-warning",
 	offline: "bg-destructive",
-	error: "bg-amber-500",
-	retrying: "bg-amber-500 animate-pulse",
+	error: "bg-warning",
+	retrying: "bg-warning animate-pulse",
 	authExpired: "bg-destructive",
 	stalled: "bg-destructive",
 };

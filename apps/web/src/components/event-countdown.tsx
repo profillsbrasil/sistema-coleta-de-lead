@@ -61,7 +61,7 @@ export function EventCountdown() {
 	}
 
 	return (
-		<span className="font-medium font-mono text-[13px] text-amber-500">
+		<span className="font-medium font-mono text-[13px] text-warning">
 			{formatTimeLeft(timeLeft)}
 		</span>
 	);

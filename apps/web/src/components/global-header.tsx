@@ -90,7 +90,7 @@ function HeaderStats({
 				<span className="text-[10px] text-muted-foreground">leads</span>
 			</div>
 			<div className="flex items-baseline gap-1">
-				<span className="font-semibold text-[15px] text-emerald-400">
+				<span className="font-semibold text-[15px] text-success">
 					{secondary}
 				</span>
 				<span className="text-[10px] text-muted-foreground">
@@ -135,7 +135,7 @@ function HeaderIdentity({
 				{showName && (
 					<div className="text-right">
 						<p className="font-medium text-foreground text-sm">{userName}</p>
-						<p className="text-[10px] text-indigo-400">#{rank ?? "\u2014"}</p>
+						<p className="text-[10px] text-rank-accent">#{rank ?? "\u2014"}</p>
 					</div>
 				)}
 				<Avatar className={showName ? "size-[30px]" : "size-7"}>
@@ -201,7 +201,7 @@ export function GlobalHeader() {
 						userId={snapshot.userId}
 					/>
 					<div className="flex items-center gap-1.5">
-						<span className="size-[5px] shrink-0 animate-pulse rounded-full bg-amber-500" />
+						<span className="size-[5px] shrink-0 animate-pulse rounded-full bg-warning" />
 						<EventCountdown />
 					</div>
 					<HeaderIdentity
@@ -217,7 +217,7 @@ export function GlobalHeader() {
 			<header className="flex h-11 shrink-0 items-center justify-between border-border border-b px-3.5 md:hidden">
 				<HeaderStats isAdminContext={isAdminContext} userId={snapshot.userId} />
 				<div className="flex items-center gap-1">
-					<span className="size-1 shrink-0 rounded-full bg-amber-500" />
+					<span className="size-1 shrink-0 rounded-full bg-warning" />
 					<EventCountdown />
 				</div>
 				<HeaderIdentity

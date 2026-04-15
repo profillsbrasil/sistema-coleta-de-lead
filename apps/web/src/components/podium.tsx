@@ -42,7 +42,7 @@ const PODIUM_CONFIG = {
 	1: {
 		avatarSize: "size-12",
 		avatarText: "text-base",
-		border: "border-2 border-primary shadow-[0_0_16px_rgba(62,207,142,0.25)]",
+		border: "border-2 border-primary shadow-glow-primary",
 		barHeight: "h-[88px]",
 		barBg: "bg-gradient-to-b from-primary/10 to-primary/[0.02] border border-primary/20",
 		numberColor: "text-primary",
@@ -95,7 +95,7 @@ function PodiumSlot({
 		>
 			{position === 1 && (
 				<Star
-					className="mb-1 size-5 animate-pulse fill-yellow-500 text-yellow-500"
+					className="mb-1 size-5 animate-pulse fill-gold text-gold"
 				/>
 			)}
 			<Avatar
