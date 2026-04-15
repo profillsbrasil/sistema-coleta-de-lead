@@ -435,7 +435,6 @@ function UserRow({
 						render={
 							<Button
 								aria-label="Abrir menu de acoes"
-								className="size-11"
 								size="icon-lg"
 								type="button"
 								variant="ghost"
