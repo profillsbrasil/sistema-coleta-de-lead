@@ -12,15 +12,15 @@
 
 ## File Map
 
-| Action | Path | Responsibility |
-|--------|------|----------------|
-| Create | `apps/web/src/components/interest-icon.tsx` | Componente centralizado: tag → ícone redondo com cor e tamanho |
-| Modify | `apps/web/src/components/tag-selector.tsx` | Seletor circular com `InterestIcon` size="lg" |
-| Modify | `apps/web/src/components/tag-filter.tsx` | "Todos" + 3 `InterestIcon` size="md" |
-| Modify | `apps/web/src/components/lead-card.tsx` | Badge texto → `InterestIcon` size="sm" |
-| Modify | `apps/web/src/app/(app)/admin/leads/admin-lead-card.tsx` | Badge texto → `InterestIcon` size="sm" |
-| Modify | `apps/web/src/app/(app)/leads/lead-list.tsx` | `flex-col` → `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3` |
-| Modify | `apps/web/src/app/(app)/admin/leads/leads-panel.tsx` | Mobile cards: `flex-col` → grid; Table: `Badge` → `InterestIcon` |
+| Action | Path                                                     | Responsibility                                                   |
+| ------ | -------------------------------------------------------- | ---------------------------------------------------------------- |
+| Create | `apps/web/src/components/interest-icon.tsx`              | Componente centralizado: tag → ícone redondo com cor e tamanho   |
+| Modify | `apps/web/src/components/tag-selector.tsx`               | Seletor circular com `InterestIcon` size="lg"                    |
+| Modify | `apps/web/src/components/tag-filter.tsx`                 | "Todos" + 3 `InterestIcon` size="md"                             |
+| Modify | `apps/web/src/components/lead-card.tsx`                  | Badge texto → `InterestIcon` size="sm"                           |
+| Modify | `apps/web/src/app/(app)/admin/leads/admin-lead-card.tsx` | Badge texto → `InterestIcon` size="sm"                           |
+| Modify | `apps/web/src/app/(app)/leads/lead-list.tsx`             | `flex-col` → `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`    |
+| Modify | `apps/web/src/app/(app)/admin/leads/leads-panel.tsx`     | Mobile cards: `flex-col` → grid; Table: `Badge` → `InterestIcon` |
 
 ---
 

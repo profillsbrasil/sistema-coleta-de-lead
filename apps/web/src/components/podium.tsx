@@ -1,8 +1,8 @@
 "use client";
 
 import {
-	Avatar,
-	AvatarFallback,
+  Avatar,
+  AvatarFallback,
 } from "@dashboard-leads-profills/ui/components/avatar";
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
 import { Star } from "lucide-react";
@@ -142,7 +142,7 @@ export function Podium({ entries, eventName }: PodiumProps) {
 	}
 
 	return (
-		<div className="relative bg-gradient-to-b from-transparent via-primary/[0.03] to-transparent px-4 py-6">
+		<div className="relative bg-linear-to-b from-transparent via-primary/3 to-transparent px-4 pt-6 pb-3">
 			{eventName && (
 				<div className="mb-6 text-center">
 					<p className="font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
