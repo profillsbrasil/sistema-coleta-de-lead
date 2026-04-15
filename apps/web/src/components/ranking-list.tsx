@@ -72,13 +72,13 @@ export function RankingList({
 									{entry.rank}
 								</span>
 								<Avatar className="size-6 bg-card">
-									<AvatarFallback className="text-[9px]">
+									<AvatarFallback className="text-xs">
 										{getInitials(entry.name)}
 									</AvatarFallback>
 								</Avatar>
 								<span
 									className={cn(
-										"flex-1 text-[13px]",
+										"flex-1 text-sm",
 										isCurrentUser ? "text-foreground" : "text-secondary-foreground"
 									)}
 								>
@@ -86,7 +86,7 @@ export function RankingList({
 								</span>
 								<span
 									className={cn(
-										"text-[13px]",
+										"text-sm",
 										isCurrentUser ? "font-medium text-foreground" : "text-muted-foreground"
 									)}
 								>
