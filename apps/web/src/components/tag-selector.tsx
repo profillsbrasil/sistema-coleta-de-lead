@@ -25,14 +25,14 @@ export default function TagSelector({
 			aria-label="Tag de interesse"
 			className="gap-5"
 			disabled={disabled}
-			onValueChange={(val) => {
-				if (val) {
-					onChange(val as InterestTag);
+			onValueChange={(values) => {
+				const next = values[0] as InterestTag | undefined;
+				if (next) {
+					onChange(next);
 				}
 			}}
 			spacing={20}
-			type="single"
-			value={value}
+			value={[value]}
 		>
 			{TAGS.map((tag) => {
 				const config = getTagConfig(tag);
