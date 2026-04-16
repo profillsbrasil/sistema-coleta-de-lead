@@ -1,30 +1,30 @@
 "use client";
 
+import { SyncStatusIndicator } from "@/components/sync-status-indicator";
 import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
 } from "@dashboard-leads-profills/ui/components/collapsible";
 import {
-	Sidebar,
-	SidebarContent,
-	SidebarFooter,
-	SidebarGroup,
-	SidebarGroupLabel,
-	SidebarMenu,
-	SidebarMenuButton,
-	SidebarMenuItem,
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@dashboard-leads-profills/ui/components/sidebar";
 import {
-	BarChart3,
-	ClipboardList,
-	PlusCircle,
-	Trophy,
-	Users,
+  BarChart3,
+  ClipboardList,
+  PlusCircle,
+  Trophy,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SyncStatusIndicator } from "@/components/sync-status-indicator";
 
 const VENDEDOR_ITEMS = [
 	{ href: "/dashboard", label: "Ranking", icon: Trophy },
