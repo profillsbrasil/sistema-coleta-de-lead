@@ -1,11 +1,16 @@
 "use client";
 
+import type { Lead } from "@/lib/db/types";
+import { saveLead } from "@/lib/lead/save-lead";
+import { updateLead } from "@/lib/lead/update-lead";
+import { type LeadFormData, leadFormSchema } from "@/lib/lead/validation";
+import { formatPhone, maskPhoneInput, unmaskPhone } from "@/lib/masks/phone";
 import { Button } from "@dashboard-leads-profills/ui/components/button";
 import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
 } from "@dashboard-leads-profills/ui/components/card";
 import { Input } from "@dashboard-leads-profills/ui/components/input";
 import { Label } from "@dashboard-leads-profills/ui/components/label";
@@ -14,11 +19,6 @@ import { ArrowLeft, Loader2, QrCode } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import type { Lead } from "@/lib/db/types";
-import { saveLead } from "@/lib/lead/save-lead";
-import { updateLead } from "@/lib/lead/update-lead";
-import { type LeadFormData, leadFormSchema } from "@/lib/lead/validation";
-import { formatPhone, maskPhoneInput, unmaskPhone } from "@/lib/masks/phone";
 
 import PhotoCapture from "./photo-capture";
 import QRScanner from "./qr-scanner";
@@ -179,7 +179,7 @@ export default function LeadForm({
 						className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4"
 						onSubmit={handleSubmit}
 					>
-						<div className="flex flex-col gap-2">
+						<div className="flex flex-col gap-2 justify-center">
 							<Label htmlFor="lead-name">Nome *</Label>
 							<Input
 								aria-describedby={errors.name ? "error-name" : undefined}
@@ -210,6 +210,7 @@ export default function LeadForm({
 								disabled={isSubmitting}
 								onChange={setInterestTag}
 								value={interestTag}
+
 							/>
 						</div>
 

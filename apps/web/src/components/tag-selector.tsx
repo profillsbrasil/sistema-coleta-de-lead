@@ -1,8 +1,8 @@
 "use client";
 
 import {
-	ToggleGroup,
-	ToggleGroupItem,
+  ToggleGroup,
+  ToggleGroupItem,
 } from "@dashboard-leads-profills/ui/components/toggle-group";
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
 import InterestIcon, { getTagConfig, type InterestTag } from "./interest-icon";
