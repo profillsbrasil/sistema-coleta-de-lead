@@ -1,9 +1,9 @@
 "use client";
 
+import { compressImage } from "@/lib/lead/compression";
 import { Button } from "@dashboard-leads-profills/ui/components/button";
 import { Camera, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { compressImage } from "@/lib/lead/compression";
 
 interface PhotoCaptureProps {
 	onCapture: (blob: Blob) => void;
@@ -77,6 +77,7 @@ export default function PhotoCapture({
 				size="sm"
 				type="button"
 				variant="outline"
+        className="w-full h-8"
 			>
 				{isCompressing ? (
 					<Loader2 className="mr-2 size-4 animate-spin" />
