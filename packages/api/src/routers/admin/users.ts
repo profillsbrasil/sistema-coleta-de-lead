@@ -101,7 +101,7 @@ export const adminUsersRouter = router({
 	deactivate: adminProcedure
 		.input(z.object({ userId: z.string().uuid() }))
 		.mutation(async ({ ctx, input }) => {
-			const currentUserId = ctx.user.sub as string;
+			const currentUserId = ctx.user.id;
 			if (currentUserId === input.userId) {
 				throw new TRPCError({
 					code: "FORBIDDEN",
