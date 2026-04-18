@@ -1,9 +1,15 @@
-import type { Session, User } from "@supabase/supabase-js";
 import { getGravatarUrl } from "@/lib/gravatar";
 
 export const AUTH_SNAPSHOT_STORAGE_KEY = "app-auth-snapshot";
 
 export type AppUserRole = "admin" | "vendedor";
+
+export type AppUser = {
+	id: string;
+	email: string;
+	name: string | null | undefined;
+	role?: string | null;
+};
 
 export interface AppAuthSnapshot {
 	gravatarUrl: string;
@@ -53,7 +59,7 @@ export function readAuthSnapshot(): AppAuthSnapshot | null {
 	}
 
 	return parseAuthSnapshot(
-		window.localStorage.getItem(AUTH_SNAPSHOT_STORAGE_KEY)
+		window.localStorage.getItem(AUTH_SNAPSHOT_STORAGE_KEY),
 	);
 }
 
@@ -64,7 +70,7 @@ export function writeAuthSnapshot(snapshot: AppAuthSnapshot): void {
 
 	window.localStorage.setItem(
 		AUTH_SNAPSHOT_STORAGE_KEY,
-		JSON.stringify(snapshot)
+		JSON.stringify(snapshot),
 	);
 }
 
@@ -76,10 +82,9 @@ export function clearAuthSnapshot(): void {
 	window.localStorage.removeItem(AUTH_SNAPSHOT_STORAGE_KEY);
 }
 
-function getUserName(user: Pick<User, "email" | "user_metadata">): string {
-	const fullName = user.user_metadata?.full_name;
-	if (typeof fullName === "string" && fullName.trim() !== "") {
-		return fullName;
+function getUserName(user: Pick<AppUser, "email" | "name">): string {
+	if (typeof user.name === "string" && user.name.trim() !== "") {
+		return user.name;
 	}
 
 	if (typeof user.email === "string" && user.email.includes("@")) {
@@ -90,8 +95,8 @@ function getUserName(user: Pick<User, "email" | "user_metadata">): string {
 }
 
 export async function createAuthSnapshot(
-	user: Pick<User, "email" | "id" | "user_metadata">,
-	userRole: AppUserRole
+	user: AppUser,
+	userRole: AppUserRole,
 ): Promise<AppAuthSnapshot> {
 	const userEmail = user.email ?? "";
 
@@ -105,18 +110,13 @@ export async function createAuthSnapshot(
 	};
 }
 
-export function getSessionUserRole(
-	claims: Record<string, unknown> | null | undefined,
-	fallbackRole: AppUserRole = "vendedor"
+export function resolveUserRole(
+	role: string | null | undefined,
+	fallbackRole: AppUserRole = "vendedor",
 ): AppUserRole {
-	const claimRole = claims?.user_role;
-	return isUserRole(claimRole) ? claimRole : fallbackRole;
+	return isUserRole(role) ? role : fallbackRole;
 }
 
 export function hasStoredAuthSnapshot(): boolean {
 	return readAuthSnapshot() !== null;
-}
-
-export function getSessionUser(session: Session | null): User | null {
-	return session?.user ?? null;
 }
