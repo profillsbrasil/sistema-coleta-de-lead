@@ -36,7 +36,8 @@
     "db:migrate": "turbo -F @dashboard-leads-profills/db db:migrate",
     "check": "ultracite check",
     "test": "turbo test",
-    "fix": "ultracite fix"
+    "fix": "ultracite fix",
+    "seed:admin": "cd apps/web && bun run ../../scripts/seed-admin.ts"
   },
   "dependencies": {
     "@dashboard-leads-profills/env": "workspace:*",
