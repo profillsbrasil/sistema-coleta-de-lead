@@ -30,7 +30,8 @@ export function ServiceWorkerRegistrar() {
 		}
 
 		// Em dev NAO registramos o SW. Turbopack regenera chunks com hash a cada HMR;
-		// um SW com CacheFirst causa "module factory is not available" em @supabase/ssr.
+		// um SW com CacheFirst causa "module factory is not available" em módulos com
+		// chunks versionados (ex: better-auth, supabase-js).
 		// Tambem fazemos cleanup ativo de SW/caches antigos pra usuarios que ja tinham
 		// o SW dev instalado antes deste fix — sem precisar de hard reload manual.
 		if (process.env.NODE_ENV !== "production") {

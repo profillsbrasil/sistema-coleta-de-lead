@@ -64,7 +64,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { createClient } from "@/lib/supabase/client";
+import { authClient } from "@dashboard-leads-profills/auth/client";
 import { trpc } from "@/utils/trpc";
 import { AdminUserCard } from "./admin-user-card";
 
@@ -93,12 +93,11 @@ export default function UsersPanel() {
 
 	const queryClient = useQueryClient();
 
+	const { data: sessionData } = authClient.useSession();
+
 	useEffect(() => {
-		const supabase = createClient();
-		supabase.auth
-			.getUser()
-			.then(({ data }) => setCurrentUserId(data.user?.id ?? null));
-	}, []);
+		setCurrentUserId(sessionData?.user?.id ?? null);
+	}, [sessionData]);
 
 	useEffect(() => {
 		if (debounceRef.current) {

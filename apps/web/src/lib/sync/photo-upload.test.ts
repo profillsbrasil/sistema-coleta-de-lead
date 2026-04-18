@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mockUpload = vi.fn();
 const mockGetPublicUrl = vi.fn();
 
-vi.mock("@/lib/supabase/client", () => ({
-	createClient: () => ({
+vi.mock("@/lib/storage/client", () => ({
+	createStorageClient: () => ({
 		storage: {
 			from: () => ({
 				upload: mockUpload,
