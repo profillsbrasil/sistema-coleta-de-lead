@@ -59,10 +59,9 @@ export function AppAuthProvider({ children }: { children: React.ReactNode }) {
 			if (isPending) return;
 
 			if (!session?.user) {
-				if (active && snapshot) {
-					clearAuthSnapshot();
-					setSnapshot(null);
-				}
+				if (!active) return;
+				clearAuthSnapshot();
+				setSnapshot(null);
 				return;
 			}
 
@@ -76,8 +75,19 @@ export function AppAuthProvider({ children }: { children: React.ReactNode }) {
 			const next = await createAuthSnapshot(user, role);
 
 			if (!active) return;
-			writeAuthSnapshot(next);
-			setSnapshot(next);
+			setSnapshot((prev) => {
+				if (
+					prev &&
+					prev.userId === next.userId &&
+					prev.userRole === next.userRole &&
+					prev.userName === next.userName &&
+					prev.userEmail === next.userEmail
+				) {
+					return prev;
+				}
+				writeAuthSnapshot(next);
+				return next;
+			});
 		}
 
 		sync();
@@ -85,7 +95,7 @@ export function AppAuthProvider({ children }: { children: React.ReactNode }) {
 		return () => {
 			active = false;
 		};
-	}, [session, isPending, snapshot]);
+	}, [session, isPending]);
 
 	return (
 		<AppAuthContext
