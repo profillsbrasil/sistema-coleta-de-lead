@@ -1,12 +1,21 @@
+import { auth } from "@dashboard-leads-profills/auth";
 import { db } from "@dashboard-leads-profills/db";
-import { userRoles } from "@dashboard-leads-profills/db/schema/auth";
 import { leads } from "@dashboard-leads-profills/db/schema/leads";
 import { TRPCError } from "@trpc/server";
-import { and, count, eq, inArray, isNull } from "drizzle-orm";
+import { and, count, inArray, isNull } from "drizzle-orm";
 import z from "zod";
 
 import { adminProcedure, router } from "../../index";
-import { supabaseAdmin } from "../../lib/supabase-admin";
+
+type AuthUser = {
+	id: string;
+	email: string;
+	name: string;
+	role: string | null;
+	banned?: boolean | null;
+	banReason?: string | null;
+	banExpires?: Date | string | null;
+};
 
 export const adminUsersRouter = router({
 	list: adminProcedure
@@ -15,57 +24,41 @@ export const adminUsersRouter = router({
 				search: z.string().optional(),
 				page: z.number().min(1).default(1),
 				perPage: z.number().min(1).max(100).default(20),
-			})
+			}),
 		)
-		.query(async ({ input }) => {
-			const { data, error } = await supabaseAdmin.auth.admin.listUsers({
-				page: input.page,
-				perPage: input.perPage,
-			});
+		.query(async ({ ctx, input }) => {
+			const result = (await auth.api.listUsers({
+				query: {
+					limit: input.perPage,
+					offset: (input.page - 1) * input.perPage,
+				},
+				headers: ctx.headers,
+			})) as { users: AuthUser[]; total: number };
 
-			if (error) {
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to list users",
-				});
-			}
+			const userIds = result.users.map((u) => u.id);
 
-			const userIds = data.users.map((u) => u.id);
-
-			const [rolesResult, leadsResult] = await Promise.all([
+			const leadsResult =
 				userIds.length > 0
-					? db
-							.select()
-							.from(userRoles)
-							.where(inArray(userRoles.userId, userIds))
-					: Promise.resolve([]),
-				userIds.length > 0
-					? db
-							.select({
-								userId: leads.userId,
-								leadCount: count(leads.id),
-							})
+					? await db
+							.select({ userId: leads.userId, leadCount: count(leads.id) })
 							.from(leads)
 							.where(
-								and(inArray(leads.userId, userIds), isNull(leads.deletedAt))
+								and(inArray(leads.userId, userIds), isNull(leads.deletedAt)),
 							)
 							.groupBy(leads.userId)
-					: Promise.resolve([]),
-			]);
+					: [];
 
-			const rolesByUserId = new Map(rolesResult.map((r) => [r.userId, r.role]));
 			const leadCountByUserId = new Map(
-				leadsResult.map((r) => [r.userId, r.leadCount])
+				leadsResult.map((r) => [r.userId, r.leadCount]),
 			);
 
-			let users = data.users.map((u) => ({
+			let users = result.users.map((u) => ({
 				id: u.id,
-				email: u.email ?? "",
-				name: (u.user_metadata?.name as string) ?? "",
-				role: rolesByUserId.get(u.id) ?? "vendedor",
+				email: u.email,
+				name: u.name ?? "",
+				role: (u.role as "admin" | "vendedor" | null) ?? "vendedor",
 				leadCount: leadCountByUserId.get(u.id) ?? 0,
-				isBanned:
-					u.banned_until != null && u.banned_until > new Date().toISOString(),
+				isBanned: !!u.banned,
 			}));
 
 			if (input.search) {
@@ -73,11 +66,11 @@ export const adminUsersRouter = router({
 				users = users.filter(
 					(u) =>
 						u.name.toLowerCase().includes(term) ||
-						u.email.toLowerCase().includes(term)
+						u.email.toLowerCase().includes(term),
 				);
 			}
 
-			return { users, total: data.total ?? data.users.length };
+			return { users, total: result.total };
 		}),
 
 	updateRole: adminProcedure
@@ -85,67 +78,39 @@ export const adminUsersRouter = router({
 			z.object({
 				userId: z.string().uuid(),
 				role: z.enum(["admin", "vendedor"]),
-			})
+			}),
 		)
-		.mutation(async ({ input }) => {
-			await db.transaction(async (tx) => {
-				await tx.delete(userRoles).where(eq(userRoles.userId, input.userId));
-				await tx
-					.insert(userRoles)
-					.values({ userId: input.userId, role: input.role });
+		.mutation(async ({ ctx, input }) => {
+			await auth.api.setRole({
+				body: { userId: input.userId, role: input.role as "admin" },
+				headers: ctx.headers,
 			});
-
 			return { success: true };
 		}),
 
 	deactivate: adminProcedure
 		.input(z.object({ userId: z.string().uuid() }))
 		.mutation(async ({ ctx, input }) => {
-			const currentUserId = ctx.user.sub as string;
-			if (currentUserId === input.userId) {
+			if (ctx.user.id === input.userId) {
 				throw new TRPCError({
 					code: "FORBIDDEN",
 					message: "Cannot deactivate your own account",
 				});
 			}
-
-			const { error } = await supabaseAdmin.auth.admin.updateUserById(
-				input.userId,
-				{ ban_duration: "876000h" }
-			);
-
-			if (error) {
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to deactivate user",
-				});
-			}
-
-			await db.transaction(async (tx) => {
-				await tx.delete(userRoles).where(eq(userRoles.userId, input.userId));
-				await tx
-					.insert(userRoles)
-					.values({ userId: input.userId, role: "vendedor" });
+			await auth.api.banUser({
+				body: { userId: input.userId, banReason: "desativado por admin" },
+				headers: ctx.headers,
 			});
-
 			return { success: true };
 		}),
 
 	reactivate: adminProcedure
 		.input(z.object({ userId: z.string().uuid() }))
-		.mutation(async ({ input }) => {
-			const { error } = await supabaseAdmin.auth.admin.updateUserById(
-				input.userId,
-				{ ban_duration: "none" }
-			);
-
-			if (error) {
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to reactivate user",
-				});
-			}
-
+		.mutation(async ({ ctx, input }) => {
+			await auth.api.unbanUser({
+				body: { userId: input.userId },
+				headers: ctx.headers,
+			});
 			return { success: true };
 		}),
 });

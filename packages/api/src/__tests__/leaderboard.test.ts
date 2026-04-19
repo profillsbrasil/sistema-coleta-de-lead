@@ -36,8 +36,7 @@ async function loadLeaderboardRouter(mockRows: MockLeaderboardRow[]) {
 	const module = await import("../routers/leaderboard");
 
 	const caller = module.leaderboardRouter.createCaller({
-		supabase: {} as never,
-		user: { sub: "user-123" },
+		user: { id: "user-123" } as never, headers: new Headers(), session: null,
 		userRole: "vendedor",
 	});
 
