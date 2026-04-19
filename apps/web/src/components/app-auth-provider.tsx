@@ -97,10 +97,13 @@ export function AppAuthProvider({ children }: { children: React.ReactNode }) {
 		};
 	}, [session, isPending]);
 
+	const hasSessionAwaitingSnapshot = !!session?.user && !snapshot;
+	const isLoading = isPending || hasSessionAwaitingSnapshot;
+
 	return (
 		<AppAuthContext
 			value={{
-				isLoading: isPending && !snapshot,
+				isLoading,
 				isOnline,
 				snapshot,
 			}}

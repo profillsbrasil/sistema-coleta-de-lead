@@ -113,8 +113,7 @@ export default function LoginCard() {
 				return;
 			}
 
-			router.replace("/dashboard");
-			router.refresh();
+			window.location.assign("/dashboard");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -157,8 +156,7 @@ export default function LoginCard() {
 				return;
 			}
 
-			router.replace("/dashboard");
-			router.refresh();
+			window.location.assign("/dashboard");
 		} finally {
 			setIsSubmitting(false);
 		}
