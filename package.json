@@ -37,7 +37,7 @@
     "check": "ultracite check",
     "test": "turbo test",
     "fix": "ultracite fix",
-    "seed:admin": "cd apps/web && bun run ../../scripts/seed-admin.ts"
+    "seed:admin": "bun --env-file=apps/web/.env run packages/auth/scripts/seed-admin.ts"
   },
   "dependencies": {
     "@dashboard-leads-profills/env": "workspace:*",
