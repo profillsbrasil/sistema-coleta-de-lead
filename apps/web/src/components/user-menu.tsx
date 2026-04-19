@@ -1,5 +1,6 @@
 "use client";
 
+import { authClient } from "@dashboard-leads-profills/auth/client";
 import { Button } from "@dashboard-leads-profills/ui/components/button";
 import {
 	DropdownMenu,
@@ -11,30 +12,19 @@ import {
 	DropdownMenuTrigger,
 } from "@dashboard-leads-profills/ui/components/dropdown-menu";
 import { Skeleton } from "@dashboard-leads-profills/ui/components/skeleton";
-import type { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { clearAuthSnapshot } from "@/lib/auth/auth-snapshot";
-import { createClient } from "@/lib/supabase/client";
 
 export default function UserMenu() {
 	const router = useRouter();
-	const [user, setUser] = useState<User | null>(null);
-	const [loading, setLoading] = useState(true);
+	const { data: session, isPending } = authClient.useSession();
 
-	useEffect(() => {
-		const supabase = createClient();
-		supabase.auth.getUser().then(({ data }) => {
-			setUser(data.user);
-			setLoading(false);
-		});
-	}, []);
-
-	if (loading) {
+	if (isPending) {
 		return <Skeleton className="h-9 w-24" />;
 	}
 
+	const user = session?.user ?? null;
 	if (!user) {
 		return (
 			<Link href="/login">
@@ -44,13 +34,12 @@ export default function UserMenu() {
 	}
 
 	async function handleSignOut() {
-		const supabase = createClient();
 		clearAuthSnapshot();
-		await supabase.auth.signOut();
+		await authClient.signOut();
 		router.push("/login");
 	}
 
-	const displayName = user.user_metadata?.full_name ?? user.email ?? "Usuario";
+	const displayName = user.name || user.email;
 
 	return (
 		<DropdownMenu>

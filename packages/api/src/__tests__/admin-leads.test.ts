@@ -100,8 +100,7 @@ describe("adminLeadsRouter", () => {
 
 		const { adminLeadsRouter, dbSpies } = await loadAdminLeadsRouter(rows);
 		const caller = adminLeadsRouter.createCaller({
-			supabase: {} as never,
-			user: { sub: "admin-user" },
+			user: { id: "admin-user" } as never, headers: new Headers(), session: null,
 			userRole: "admin",
 		});
 
@@ -133,8 +132,7 @@ describe("adminLeadsRouter", () => {
 		(db.execute as ReturnType<typeof vi.fn>).mockResolvedValue(executeResult);
 
 		const caller = adminLeadsRouter.createCaller({
-			supabase: {} as never,
-			user: { sub: "admin-user" },
+			user: { id: "admin-user" } as never, headers: new Headers(), session: null,
 			userRole: "admin",
 		});
 

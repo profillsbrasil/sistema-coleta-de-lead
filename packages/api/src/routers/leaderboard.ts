@@ -4,13 +4,13 @@ import { protectedProcedure, router } from "../index";
 
 export const leaderboardRouter = router({
 	getRanking: protectedProcedure.query(async ({ ctx }) => {
-		const currentUserId = (ctx.user as Record<string, unknown>).sub as string;
+		const currentUserId = ctx.user.id;
 
 		const result = await db.execute(sql`
 			WITH ranked AS (
 				SELECT
 					u.id::text AS "userId",
-					u.raw_user_meta_data->>'name' AS "rawName",
+					u.name AS "rawName",
 					COUNT(l.id)::int AS "totalLeads",
 					COALESCE(SUM(CASE
 						WHEN l.interest_tag = 'quente' THEN 3
@@ -28,15 +28,10 @@ export const leaderboardRouter = router({
 							END), 0) DESC,
 							COUNT(l.id) DESC
 					)::int AS rank
-				FROM auth.users u
+				FROM public."user" u
 				LEFT JOIN leads l ON l.user_id = u.id AND l.deleted_at IS NULL
-				GROUP BY u.id, u.raw_user_meta_data->>'name'
-				HAVING
-					NOT EXISTS (
-						SELECT 1 FROM user_roles ur
-						WHERE ur.user_id = u.id AND ur.role = 'admin'
-					)
-					OR COUNT(l.id) > 0
+				GROUP BY u.id, u.name
+				HAVING u.role IS DISTINCT FROM 'admin' OR COUNT(l.id) > 0
 			)
 			SELECT
 				"userId",

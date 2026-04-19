@@ -1,5 +1,6 @@
 "use client";
 
+import { authClient } from "@dashboard-leads-profills/auth/client";
 import { Button } from "@dashboard-leads-profills/ui/components/button";
 import {
 	Card,
@@ -8,14 +9,25 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@dashboard-leads-profills/ui/components/card";
+import {
+	Field,
+	FieldError,
+	FieldLabel,
+	FieldSeparator,
+} from "@dashboard-leads-profills/ui/components/field";
+import { Input } from "@dashboard-leads-profills/ui/components/input";
+import {
+	Tabs,
+	TabsContent,
+	TabsList,
+	TabsTrigger,
+} from "@dashboard-leads-profills/ui/components/tabs";
 import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import type React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { readAuthSnapshot } from "@/lib/auth/auth-snapshot";
-import { createClient } from "@/lib/supabase/client";
-
-type OAuthProvider = "google" | "linkedin_oidc" | "facebook";
 
 function GoogleIcon() {
 	return (
@@ -40,40 +52,15 @@ function GoogleIcon() {
 	);
 }
 
-function LinkedInIcon() {
-	return (
-		<svg
-			aria-hidden="true"
-			fill="#0A66C2"
-			height="20"
-			viewBox="0 0 24 24"
-			width="20"
-		>
-			<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-		</svg>
-	);
-}
-
-function FacebookIcon() {
-	return (
-		<svg
-			aria-hidden="true"
-			fill="#1877F2"
-			height="20"
-			viewBox="0 0 24 24"
-			width="20"
-		>
-			<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-		</svg>
-	);
-}
-
 export default function LoginCard() {
-	const [loadingProvider, setLoadingProvider] = useState<OAuthProvider | null>(
-		null
-	);
+	const [email, setEmail] = useState("");
+	const [password, setPassword] = useState("");
+	const [name, setName] = useState("");
+	const [formError, setFormError] = useState<string | null>(null);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 	const [localSnapshotName, setLocalSnapshotName] = useState<string | null>(
-		null
+		null,
 	);
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -83,7 +70,7 @@ export default function LoginCard() {
 		if (error === "auth-code-error") {
 			toast.error("Erro ao autenticar. Tente novamente com outro provedor.");
 		} else if (error) {
-			toast.error("Nao foi possivel fazer login. Tente novamente.");
+			toast.error("Não foi possível fazer login. Tente novamente.");
 		}
 	}, [searchParams]);
 
@@ -91,31 +78,105 @@ export default function LoginCard() {
 		setLocalSnapshotName(readAuthSnapshot()?.userName ?? null);
 	}, []);
 
-	function handleLogin(provider: OAuthProvider) {
-		setLoadingProvider(provider);
-		const supabase = createClient();
-		supabase.auth.signInWithOAuth({
-			provider,
-			options: {
-				redirectTo: `${window.location.origin}/auth/callback`,
-			},
-		});
+	async function handleGoogleLogin() {
+		setIsGoogleLoading(true);
+		try {
+			await authClient.signIn.social({
+				provider: "google",
+				callbackURL: "/dashboard",
+			});
+		} catch {
+			toast.error("Não foi possível iniciar o login com Google.");
+			setIsGoogleLoading(false);
+		}
 	}
 
-	const isLoading = loadingProvider !== null;
+	async function handleEmailLogin(e: React.FormEvent) {
+		e.preventDefault();
+		setFormError(null);
+
+		const trimmedEmail = email.trim();
+		if (!trimmedEmail || !password) {
+			setFormError("Preencha email e senha.");
+			return;
+		}
+
+		setIsSubmitting(true);
+		try {
+			const { error } = await authClient.signIn.email({
+				email: trimmedEmail,
+				password,
+			});
+
+			if (error) {
+				setFormError("Email ou senha incorretos.");
+				return;
+			}
+
+			window.location.assign("/dashboard");
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
+
+	async function handleEmailSignup(e: React.FormEvent) {
+		e.preventDefault();
+		setFormError(null);
+
+		const trimmedEmail = email.trim();
+		const trimmedName = name.trim();
+
+		if (!trimmedName) {
+			setFormError("Informe seu nome.");
+			return;
+		}
+		if (!trimmedEmail) {
+			setFormError("Informe seu email.");
+			return;
+		}
+		if (password.length < 6) {
+			setFormError("A senha deve ter pelo menos 6 caracteres.");
+			return;
+		}
+
+		setIsSubmitting(true);
+		try {
+			const { error } = await authClient.signUp.email({
+				email: trimmedEmail,
+				password,
+				name: trimmedName,
+			});
+
+			if (error) {
+				if (error.message?.includes("exists") || error.code === "USER_ALREADY_EXISTS") {
+					setFormError("Este email já está cadastrado.");
+				} else {
+					setFormError(error.message ?? "Falha ao cadastrar.");
+				}
+				return;
+			}
+
+			window.location.assign("/dashboard");
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
+
+	const isLoading = isSubmitting || isGoogleLoading;
 
 	return (
 		<Card className="w-full max-w-[400px]">
 			<CardHeader className="text-center">
 				<CardTitle className="font-semibold text-xl">Dashboard Leads</CardTitle>
 				<CardDescription>
-					Acesse sua conta para comecar a coletar leads
+					Acesse sua conta para começar a coletar leads
 				</CardDescription>
 			</CardHeader>
-			<CardContent className="flex flex-col gap-3">
+			<CardContent className="flex flex-col gap-4">
 				{localSnapshotName ? (
 					<Button
 						className="w-full"
+						disabled={isLoading}
 						onClick={() => router.push("/dashboard")}
 						size="lg"
 						variant="secondary"
@@ -123,49 +184,138 @@ export default function LoginCard() {
 						Continuar offline como {localSnapshotName}
 					</Button>
 				) : null}
+
+				<Tabs defaultValue={0}>
+					<TabsList className="w-full">
+						<TabsTrigger
+							className="flex-1"
+							onClick={() => setFormError(null)}
+							value={0}
+						>
+							Entrar
+						</TabsTrigger>
+						<TabsTrigger
+							className="flex-1"
+							onClick={() => setFormError(null)}
+							value={1}
+						>
+							Criar conta
+						</TabsTrigger>
+					</TabsList>
+
+					<TabsContent value={0}>
+						<form
+							className="flex flex-col gap-3 pt-4"
+							onSubmit={handleEmailLogin}
+						>
+							<Field>
+								<FieldLabel>Email</FieldLabel>
+								<Input
+									autoComplete="email"
+									disabled={isLoading}
+									onChange={(e) => setEmail(e.target.value)}
+									placeholder="seu@email.com"
+									type="email"
+									value={email}
+								/>
+							</Field>
+							<Field>
+								<FieldLabel>Senha</FieldLabel>
+								<Input
+									autoComplete="current-password"
+									disabled={isLoading}
+									onChange={(e) => setPassword(e.target.value)}
+									placeholder="Sua senha"
+									type="password"
+									value={password}
+								/>
+							</Field>
+							{formError && <FieldError>{formError}</FieldError>}
+							<Button
+								className="w-full"
+								disabled={isLoading}
+								size="lg"
+								type="submit"
+							>
+								{isSubmitting ? (
+									<Loader2 className="animate-spin" />
+								) : null}
+								Entrar
+							</Button>
+						</form>
+					</TabsContent>
+
+					<TabsContent value={1}>
+						<form
+							className="flex flex-col gap-3 pt-4"
+							onSubmit={handleEmailSignup}
+						>
+							<Field>
+								<FieldLabel>Nome</FieldLabel>
+								<Input
+									autoComplete="name"
+									disabled={isLoading}
+									onChange={(e) => setName(e.target.value)}
+									placeholder="Seu nome completo"
+									type="text"
+									value={name}
+								/>
+							</Field>
+							<Field>
+								<FieldLabel>Email</FieldLabel>
+								<Input
+									autoComplete="email"
+									disabled={isLoading}
+									onChange={(e) => setEmail(e.target.value)}
+									placeholder="seu@email.com"
+									type="email"
+									value={email}
+								/>
+							</Field>
+							<Field>
+								<FieldLabel>Senha</FieldLabel>
+								<Input
+									autoComplete="new-password"
+									disabled={isLoading}
+									minLength={6}
+									onChange={(e) => setPassword(e.target.value)}
+									placeholder="Mínimo 6 caracteres"
+									type="password"
+									value={password}
+								/>
+							</Field>
+							{formError && <FieldError>{formError}</FieldError>}
+							<Button
+								className="w-full"
+								disabled={isLoading}
+								size="lg"
+								type="submit"
+							>
+								{isSubmitting ? (
+									<Loader2 className="animate-spin" />
+								) : null}
+								Criar conta
+							</Button>
+						</form>
+					</TabsContent>
+				</Tabs>
+
+				<FieldSeparator>ou</FieldSeparator>
+
 				<Button
-					aria-busy={loadingProvider === "google"}
+					aria-busy={isGoogleLoading}
 					className="w-full"
 					disabled={isLoading}
-					onClick={() => handleLogin("google")}
+					onClick={handleGoogleLogin}
 					size="lg"
+					variant="outline"
 				>
-					{loadingProvider === "google" ? (
+					{isGoogleLoading ? (
 						<Loader2 className="animate-spin" />
 					) : (
 						<GoogleIcon />
 					)}
-					Entrar com Google
-				</Button>
-				<Button
-					aria-busy={loadingProvider === "linkedin_oidc"}
-					className="w-full"
-					disabled={isLoading}
-					onClick={() => handleLogin("linkedin_oidc")}
-					size="lg"
-					variant="outline"
-				>
-					{loadingProvider === "linkedin_oidc" ? (
-						<Loader2 className="animate-spin" />
-					) : (
-						<LinkedInIcon />
-					)}
-					Entrar com LinkedIn
-				</Button>
-				<Button
-					aria-busy={loadingProvider === "facebook"}
-					className="w-full"
-					disabled={isLoading}
-					onClick={() => handleLogin("facebook")}
-					size="lg"
-					variant="outline"
-				>
-					{loadingProvider === "facebook" ? (
-						<Loader2 className="animate-spin" />
-					) : (
-						<FacebookIcon />
-					)}
-					Entrar com Facebook
+					Continuar com Google
 				</Button>
 			</CardContent>
 		</Card>

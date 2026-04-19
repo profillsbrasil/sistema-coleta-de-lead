@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/client";
+import { createStorageClient } from "@/lib/storage/client";
 
 import { db } from "../db/index";
 
 const MAX_UPLOAD_RETRIES = 10;
 
 export async function uploadPendingPhotos(): Promise<number> {
-	const supabase = createClient();
+	const supabase = createStorageClient();
 
 	// Excluir leads com uploadFailed=true (limite de retries atingido)
 	const candidates = await db.leads

@@ -1,31 +1,23 @@
-import { createServerClient } from "@supabase/ssr";
+import { auth, type Session } from "@dashboard-leads-profills/auth";
 import type { NextRequest } from "next/server";
 
-export async function createContext(req: NextRequest) {
-	const supabase = createServerClient(
-		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-		{
-			cookies: {
-				getAll() {
-					return req.cookies.getAll();
-				},
-				setAll() {
-					// tRPC route handler nao precisa setar cookies
-					// proxy.ts ja cuida do refresh
-				},
-			},
-		}
-	);
+export type Context = {
+	headers: Headers;
+	session: Session["session"] | null;
+	user: Session["user"] | null;
+	userRole: "admin" | "vendedor" | null;
+};
 
-	const { data } = await supabase.auth.getClaims();
-	const claims = data?.claims as Record<string, unknown> | null;
+export async function createContext(req: NextRequest): Promise<Context> {
+	const session = await auth.api.getSession({ headers: req.headers });
+	const user = session?.user ?? null;
+	const userRole =
+		(user?.role as "admin" | "vendedor" | null | undefined) ?? null;
 
 	return {
-		supabase,
-		user: claims ?? null,
-		userRole: (claims?.user_role as string) ?? null,
+		headers: req.headers,
+		session: session?.session ?? null,
+		user,
+		userRole,
 	};
 }
-
-export type Context = Awaited<ReturnType<typeof createContext>>;

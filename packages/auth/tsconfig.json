@@ -1,0 +1,8 @@
+{
+  "extends": "@dashboard-leads-profills/config/tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*"]
+}

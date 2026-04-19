@@ -36,8 +36,7 @@ async function loadSyncRouter(mockDb: MockDb) {
 
 	const module = await import("../routers/sync");
 	const caller = module.syncRouter.createCaller({
-		supabase: {} as never,
-		user: { sub: "user-123" },
+		user: { id: "user-123" } as never, headers: new Headers(), session: null,
 		userRole: "vendedor",
 	});
 	return { caller };

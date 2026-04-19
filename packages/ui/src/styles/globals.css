@@ -24,7 +24,7 @@
 	--destructive: #e7000b;
 	--border: #e5e5e5;
 	--input: #e5e5e5;
-	--ring: #3ecf8e;
+	--ring: transparent;
 	--chart-1: #3ecf8e;
 	--chart-2: #00c573;
 	--chart-3: #00a86b;
@@ -38,7 +38,7 @@
 	--sidebar-accent: #f4f4f4;
 	--sidebar-accent-foreground: #171717;
 	--sidebar-border: #e5e5e5;
-	--sidebar-ring: #3ecf8e;
+	--sidebar-ring: transparent;
 	/* Border hierarchy */
 	--border-subtle: #efefef;
 	--border-prominent: #d4d4d4;
@@ -80,7 +80,7 @@
 	--destructive: #e7000b;
 	--border: #2e2e2e;
 	--input: #2e2e2e;
-	--ring: #3ecf8e;
+	--ring: transparent;
 	--chart-1: #3ecf8e;
 	--chart-2: #00c573;
 	--chart-3: #00a86b;
@@ -93,7 +93,7 @@
 	--sidebar-accent: #262626;
 	--sidebar-accent-foreground: #fafafa;
 	--sidebar-border: #2e2e2e;
-	--sidebar-ring: #3ecf8e;
+	--sidebar-ring: transparent;
 	/* Border hierarchy */
 	--border-subtle: #242424;
 	--border-prominent: #363636;
@@ -184,7 +184,7 @@
 
 @layer base {
 	* {
-		@apply border-border outline-ring/50;
+		@apply border-border;
 		scrollbar-width: thin;
 		scrollbar-color: var(--border) var(--background);
 	}

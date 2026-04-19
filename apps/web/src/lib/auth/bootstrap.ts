@@ -1,11 +1,9 @@
-import type { Session } from "@supabase/supabase-js";
-import { type AppAuthSnapshot, createAuthSnapshot } from "./auth-snapshot";
+import type { AppAuthSnapshot } from "./auth-snapshot";
 
 export const SESSION_TIMEOUT_MS = 1200;
-export const CLAIMS_TIMEOUT_MS = 1200;
 
 export function coerceSnapshotToOfflineSeller(
-	snapshot: AppAuthSnapshot | null
+	snapshot: AppAuthSnapshot | null,
 ): AppAuthSnapshot | null {
 	if (!snapshot) {
 		return null;
@@ -17,19 +15,9 @@ export function coerceSnapshotToOfflineSeller(
 	};
 }
 
-export function createSellerSnapshotFromSession(
-	session: Session | null
-): Promise<AppAuthSnapshot | null> {
-	if (!session?.user) {
-		return Promise.resolve(null);
-	}
-
-	return createAuthSnapshot(session.user, "vendedor");
-}
-
 export function resolveWithTimeout<T>(
 	promise: Promise<T>,
-	timeoutMs: number
+	timeoutMs: number,
 ): Promise<T | null> {
 	return new Promise((resolve) => {
 		const timeoutId = globalThis.setTimeout(() => {

@@ -132,12 +132,9 @@ export const adminLeadsRouter = router({
 			sql`
 				SELECT DISTINCT
 					l.user_id AS "userId",
-					COALESCE(
-						u.raw_user_meta_data->>'name',
-						SPLIT_PART(u.email, '@', 1)
-					) AS "name"
+					COALESCE(NULLIF(u.name, ''), SPLIT_PART(u.email, '@', 1)) AS "name"
 				FROM leads l
-				JOIN auth.users u ON u.id = l.user_id::uuid
+				JOIN public."user" u ON u.id = l.user_id
 				WHERE l.deleted_at IS NULL
 				ORDER BY "name" ASC
 			`

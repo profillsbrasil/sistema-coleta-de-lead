@@ -48,7 +48,7 @@ export const syncRouter = router({
 	pushChanges: protectedProcedure
 		.input(pushInputSchema)
 		.mutation(async ({ ctx, input }) => {
-			const userId = ctx.user.sub as string;
+			const userId = ctx.user.id;
 			const acknowledged: Array<{ localId: string; queueId: string }> = [];
 			const idMappings: Array<{ localId: string; serverId: string }> = [];
 
@@ -151,7 +151,7 @@ export const syncRouter = router({
 	pullChanges: protectedProcedure
 		.input(pullInputSchema)
 		.query(async ({ ctx, input }) => {
-			const userId = ctx.user.sub as string;
+			const userId = ctx.user.id;
 			const since = new Date(input.since);
 
 			const changes = await db

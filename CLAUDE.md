@@ -19,7 +19,8 @@
 - UI compartilhada: `packages/ui` com primitives shadcn/ui path-based
 - API: tRPC 11 em route handler Next.js
 - Banco: PostgreSQL + Drizzle ORM
-- Auth: Supabase Auth via `@supabase/ssr` e `@supabase/supabase-js`
+- Auth: Better Auth (Drizzle adapter pg + plugin admin) em `packages/auth`
+- Storage (fotos de leads): Supabase Storage bucket `lead-photos` via `@supabase/supabase-js` em `apps/web/src/lib/storage/client.ts`
 - Offline local: Dexie 4 + `dexie-react-hooks`
 - Testes: Vitest
 - Lint/format: Ultracite / Biome
@@ -32,7 +33,7 @@ packages/api    Routers tRPC, contexto auth e regras de negocio
 packages/db     Schema Drizzle, migrations e acesso ao Postgres
 packages/env    Validacao de env para server e client
 packages/ui     Componentes e utilitarios de UI compartilhados
-packages/auth   Pacote legado/utilitario de auth; nao e a superficie ativa do app/API hoje
+packages/auth   Instância Better Auth (server, client React, schema Drizzle)
 packages/config Base compartilhada de TypeScript
 ```
 
@@ -40,13 +41,17 @@ Namespace de workspace: `@dashboard-leads-profills/*`
 
 ## Auth Real
 
-- O app web usa clientes Supabase em `apps/web/src/lib/supabase/client.ts`, `apps/web/src/lib/supabase/server.ts` e `apps/web/src/lib/supabase/proxy.ts`.
-- O middleware de sessao fica em `apps/web/src/middleware.ts` e redireciona rotas privadas para `/login`.
-- O callback OAuth fica em `apps/web/src/app/auth/callback/route.ts`.
-- O login atual usa Google, LinkedIn e Facebook via Supabase OAuth em `apps/web/src/components/login-card.tsx`.
-- O contexto tRPC cria um cliente Supabase diretamente em `packages/api/src/context.ts` e extrai claims para `user` e `userRole`.
-- Operacoes administrativas no backend usam `packages/api/src/lib/supabase-admin.ts`.
-- Existe um pacote `packages/auth`, mas ele nao e consumido pelo app nem pela API no estado atual. Nao trate esse pacote como ponto central sem uma refatoracao explicita.
+- Auth via Better Auth em `packages/auth/src/index.ts` (Drizzle adapter `pg`, plugin `admin`).
+- Client React em `packages/auth/src/client.ts` — expõe `authClient`, `useSession`, `signIn`, `signUp`, `signOut` + `adminClient()` plugin.
+- Schema Drizzle gerado em `packages/auth/src/schema.ts` — tabelas `user` / `session` / `account` / `verification` com IDs `uuid defaultRandom`.
+- Handler Next.js em `apps/web/src/app/api/auth/[...all]/route.ts` via `toNextJsHandler`.
+- Middleware em `apps/web/src/middleware.ts` usa `getSessionCookie` (Edge-safe, sem hit DB).
+- Contexto tRPC em `packages/api/src/context.ts` chama `auth.api.getSession({ headers })` e expõe `{ user, userRole, session, headers }`.
+- Guard admin em `apps/web/src/app/(app)/admin/layout.tsx` via `session.user.role === "admin"`.
+- Admin API usa `auth.api.listUsers/banUser/unbanUser/setRole` em `packages/api/src/routers/admin/users.ts`.
+- Providers: email/senha (auto-verificado, sem confirmação por email) + Google OAuth. Callback OAuth hospedado pelo Better Auth em `/api/auth/callback/google`.
+- Role é campo direto em `public.user.role` (não há tabela `user_roles` nem `custom_access_token_hook`).
+- Snapshot offline em `apps/web/src/lib/auth/auth-snapshot.ts` construído a partir de `session.user` (Better Auth).
 
 ## Arquitetura Offline-First
 
@@ -93,14 +98,17 @@ Arquivo esperado no desenvolvimento: `apps/web/.env`
 
 Server:
 - `DATABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `BETTER_AUTH_SECRET` (min 32 chars)
+- `BETTER_AUTH_URL` (ex: http://localhost:3001)
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (Google OAuth)
+- `NEXT_PUBLIC_SUPABASE_URL` (somente Storage `lead-photos`)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (somente Storage)
 - `NODE_ENV`
 
 Client:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_BETTER_AUTH_URL`
+- `NEXT_PUBLIC_SUPABASE_URL` (Storage)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Storage)
 
 As validacoes ficam em `packages/env/src/server.ts` e `packages/env/src/web.ts`.
 
@@ -133,10 +141,10 @@ bun run db:studio    # drizzle-kit studio no pacote db
 ## Guardrails para Agentes
 
 - Antes de descrever arquitetura, verifique o codigo correspondente.
-- Use sempre as superficies de auth baseadas em Supabase descritas neste repo.
+- Use sempre as superficies de auth baseadas em Better Auth (`packages/auth`) descritas neste repo.
 - Nao afirme que o health check de conectividade e `/api/trpc/healthCheck`. O endpoint usado pelo app e `/api/health`.
 - Nao tratar o service worker como PWA completa.
-- Nao mover o app para usar `packages/auth` por padrao. Isso seria refatoracao, nao manutencao rotineira.
+- `packages/auth` agora é o ponto central de auth; não retorne a padrões Supabase Auth.
 - Quando tocar offline/sync, preserve a prioridade do dado local e o comportamento resiliente sem rede.
 
 ## Hurdles Conhecidos

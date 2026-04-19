@@ -121,10 +121,7 @@ export const adminStatsRouter = router({
 				sql`
 					SELECT
 						leads.user_id AS "userId",
-						COALESCE(
-							u.raw_user_meta_data->>'name',
-							SPLIT_PART(u.email, '@', 1)
-						) AS "name",
+						COALESCE(NULLIF(u.name, ''), SPLIT_PART(u.email, '@', 1)) AS "name",
 						COUNT(leads.id)::int AS "totalLeads",
 						COALESCE(SUM(CASE
 							WHEN leads.interest_tag = 'quente' THEN 3
@@ -132,9 +129,9 @@ export const adminStatsRouter = router({
 							ELSE 1
 						END), 0)::int AS "score"
 					FROM leads
-					JOIN auth.users u ON u.id = leads.user_id::uuid
+					JOIN public."user" u ON u.id = leads.user_id
 					WHERE ${whereClause}
-					GROUP BY leads.user_id, u.raw_user_meta_data->>'name', u.email
+					GROUP BY leads.user_id, u.name, u.email
 					ORDER BY "score" DESC
 				`
 			);

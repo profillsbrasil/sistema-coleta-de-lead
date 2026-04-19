@@ -18,12 +18,12 @@ import { LogOut, Moon, Sun, User } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { type ReactNode, useEffect, useState } from "react";
+import { authClient } from "@dashboard-leads-profills/auth/client";
 import { useAppAuth } from "@/components/app-auth-provider";
 import { EventCountdown } from "@/components/event-countdown";
 import { clearAuthSnapshot } from "@/lib/auth/auth-snapshot";
 import { db } from "@/lib/db/index";
 import { getPersonalStats } from "@/lib/lead/stats";
-import { createClient } from "@/lib/supabase/client";
 import { trpc } from "@/utils/trpc";
 
 const WHITESPACE_RE = /\s+/;
@@ -123,9 +123,8 @@ function HeaderIdentity({
 	}
 
 	async function handleSignOut() {
-		const supabase = createClient();
 		clearAuthSnapshot();
-		await supabase.auth.signOut();
+		await authClient.signOut();
 		router.push("/login");
 	}
 

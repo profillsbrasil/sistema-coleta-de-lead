@@ -108,8 +108,7 @@ describe("adminStatsRouter", () => {
 		const { adminStatsRouter } = await loadAdminStatsRouter(rankingRows);
 
 		const caller = adminStatsRouter.createCaller({
-			supabase: {} as never,
-			user: { sub: "admin-user" },
+			user: { id: "admin-user" } as never, headers: new Headers(), session: null,
 			userRole: "admin",
 		});
 

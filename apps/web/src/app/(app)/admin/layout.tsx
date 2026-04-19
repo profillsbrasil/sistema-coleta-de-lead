@@ -1,24 +1,19 @@
+import { auth } from "@dashboard-leads-profills/auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
+	const session = await auth.api.getSession({ headers: await headers() });
 
-	if (!user) {
+	if (!session?.user) {
 		redirect("/login");
 	}
 
-	const { data: claimsData } = await supabase.auth.getClaims();
-	const userRole = (claimsData?.claims as Record<string, unknown>)?.user_role;
-
-	if (userRole !== "admin") {
+	if ((session.user as { role?: string }).role !== "admin") {
 		redirect("/dashboard");
 	}
 

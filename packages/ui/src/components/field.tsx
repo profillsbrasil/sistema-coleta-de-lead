@@ -163,7 +163,7 @@ function FieldSeparator({
 			<Separator className="absolute inset-0 top-1/2" />
 			{children && (
 				<span
-					className="relative mx-auto block w-fit bg-background px-2 text-muted-foreground"
+					className="relative mx-auto block w-fit bg-card  px-2 text-muted-foreground"
 					data-slot="field-separator-content"
 				>
 					{children}
@@ -225,14 +225,14 @@ function FieldError({
 }
 
 export {
-	Field,
-	FieldContent,
-	FieldDescription,
-	FieldError,
-	FieldGroup,
-	FieldLabel,
-	FieldLegend,
-	FieldSeparator,
-	FieldSet,
-	FieldTitle,
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+  FieldTitle
 };
