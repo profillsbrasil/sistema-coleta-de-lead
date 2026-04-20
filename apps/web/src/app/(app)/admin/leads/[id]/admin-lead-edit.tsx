@@ -134,7 +134,6 @@ export default function AdminLeadEdit({ leadId }: AdminLeadEditProps) {
 	return (
 		<LeadForm
 			hidePhoto
-			hideQR
 			lead={mappedLead}
 			onDelete={handleDelete}
 			onUpdate={handleUpdate}

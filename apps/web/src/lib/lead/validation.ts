@@ -6,7 +6,7 @@ export const leadFormSchema = z
 		phone: z.string().optional().default(""),
 		email: z.string().email("Email invalido").optional().or(z.literal("")),
 		interestTag: z.enum(["quente", "morno", "frio"]).default("morno"),
-		company: z.string().optional().default(""),
+		company: z.string().min(1, "Empresa e obrigatoria"),
 		position: z.string().optional().default(""),
 		segment: z.string().optional().default(""),
 		notes: z.string().optional().default(""),
