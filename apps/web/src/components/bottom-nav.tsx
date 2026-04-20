@@ -6,11 +6,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useKeyboardVisible } from "@/components/fab";
 
-const NAV_ITEMS = [
-	{ href: "/dashboard", label: "Ranking", icon: Trophy },
-	{ href: "/leads", label: "Leads", icon: UserPlus },
-] as const;
-
 export default function BottomNav() {
 	const pathname = usePathname();
 	const keyboardVisible = useKeyboardVisible();
@@ -20,7 +15,7 @@ export default function BottomNav() {
 	}
 
 	return (
-		<nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card md:hidden">
+		<nav className="fixed inset-x-0 bottom-0 z-50 border-border border-t bg-card md:hidden">
 			<div className="relative flex items-center justify-around pb-[env(safe-area-inset-bottom)]">
 				{/* Left tab: Ranking */}
 				<Link
@@ -54,7 +49,10 @@ export default function BottomNav() {
 					href={"/leads/new" as unknown as "/"}
 				>
 					<div className="flex size-[52px] items-center justify-center rounded-full border-[3px] border-card bg-primary">
-						<Plus className="size-6 text-primary-foreground" strokeWidth={2.5} />
+						<Plus
+							className="size-6 text-primary-foreground"
+							strokeWidth={2.5}
+						/>
 					</div>
 				</Link>
 
@@ -66,9 +64,7 @@ export default function BottomNav() {
 					<UserPlus
 						className={cn(
 							"size-5",
-							pathname === "/leads"
-								? "text-primary"
-								: "text-muted-foreground"
+							pathname === "/leads" ? "text-primary" : "text-muted-foreground"
 						)}
 					/>
 					<span
