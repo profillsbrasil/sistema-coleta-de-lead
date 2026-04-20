@@ -37,6 +37,8 @@
     "check": "ultracite check",
     "test": "turbo test",
     "fix": "ultracite fix",
+    "clean": "find . -name .git -prune -o \\( -name node_modules -o -name .turbo -o -name .next \\) -type d -prune -exec rm -rf {} + && find . -name .git -prune -o -name bun.lock -type f -exec rm -f {} +",
+    "clean:cache": "find . -name .git -prune -o \\( -name node_modules -o -name .turbo -o -name .next \\) -type d -prune -exec rm -rf {} +",
     "seed:admin": "bun --env-file=apps/web/.env run packages/auth/scripts/seed-admin.ts"
   },
   "dependencies": {
