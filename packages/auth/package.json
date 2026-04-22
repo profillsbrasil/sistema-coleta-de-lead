@@ -12,10 +12,14 @@
     },
     "./schema": {
       "default": "./src/schema.ts"
+    },
+    "./invite-token": {
+      "default": "./src/invite-token.ts"
     }
   },
   "scripts": {
     "check-types": "tsc --noEmit",
+    "test": "vitest run",
     "generate": "better-auth generate --config src/index.ts --output src/schema.ts --y"
   },
   "dependencies": {
