@@ -60,14 +60,24 @@ export default function LoginCard() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 	const [localSnapshotName, setLocalSnapshotName] = useState<string | null>(
-		null,
+		null
 	);
+	const [activeTab, setActiveTab] = useState<0 | 1>(0);
+	const [inviteCode, setInviteCode] = useState("");
+	const [inviteUnlocked, setInviteUnlocked] = useState(false);
+	const [isValidatingInvite, setIsValidatingInvite] = useState(false);
+	const [inviteError, setInviteError] = useState<string | null>(null);
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
 	useEffect(() => {
 		const error = searchParams.get("error");
-		if (error === "auth-code-error") {
+		if (error === "invite_required") {
+			toast.error(
+				"Esta conta Google não está cadastrada. Informe o código de convite para criar conta."
+			);
+			setActiveTab(1);
+		} else if (error === "auth-code-error") {
 			toast.error("Erro ao autenticar. Tente novamente com outro provedor.");
 		} else if (error) {
 			toast.error("Não foi possível fazer login. Tente novamente.");
@@ -79,15 +89,51 @@ export default function LoginCard() {
 	}, []);
 
 	async function handleGoogleLogin() {
+		if (activeTab === 1 && !inviteUnlocked) {
+			setInviteError("Valide o código de convite antes de criar conta.");
+			return;
+		}
 		setIsGoogleLoading(true);
 		try {
 			await authClient.signIn.social({
 				provider: "google",
 				callbackURL: "/dashboard",
+				errorCallbackURL: "/login",
 			});
 		} catch {
 			toast.error("Não foi possível iniciar o login com Google.");
 			setIsGoogleLoading(false);
+		}
+	}
+
+	async function handleValidateInvite(e: React.FormEvent) {
+		e.preventDefault();
+		setInviteError(null);
+		const code = inviteCode.trim();
+		if (!code) {
+			setInviteError("Informe o código de convite.");
+			return;
+		}
+		setIsValidatingInvite(true);
+		try {
+			const res = await fetch("/api/signup-invite", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ code }),
+			});
+			if (!res.ok) {
+				const data = (await res.json().catch(() => null)) as {
+					error?: string;
+				} | null;
+				setInviteError(data?.error ?? "Código inválido.");
+				return;
+			}
+			setInviteUnlocked(true);
+			setInviteError(null);
+		} catch {
+			setInviteError("Falha ao validar. Verifique sua conexão.");
+		} finally {
+			setIsValidatingInvite(false);
 		}
 	}
 
@@ -96,7 +142,7 @@ export default function LoginCard() {
 		setFormError(null);
 
 		const trimmedEmail = email.trim();
-		if (!trimmedEmail || !password) {
+		if (!(trimmedEmail && password)) {
 			setFormError("Preencha email e senha.");
 			return;
 		}
@@ -148,7 +194,10 @@ export default function LoginCard() {
 			});
 
 			if (error) {
-				if (error.message?.includes("exists") || error.code === "USER_ALREADY_EXISTS") {
+				if (
+					error.message?.includes("exists") ||
+					error.code === "USER_ALREADY_EXISTS"
+				) {
 					setFormError("Este email já está cadastrado.");
 				} else {
 					setFormError(error.message ?? "Falha ao cadastrar.");
@@ -185,7 +234,7 @@ export default function LoginCard() {
 					</Button>
 				) : null}
 
-				<Tabs defaultValue={0}>
+				<Tabs onValueChange={(v) => setActiveTab(v as 0 | 1)} value={activeTab}>
 					<TabsList className="w-full">
 						<TabsTrigger
 							className="flex-1"
@@ -237,86 +286,121 @@ export default function LoginCard() {
 								size="lg"
 								type="submit"
 							>
-								{isSubmitting ? (
-									<Loader2 className="animate-spin" />
-								) : null}
+								{isSubmitting ? <Loader2 className="animate-spin" /> : null}
 								Entrar
 							</Button>
 						</form>
 					</TabsContent>
 
 					<TabsContent value={1}>
-						<form
-							className="flex flex-col gap-3 pt-4"
-							onSubmit={handleEmailSignup}
-						>
-							<Field>
-								<FieldLabel>Nome</FieldLabel>
-								<Input
-									autoComplete="name"
-									disabled={isLoading}
-									onChange={(e) => setName(e.target.value)}
-									placeholder="Seu nome completo"
-									type="text"
-									value={name}
-								/>
-							</Field>
-							<Field>
-								<FieldLabel>Email</FieldLabel>
-								<Input
-									autoComplete="email"
-									disabled={isLoading}
-									onChange={(e) => setEmail(e.target.value)}
-									placeholder="seu@email.com"
-									type="email"
-									value={email}
-								/>
-							</Field>
-							<Field>
-								<FieldLabel>Senha</FieldLabel>
-								<Input
-									autoComplete="new-password"
-									disabled={isLoading}
-									minLength={6}
-									onChange={(e) => setPassword(e.target.value)}
-									placeholder="Mínimo 6 caracteres"
-									type="password"
-									value={password}
-								/>
-							</Field>
-							{formError && <FieldError>{formError}</FieldError>}
-							<Button
-								className="w-full"
-								disabled={isLoading}
-								size="lg"
-								type="submit"
+						{inviteUnlocked ? (
+							<form
+								className="flex flex-col gap-3 pt-4"
+								onSubmit={handleEmailSignup}
 							>
-								{isSubmitting ? (
-									<Loader2 className="animate-spin" />
-								) : null}
-								Criar conta
-							</Button>
-						</form>
+								<Field>
+									<FieldLabel>Nome</FieldLabel>
+									<Input
+										autoComplete="name"
+										disabled={isLoading}
+										onChange={(e) => setName(e.target.value)}
+										placeholder="Seu nome completo"
+										type="text"
+										value={name}
+									/>
+								</Field>
+								<Field>
+									<FieldLabel>Email</FieldLabel>
+									<Input
+										autoComplete="email"
+										disabled={isLoading}
+										onChange={(e) => setEmail(e.target.value)}
+										placeholder="seu@email.com"
+										type="email"
+										value={email}
+									/>
+								</Field>
+								<Field>
+									<FieldLabel>Senha</FieldLabel>
+									<Input
+										autoComplete="new-password"
+										disabled={isLoading}
+										minLength={6}
+										onChange={(e) => setPassword(e.target.value)}
+										placeholder="Mínimo 6 caracteres"
+										type="password"
+										value={password}
+									/>
+								</Field>
+								{formError && <FieldError>{formError}</FieldError>}
+								<Button
+									className="w-full"
+									disabled={isLoading}
+									size="lg"
+									type="submit"
+								>
+									{isSubmitting ? <Loader2 className="animate-spin" /> : null}
+									Criar conta
+								</Button>
+							</form>
+						) : (
+							<form
+								className="flex flex-col gap-3 pt-4"
+								onSubmit={handleValidateInvite}
+							>
+								<p className="text-muted-foreground text-sm">
+									A criação de conta é restrita. Informe o código de convite
+									fornecido pelo administrador.
+								</p>
+								<Field>
+									<FieldLabel>Código de convite</FieldLabel>
+									<Input
+										autoComplete="one-time-code"
+										disabled={isValidatingInvite}
+										inputMode="numeric"
+										onChange={(e) => setInviteCode(e.target.value)}
+										placeholder="Digite o código"
+										type="text"
+										value={inviteCode}
+									/>
+								</Field>
+								{inviteError && <FieldError>{inviteError}</FieldError>}
+								<Button
+									className="w-full"
+									disabled={isValidatingInvite}
+									size="lg"
+									type="submit"
+								>
+									{isValidatingInvite ? (
+										<Loader2 className="animate-spin" />
+									) : null}
+									Validar código
+								</Button>
+							</form>
+						)}
 					</TabsContent>
 				</Tabs>
 
-				<FieldSeparator>ou</FieldSeparator>
-
-				<Button
-					aria-busy={isGoogleLoading}
-					className="w-full"
-					disabled={isLoading}
-					onClick={handleGoogleLogin}
-					size="lg"
-					variant="outline"
-				>
-					{isGoogleLoading ? (
-						<Loader2 className="animate-spin" />
-					) : (
-						<GoogleIcon />
-					)}
-					Continuar com Google
-				</Button>
+				{(activeTab === 0 || inviteUnlocked) && (
+					<>
+						<FieldSeparator>ou</FieldSeparator>
+						<Button
+							aria-busy={isGoogleLoading}
+							className="w-full"
+							disabled={isLoading}
+							onClick={handleGoogleLogin}
+							size="lg"
+							variant="outline"
+						>
+							{isGoogleLoading ? (
+								<Loader2 className="animate-spin" />
+							) : (
+								<GoogleIcon />
+							)}
+							Continuar com Google
+						</Button>
+					</>
+				)}
 			</CardContent>
 		</Card>
 	);
