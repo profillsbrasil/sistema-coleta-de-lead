@@ -1,8 +1,9 @@
 "use client";
 
+import { env } from "@dashboard-leads-profills/env/web";
 import { useEffect, useState } from "react";
 
-const EVENT_END = process.env.NEXT_PUBLIC_EVENT_END;
+const EVENT_END = env.NEXT_PUBLIC_EVENT_END;
 
 function getTimeLeft(target: Date): number {
 	return Math.max(0, target.getTime() - Date.now());
