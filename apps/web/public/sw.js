@@ -6,6 +6,8 @@ importScripts(
 	"https://storage.googleapis.com/workbox-cdn/releases/7.4.0/workbox-sw.js"
 );
 
+const workbox = self.workbox;
+
 // Build config gerado pelo postbuild — define self.__SW_BUILD_ID com o buildId do Next.js.
 // Em dev mode, sw-build.js nao existe — importScripts falha silenciosamente e __SW_BUILD_ID fica undefined.
 // O browser compara todos os importScripts ao checar updates de SW, entao mudanca no buildId
@@ -93,6 +95,7 @@ const BUILD_REVISION = self.__SW_BUILD_ID || "dev";
 
 precacheAndRoute([
 	{ url: "/dashboard", revision: BUILD_REVISION },
+	{ url: "/account", revision: BUILD_REVISION },
 	{ url: "/leads", revision: BUILD_REVISION },
 	{ url: "/leads/new", revision: BUILD_REVISION },
 	{ url: "/admin/leads", revision: BUILD_REVISION },
@@ -105,7 +108,7 @@ precacheAndRoute([
 // Remove ?_rsc=<random> gerado pelo Next.js App Router em cada navegacao client-side
 // Sem isso: cada navegacao cria uma entrada diferente no cache (Pitfall 1 do RESEARCH.md)
 const rscUrlNormalizerPlugin = {
-	cacheKeyWillBeUsed: async ({ request }) => {
+	cacheKeyWillBeUsed: ({ request }) => {
 		const url = new URL(request.url);
 		url.searchParams.delete("_rsc");
 		return url.toString();
