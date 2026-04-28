@@ -11,7 +11,7 @@ export const env = createEnv({
 		BETTER_AUTH_URL: z.string().url(),
 		GOOGLE_CLIENT_ID: z.string().min(1),
 		GOOGLE_CLIENT_SECRET: z.string().min(1),
-		SIGNUP_INVITE_CODE: z.string().min(1),
+		SIGNUP_INVITE_CODE: z.string().min(1).optional(),
 		NODE_ENV: z
 			.enum(["development", "production", "test"])
 			.default("development"),

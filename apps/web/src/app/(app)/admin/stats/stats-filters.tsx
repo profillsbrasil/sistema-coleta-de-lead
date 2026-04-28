@@ -198,7 +198,11 @@ export default function StatsFilters({
 						</PopoverContent>
 					</Popover>
 
-					<Button className="w-full lg:w-auto" disabled={isLoading} onClick={handleApply}>
+					<Button
+						className="w-full lg:w-auto"
+						disabled={isLoading}
+						onClick={handleApply}
+					>
 						Aplicar filtros
 					</Button>
 				</div>

@@ -34,27 +34,17 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useRequiredAppAuth } from "@/components/app-auth-provider";
+import { PageHeader } from "@/components/page/page-header";
 import { deriveSyncState, getTooltipText } from "@/components/sync-status-icon";
 import { useSyncStatus } from "@/components/sync-status-provider";
 import { clearAuthSnapshot } from "@/lib/auth/auth-snapshot";
 import { db } from "@/lib/db/index";
-import type { PersonalStats } from "@/lib/lead/stats";
-import { getPersonalStats } from "@/lib/lead/stats";
 import {
 	canRetryAccountSync,
 	formatAccountRank,
 	getAccountRoleLabel,
 	getAccountSyncActionLabel,
 } from "./account-presentation";
-
-const ZERO_STATS: PersonalStats = {
-	frio: 0,
-	hoje: 0,
-	morno: 0,
-	quente: 0,
-	score: 0,
-	total: 0,
-};
 
 const WHITESPACE_RE = /\s+/;
 
@@ -115,11 +105,6 @@ export default function AccountPage() {
 
 	useEffect(() => setMounted(true), []);
 
-	const personalStats = useLiveQuery(
-		() => getPersonalStats(snapshot.userId),
-		[snapshot.userId],
-		ZERO_STATS
-	);
 	const currentRank = useLiveQuery(
 		async () => {
 			const entry = await db.leaderboardCache.get(snapshot.userId);
@@ -129,7 +114,6 @@ export default function AccountPage() {
 		null
 	);
 
-	const stats = personalStats ?? ZERO_STATS;
 	const syncState = deriveSyncState(syncStatus);
 	const syncLabel = getTooltipText(syncState, syncStatus);
 	const canRetrySync = canRetryAccountSync(syncStatus);
@@ -151,15 +135,18 @@ export default function AccountPage() {
 	}
 
 	return (
-		<main className="mx-auto flex w-full max-w-5xl flex-col gap-4 md:gap-6">
-			<div className="flex flex-col gap-1">
-				<h1 className="font-semibold text-2xl tracking-normal">Minha Conta</h1>
-				<p className="text-muted-foreground text-sm">
-					Seu resumo operacional neste dispositivo.
-				</p>
-			</div>
+		<main className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-6">
+			<PageHeader
+				eyebrow="Você"
+				subtitle={
+					<span className="text-muted-foreground">
+						Resumo operacional deste dispositivo
+					</span>
+				}
+				title="Minha conta"
+			/>
 
-			<div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+			<div className="grid gap-4 px-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
 				<div className="flex flex-col gap-4">
 					<Card>
 						<CardContent className="flex flex-col items-center gap-4 pt-2 text-center">
@@ -252,33 +239,6 @@ export default function AccountPage() {
 								<RefreshCw data-icon="inline-start" />
 								{syncActionLabel}
 							</Button>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle>Meu desempenho</CardTitle>
-							<CardDescription>Dados locais deste vendedor.</CardDescription>
-						</CardHeader>
-						<CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-							<MetricItem label="ranking" value={rankLabel} />
-							<MetricItem label="leads" value={stats.total} />
-							<MetricItem label="hoje" value={stats.hoje} />
-							<MetricItem label="score" value={stats.score} />
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle>Interesses</CardTitle>
-							<CardDescription>
-								Distribuicao dos leads coletados.
-							</CardDescription>
-						</CardHeader>
-						<CardContent className="grid grid-cols-3 gap-3">
-							<MetricItem label="quentes" value={stats.quente} />
-							<MetricItem label="mornos" value={stats.morno} />
-							<MetricItem label="frios" value={stats.frio} />
 						</CardContent>
 					</Card>
 				</div>
