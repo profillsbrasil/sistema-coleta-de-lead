@@ -1,5 +1,13 @@
 # Design System Inspiration of Supabase
 
+> **Decisões de implementação (2026-04-28)**
+>
+> - **Fonte**: usamos **Geist Sans** (e Geist Mono) como substitutos de Circular e Source Code Pro. Geist tem licença aberta e geometria comparável; mantém a personalidade do sistema sem dependência paga.
+> - **Tema padrão**: a aplicação inicia em **dark mode** (`class="dark"` no `<html>`). Light mode permanece disponível via tokens `:root`. Decisão alinhada ao `dark-mode-native` do Supabase e à legibilidade em dispositivos com modo escuro de sistema.
+> - **Movimento reduzido**: `globals.css` honra `prefers-reduced-motion: reduce` desabilitando animações e transições (~`0.01ms`).
+> - **Botões pill**: o token de raio `9999px` é aplicado via `className="rounded-full"` em CTAs primários (ver empty state do dashboard). O `Button` shadcn shipa raio padrão; usar `rounded-full` quando o componente representar uma ação de produto principal.
+
+
 ## 1. Visual Theme & Atmosphere
 
 Supabase's website is a dark-mode-native developer platform that channels the aesthetic of a premium code editor — deep black backgrounds (`#0f0f0f`, `#171717`) with emerald green accents (`#3ecf8e`, `#00c573`) that reference the brand's open-source, PostgreSQL-green identity. The design system feels like it was born in a terminal window and evolved into a sophisticated marketing surface without losing its developer soul.

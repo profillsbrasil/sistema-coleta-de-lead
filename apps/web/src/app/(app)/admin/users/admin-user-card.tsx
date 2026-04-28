@@ -53,11 +53,7 @@ function StatusBadge({ isBanned }: { isBanned: boolean }) {
 	if (isBanned) {
 		return <Badge variant="destructive">Desativado</Badge>;
 	}
-	return (
-		<Badge className="bg-primary/10 text-primary">
-			Ativo
-		</Badge>
-	);
+	return <Badge className="bg-primary/10 text-primary">Ativo</Badge>;
 }
 
 export function AdminUserCard({
@@ -78,9 +74,7 @@ export function AdminUserCard({
 			<div className="flex items-start justify-between gap-2">
 				<div className="flex min-w-0 flex-col gap-1">
 					<div className="flex items-center gap-2">
-						<span className="truncate font-medium text-sm">
-							{displayName}
-						</span>
+						<span className="truncate font-medium text-sm">{displayName}</span>
 						{isEditing ? (
 							<Select
 								defaultValue={user.role}
@@ -103,7 +97,7 @@ export function AdminUserCard({
 							<RoleBadge role={user.role} />
 						)}
 					</div>
-					<span className="truncate text-sm text-muted-foreground">
+					<span className="truncate text-muted-foreground text-sm">
 						{user.email}
 					</span>
 					<div className="flex items-center gap-2">
