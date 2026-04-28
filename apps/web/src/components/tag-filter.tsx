@@ -1,43 +1,41 @@
 "use client";
 
-import {
-	ToggleGroup,
-	ToggleGroupItem,
-} from "@dashboard-leads-profills/ui/components/toggle-group";
+import { FilterChip } from "@/components/page/filter-chip";
 import type { FilterTag } from "@/lib/lead/queries";
-import InterestIcon, { type InterestTag } from "./interest-icon";
 
 interface TagFilterProps {
 	onChange: (tag: FilterTag) => void;
 	value: FilterTag;
 }
 
-const INTEREST_TAGS: InterestTag[] = ["quente", "morno", "frio"];
+const TAGS: {
+	tag: FilterTag;
+	label: string;
+	tone: "neutral" | "quente" | "morno" | "frio";
+}[] = [
+	{ tag: "todos", label: "Todos", tone: "neutral" },
+	{ tag: "quente", label: "Quentes", tone: "quente" },
+	{ tag: "morno", label: "Mornos", tone: "morno" },
+	{ tag: "frio", label: "Frios", tone: "frio" },
+];
 
 export default function TagFilter({ value, onChange }: TagFilterProps) {
 	return (
-		<ToggleGroup
+		<fieldset
 			aria-label="Filtrar por interesse"
-			className="items-center gap-2"
-			onValueChange={(values) => onChange((values[0] as FilterTag) ?? "todos")}
-			spacing={8}
-			value={[value]}
+			className="flex flex-wrap items-center gap-2 border-0 p-0"
 		>
-			<ToggleGroupItem
-				className="min-h-11 rounded-md border border-transparent px-3 font-medium text-xs hover:bg-input/80 data-[state=off]:border-border data-[state=off]:bg-input data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-				value="todos"
-			>
-				Todos
-			</ToggleGroupItem>
-			{INTEREST_TAGS.map((tag) => (
-				<ToggleGroupItem
-					className="min-h-11 min-w-11 rounded-full hover:bg-transparent data-[state=on]:bg-transparent"
+			{TAGS.map(({ tag, label, tone }) => (
+				<FilterChip
+					active={value === tag}
+					aria-label={`Filtrar ${label}`}
 					key={tag}
-					value={tag}
+					onClick={() => onChange(tag)}
+					tone={tone}
 				>
-					<InterestIcon selected={value === tag} size="md" tag={tag} />
-				</ToggleGroupItem>
+					{label}
+				</FilterChip>
 			))}
-		</ToggleGroup>
+		</fieldset>
 	);
 }

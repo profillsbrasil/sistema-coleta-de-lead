@@ -55,7 +55,13 @@ export default function LeadDetail({ localId, userId }: LeadDetailProps) {
 
 	if (lead === undefined || notFound) {
 		return (
-			<div className="flex flex-col gap-4">
+			<div
+				aria-busy="true"
+				aria-live="polite"
+				className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 pt-2"
+				role="status"
+			>
+				<span className="sr-only">Carregando lead</span>
 				<Skeleton className="h-10 w-48" />
 				<Skeleton className="h-12 w-full" />
 				<Skeleton className="h-12 w-full" />
