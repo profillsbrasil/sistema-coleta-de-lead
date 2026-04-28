@@ -5,13 +5,14 @@ import { Input } from "@dashboard-leads-profills/ui/components/input";
 import { Skeleton } from "@dashboard-leads-profills/ui/components/skeleton";
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Download, Loader2, Search, Users, X } from "lucide-react";
-import Link from "next/link";
+import { Download, Loader2, Plus, Search, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import LeadCard from "@/components/lead-card";
+import { EmptyState } from "@/components/page/empty-state";
+import { PageHeader } from "@/components/page/page-header";
 import TagFilter from "@/components/tag-filter";
 import type { Lead } from "@/lib/db/types";
 import { buildExportFilename, exportLeadsCsv } from "@/lib/lead/export-csv";
@@ -19,7 +20,7 @@ import { queryLeadExportScope } from "@/lib/lead/export-scope";
 import { type FilterTag, queryLeads } from "@/lib/lead/queries";
 
 const PAGE_SIZE = 20;
-const LEADS_NEW_HREF = "/leads/new" as unknown as "/";
+const LEADS_NEW_HREF = "/leads/new";
 const SELLER_FILTER_LABELS: Record<FilterTag, string> = {
 	todos: "Todos",
 	quente: "Quente",
@@ -31,7 +32,7 @@ interface LeadListProps {
 	userId: string;
 }
 
-function EmptyState({
+function LeadsEmpty({
 	activeTag,
 	isFiltered,
 	searchTerm,
@@ -42,34 +43,33 @@ function EmptyState({
 }) {
 	if (isFiltered) {
 		return (
-			<p className="py-8 text-center text-muted-foreground text-sm">
-				Nenhum lead encontrado para &ldquo;{searchTerm.trim()}&rdquo;
-			</p>
+			<EmptyState
+				description={`Nenhum lead encontrado para "${searchTerm.trim()}".`}
+				title="Sem resultados"
+			/>
 		);
 	}
 
 	if (activeTag !== "todos") {
 		return (
-			<p className="py-8 text-center text-muted-foreground text-sm">
-				Nenhum lead {activeTag} encontrado
-			</p>
+			<EmptyState
+				description={`Nenhum lead ${activeTag} ainda. Continue coletando — vai aparecer aqui.`}
+				title={`Sem leads ${activeTag}`}
+			/>
 		);
 	}
 
 	return (
-		<div className="flex flex-col items-center gap-4 py-8 text-center">
-			<Users className="size-12 text-muted-foreground" />
-			<h2 className="font-semibold text-lg">Nenhum lead ainda</h2>
-			<p className="text-muted-foreground text-sm">
-				Comece coletando seu primeiro lead no evento.
-			</p>
-			<Link
-				className="font-medium text-primary text-sm underline-offset-4 hover:underline"
-				href={LEADS_NEW_HREF}
-			>
-				Novo Lead
-			</Link>
-		</div>
+		<EmptyState
+			cta={{
+				href: LEADS_NEW_HREF,
+				icon: Plus,
+				label: "Novo lead",
+			}}
+			description="Pode coletar leads mesmo sem internet — eles sincronizam quando voltar online."
+			icon={Users}
+			title="Sem leads ainda"
+		/>
 	);
 }
 
@@ -224,7 +224,10 @@ export default function LeadList({ userId }: LeadListProps) {
 	function renderContent() {
 		if (filteredLeads === undefined) {
 			return (
-				<div aria-busy="true" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				<div
+					aria-busy="true"
+					className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+				>
 					<Skeleton className="h-[72px] w-full rounded-lg" />
 					<Skeleton className="h-[72px] w-full rounded-lg" />
 					<Skeleton className="h-[72px] w-full rounded-lg" />
@@ -237,7 +240,7 @@ export default function LeadList({ userId }: LeadListProps) {
 
 		if (filteredLeads.length === 0) {
 			return (
-				<EmptyState
+				<LeadsEmpty
 					activeTag={activeTag}
 					isFiltered={isFiltered}
 					searchTerm={searchTerm}
@@ -256,17 +259,41 @@ export default function LeadList({ userId }: LeadListProps) {
 		);
 	}
 
+	const totalLeads = leads?.length ?? 0;
+	const filteredCount = filteredLeads?.length ?? 0;
+
+	function buildCountLabel(): string {
+		if (isFiltered) {
+			const noun = totalLeads === 1 ? "lead" : "leads";
+			return `de ${totalLeads} ${noun}`;
+		}
+		return filteredCount === 1 ? "lead" : "leads";
+	}
+
+	const subtitle =
+		filteredLeads === undefined ? null : (
+			<span aria-live="polite">
+				<span className="text-foreground">{filteredCount}</span>{" "}
+				<span className="text-muted-foreground">{buildCountLabel()}</span>
+			</span>
+		);
+
 	return (
-		<div className="flex flex-col gap-6">
-			<div className="flex items-center justify-between">
-				<h1 className="font-semibold text-xl">Meus Leads</h1>
-				<div className="flex items-center gap-2">
-					{leads !== undefined && leads.length > 0 && (
+		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-6">
+			<PageHeader
+				eyebrow="Você"
+				subtitle={subtitle}
+				title="Meus leads"
+				trailing={
+					leads !== undefined && leads.length > 0 ? (
 						<Button
 							aria-label="Exportar leads como CSV"
+							className="rounded-full"
 							disabled={isExporting}
 							onClick={() => {
-								void handleExport();
+								handleExport().catch(() => {
+									// erros tratados em handleExport
+								});
 							}}
 							size="sm"
 							type="button"
@@ -275,18 +302,11 @@ export default function LeadList({ userId }: LeadListProps) {
 							<Download className="size-4" />
 							Exportar
 						</Button>
-					)}
-					{filteredLeads === undefined ? null : (
-						<span aria-live="polite" className="text-muted-foreground text-sm">
-							{isFiltered
-								? `${filteredLeads.length} de ${leads?.length ?? 0} leads`
-								: `${filteredLeads.length} leads`}
-						</span>
-					)}
-				</div>
-			</div>
+					) : null
+				}
+			/>
 
-			<div className="flex flex-col gap-3">
+			<div className="flex flex-col gap-3 px-4">
 				<div className="relative">
 					<Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 					<Input
@@ -313,7 +333,7 @@ export default function LeadList({ userId }: LeadListProps) {
 				<TagFilter onChange={setActiveTag} value={activeTag} />
 			</div>
 
-			{renderContent()}
+			<div className="px-4">{renderContent()}</div>
 		</div>
 	);
 }

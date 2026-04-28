@@ -2,12 +2,6 @@
 
 import { Button } from "@dashboard-leads-profills/ui/components/button";
 import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@dashboard-leads-profills/ui/components/card";
-import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
@@ -15,10 +9,11 @@ import {
 import { Input } from "@dashboard-leads-profills/ui/components/input";
 import { Label } from "@dashboard-leads-profills/ui/components/label";
 import { Textarea } from "@dashboard-leads-profills/ui/components/textarea";
-import { ArrowLeft, ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/page/page-header";
 import type { Lead } from "@/lib/db/types";
 import { saveLead } from "@/lib/lead/save-lead";
 import { updateLead } from "@/lib/lead/update-lead";
@@ -223,282 +218,270 @@ export default function LeadForm({
 		}
 	}
 
+	const submitDisabled = isSubmitting || !(isEditMode || hasMinimum);
+	const submitLabel = isEditMode ? "Salvar alterações" : "Salvar lead";
+
 	return (
-		<div className="flex flex-col px-4 pt-2 pb-32 md:pt-6 md:pb-8">
-			<Button
-				aria-label="Voltar"
-				className="fixed top-14 left-2 z-30 size-10 rounded-full bg-background/80 backdrop-blur md:hidden"
-				onClick={() => router.back()}
-				size="icon"
-				type="button"
-				variant="ghost"
+		<div className="mx-auto flex w-full max-w-2xl flex-col gap-5 pb-40 md:pb-8">
+			<PageHeader
+				eyebrow={isEditMode ? "Editar" : "Novo"}
+				subtitle={
+					missingHint && !isEditMode ? (
+						<span className="text-muted-foreground">{missingHint}</span>
+					) : null
+				}
+				title={isEditMode ? "Editar lead" : "Novo lead"}
+			/>
+
+			<form
+				aria-busy={isSubmitting}
+				className="flex flex-col gap-5 px-4"
+				id="lead-form"
+				onSubmit={handleSubmit}
 			>
-				<ArrowLeft className="size-5" />
-			</Button>
+				<div className="flex flex-col gap-2">
+					<Label htmlFor="lead-name">
+						Nome <span className="text-destructive">*</span>
+					</Label>
+					<Input
+						aria-describedby={errors.name ? "error-name" : undefined}
+						aria-invalid={!!errors.name}
+						autoComplete="name"
+						className="h-12"
+						disabled={isSubmitting}
+						enterKeyHint="next"
+						id="lead-name"
+						onChange={(e) => setName(e.target.value)}
+						placeholder="Ex.: Maria Silva"
+						ref={nameRef}
+						required
+						type="text"
+						value={name}
+					/>
+					{errors.name && (
+						<p
+							className="text-destructive text-xs"
+							id="error-name"
+							role="alert"
+						>
+							{errors.name}
+						</p>
+					)}
+				</div>
 
-			<header className="mx-auto hidden w-full max-w-lg items-center gap-3 pb-4 md:flex">
-				<Button
-					aria-label="Voltar"
-					onClick={() => router.back()}
-					size="icon"
-					type="button"
-					variant="ghost"
-				>
-					<ArrowLeft className="size-5" />
-				</Button>
-				<h1 className="font-semibold text-xl">
-					{isEditMode ? "Editar lead" : "Novo lead"}
-				</h1>
-			</header>
+				<div className="flex flex-col gap-2">
+					<Label htmlFor="lead-company">
+						Empresa <span className="text-destructive">*</span>
+					</Label>
+					<Input
+						aria-describedby={errors.company ? "error-company" : undefined}
+						aria-invalid={!!errors.company}
+						autoComplete="organization"
+						className="h-12"
+						disabled={isSubmitting}
+						enterKeyHint="next"
+						id="lead-company"
+						onChange={(e) => setCompany(e.target.value)}
+						placeholder="Ex.: Acme Corp"
+						ref={companyRef}
+						required
+						type="text"
+						value={company}
+					/>
+					{errors.company && (
+						<p
+							className="text-destructive text-xs"
+							id="error-company"
+							role="alert"
+						>
+							{errors.company}
+						</p>
+					)}
+				</div>
 
-			<Card className="mx-auto w-full max-w-lg">
-				<CardHeader className="pb-2">
-					<CardTitle className="sr-only">Formulário de lead</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<form
-						aria-busy={isSubmitting}
-						className="flex flex-col gap-5"
-						onSubmit={handleSubmit}
+				<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+					<div className="flex flex-col gap-2">
+						<Label htmlFor="lead-phone">
+							Telefone{" "}
+							<span className="text-muted-foreground text-xs">(ou email)</span>
+						</Label>
+						<Input
+							aria-describedby={errors.phone ? "error-phone" : undefined}
+							aria-invalid={!!errors.phone}
+							autoComplete="tel"
+							className="h-12"
+							disabled={isSubmitting}
+							enterKeyHint="next"
+							id="lead-phone"
+							inputMode="tel"
+							onChange={(e) => setPhone(maskPhoneInput(e.target.value))}
+							placeholder="(51) 99647-4579"
+							ref={phoneRef}
+							type="tel"
+							value={phone}
+						/>
+						{errors.phone && (
+							<p
+								className="text-destructive text-xs"
+								id="error-phone"
+								role="alert"
+							>
+								{errors.phone}
+							</p>
+						)}
+					</div>
+
+					<div className="flex flex-col gap-2">
+						<Label htmlFor="lead-email">Email</Label>
+						<Input
+							aria-describedby={errors.email ? "error-email" : undefined}
+							aria-invalid={!!errors.email}
+							autoComplete="email"
+							className="h-12"
+							disabled={isSubmitting}
+							enterKeyHint="next"
+							id="lead-email"
+							inputMode="email"
+							onChange={(e) => setEmail(e.target.value)}
+							placeholder="maria@acme.com"
+							ref={emailRef}
+							type="email"
+							value={email}
+						/>
+						{errors.email && (
+							<p
+								className="text-destructive text-xs"
+								id="error-email"
+								role="alert"
+							>
+								{errors.email}
+							</p>
+						)}
+					</div>
+				</div>
+
+				<div className="flex flex-col gap-2">
+					<Label>
+						Interesse <span className="text-destructive">*</span>
+					</Label>
+					<TagSelector
+						disabled={isSubmitting}
+						onChange={setInterestTag}
+						value={interestTag}
+					/>
+				</div>
+
+				{hidePhoto ? null : (
+					<div className="flex flex-col gap-2">
+						<Label>
+							Foto do cartão{" "}
+							<span className="font-normal text-muted-foreground text-xs">
+								(opcional)
+							</span>
+						</Label>
+						<PhotoCapture
+							onCapture={(blob) => {
+								setPhoto(blob);
+								setPhotoChanged(true);
+							}}
+							onRemove={() => {
+								setPhoto(null);
+								setPhotoChanged(true);
+							}}
+							photo={photo}
+						/>
+					</div>
+				)}
+
+				<Collapsible onOpenChange={setExtrasOpen} open={extrasOpen}>
+					<CollapsibleTrigger
+						className="flex w-full items-center justify-between rounded-md border border-border-subtle border-dashed bg-card px-4 py-3 font-medium text-foreground text-sm transition-colors hover:bg-accent"
+						disabled={isSubmitting}
+						type="button"
 					>
+						<span>
+							Mais informações{" "}
+							<span className="font-mono font-normal text-[10px] text-muted-foreground uppercase tracking-[0.16em]">
+								{extrasFilled === 0
+									? "opcional"
+									: `${extrasFilled}/${extrasTotal}`}
+							</span>
+						</span>
+						<ChevronDown
+							className={`size-4 transition-transform ${extrasOpen ? "rotate-180" : ""}`}
+						/>
+					</CollapsibleTrigger>
+					<CollapsibleContent className="flex flex-col gap-5 pt-5">
 						<div className="flex flex-col gap-2">
-							<Label htmlFor="lead-name">
-								Nome <span className="text-destructive">*</span>
-							</Label>
+							<Label htmlFor="lead-position">Cargo</Label>
 							<Input
-								aria-describedby={errors.name ? "error-name" : undefined}
-								aria-invalid={!!errors.name}
-								autoComplete="name"
+								autoComplete="organization-title"
 								className="h-12"
 								disabled={isSubmitting}
-								id="lead-name"
-								onChange={(e) => setName(e.target.value)}
-								placeholder="Nome do contato"
-								ref={nameRef}
-								required
+								id="lead-position"
+								onChange={(e) => setPosition(e.target.value)}
+								placeholder="Ex.: Head de Vendas"
 								type="text"
-								value={name}
-							/>
-							{errors.name && (
-								<p
-									className="text-destructive text-xs"
-									id="error-name"
-									role="alert"
-								>
-									{errors.name}
-								</p>
-							)}
-						</div>
-
-						<div className="flex flex-col gap-2">
-							<Label>
-								Interesse <span className="text-destructive">*</span>
-							</Label>
-							<TagSelector
-								disabled={isSubmitting}
-								onChange={setInterestTag}
-								value={interestTag}
+								value={position}
 							/>
 						</div>
 
 						<div className="flex flex-col gap-2">
-							<Label htmlFor="lead-phone">
-								Telefone{" "}
-								<span className="text-muted-foreground text-xs">
-									ou email *
-								</span>
-							</Label>
+							<Label htmlFor="lead-segment">Segmento</Label>
 							<Input
-								aria-describedby={errors.phone ? "error-phone" : undefined}
-								aria-invalid={!!errors.phone}
-								autoComplete="tel"
 								className="h-12"
 								disabled={isSubmitting}
-								id="lead-phone"
-								inputMode="tel"
-								onChange={(e) => setPhone(maskPhoneInput(e.target.value))}
-								placeholder="(51) 99647-4579"
-								ref={phoneRef}
-								type="tel"
-								value={phone}
-							/>
-							{errors.phone && (
-								<p
-									className="text-destructive text-xs"
-									id="error-phone"
-									role="alert"
-								>
-									{errors.phone}
-								</p>
-							)}
-						</div>
-
-						<div className="flex flex-col gap-2">
-							<Label htmlFor="lead-email">Email</Label>
-							<Input
-								aria-describedby={errors.email ? "error-email" : undefined}
-								aria-invalid={!!errors.email}
-								autoComplete="email"
-								className="h-12"
-								disabled={isSubmitting}
-								id="lead-email"
-								onChange={(e) => setEmail(e.target.value)}
-								placeholder="email@exemplo.com"
-								ref={emailRef}
-								type="email"
-								value={email}
-							/>
-							{errors.email && (
-								<p
-									className="text-destructive text-xs"
-									id="error-email"
-									role="alert"
-								>
-									{errors.email}
-								</p>
-							)}
-						</div>
-
-						<div className="flex flex-col gap-2">
-							<Label htmlFor="lead-company">
-								Empresa <span className="text-destructive">*</span>
-							</Label>
-							<Input
-								aria-describedby={errors.company ? "error-company" : undefined}
-								aria-invalid={!!errors.company}
-								autoComplete="organization"
-								className="h-12"
-								disabled={isSubmitting}
-								id="lead-company"
-								onChange={(e) => setCompany(e.target.value)}
-								placeholder="Empresa"
-								ref={companyRef}
-								required
+								id="lead-segment"
+								onChange={(e) => setSegment(e.target.value)}
+								placeholder="Ex.: SaaS B2B"
 								type="text"
-								value={company}
+								value={segment}
 							/>
-							{errors.company && (
-								<p
-									className="text-destructive text-xs"
-									id="error-company"
-									role="alert"
-								>
-									{errors.company}
-								</p>
-							)}
 						</div>
 
-						<Collapsible onOpenChange={setExtrasOpen} open={extrasOpen}>
-							<CollapsibleTrigger
-								className="flex w-full items-center justify-between rounded-md border border-border border-dashed bg-muted/30 px-4 py-3 font-medium text-foreground text-sm transition-colors hover:bg-muted/50"
+						<div className="flex flex-col gap-2">
+							<Label htmlFor="lead-notes">Notas</Label>
+							<Textarea
 								disabled={isSubmitting}
-								type="button"
-							>
-								<span>
-									Mais informações{" "}
-									<span className="font-normal text-muted-foreground">
-										{extrasFilled === 0
-											? "(opcional)"
-											: `(${extrasFilled} de ${extrasTotal} preenchidos)`}
-									</span>
-								</span>
-								<ChevronDown
-									className={`size-4 transition-transform ${extrasOpen ? "rotate-180" : ""}`}
-								/>
-							</CollapsibleTrigger>
-							<CollapsibleContent className="flex flex-col gap-5 pt-5">
-								<div className="flex flex-col gap-2">
-									<Label htmlFor="lead-position">Cargo</Label>
-									<Input
-										autoComplete="organization-title"
-										className="h-12"
-										disabled={isSubmitting}
-										id="lead-position"
-										onChange={(e) => setPosition(e.target.value)}
-										placeholder="Cargo"
-										type="text"
-										value={position}
-									/>
-								</div>
-
-								<div className="flex flex-col gap-2">
-									<Label htmlFor="lead-segment">Segmento</Label>
-									<Input
-										className="h-12"
-										disabled={isSubmitting}
-										id="lead-segment"
-										onChange={(e) => setSegment(e.target.value)}
-										placeholder="Segmento de atuação"
-										type="text"
-										value={segment}
-									/>
-								</div>
-
-								{hidePhoto ? null : (
-									<div className="flex flex-col gap-2">
-										<Label>Foto do cartão</Label>
-										<PhotoCapture
-											onCapture={(blob) => {
-												setPhoto(blob);
-												setPhotoChanged(true);
-											}}
-											onRemove={() => {
-												setPhoto(null);
-												setPhotoChanged(true);
-											}}
-											photo={photo}
-										/>
-									</div>
-								)}
-
-								<div className="flex flex-col gap-2">
-									<Label htmlFor="lead-notes">Notas</Label>
-									<Textarea
-										disabled={isSubmitting}
-										id="lead-notes"
-										onChange={(e) => setNotes(e.target.value)}
-										placeholder="Observações sobre o contato..."
-										rows={3}
-										value={notes}
-									/>
-								</div>
-							</CollapsibleContent>
-						</Collapsible>
-
-						<div className="mt-2 flex flex-col gap-2">
-							{missingHint && !isEditMode ? (
-								<p className="text-center text-muted-foreground text-xs">
-									{missingHint}
-								</p>
-							) : null}
-							<Button
-								aria-busy={isSubmitting}
-								className="w-full"
-								disabled={isSubmitting || !(isEditMode || hasMinimum)}
-								size="lg"
-								type="submit"
-							>
-								{isSubmitting ? (
-									<Loader2 className="mr-2 size-4 animate-spin" />
-								) : null}
-								{isEditMode ? "Salvar alterações" : "Salvar lead"}
-							</Button>
-							{isEditMode && onDelete ? (
-								<Button
-									className="w-full text-destructive"
-									disabled={isSubmitting}
-									onClick={onDelete}
-									size="lg"
-									type="button"
-									variant="outline"
-								>
-									Excluir lead
-								</Button>
-							) : null}
+								id="lead-notes"
+								onChange={(e) => setNotes(e.target.value)}
+								placeholder="Pontos da conversa, próximos passos…"
+								rows={3}
+								value={notes}
+							/>
 						</div>
-					</form>
-				</CardContent>
-			</Card>
+					</CollapsibleContent>
+				</Collapsible>
+
+				{isEditMode && onDelete ? (
+					<Button
+						className="w-full text-destructive"
+						disabled={isSubmitting}
+						onClick={onDelete}
+						size="lg"
+						type="button"
+						variant="outline"
+					>
+						Excluir lead
+					</Button>
+				) : null}
+			</form>
+
+			<div className="-mx-4 fixed inset-x-0 bottom-[68px] z-20 border-border-subtle border-t bg-background/95 px-4 pt-3 pb-3 backdrop-blur md:relative md:inset-auto md:mx-0 md:border-0 md:bg-transparent md:px-4 md:pt-0 md:pb-0 md:backdrop-blur-none">
+				<Button
+					aria-busy={isSubmitting}
+					className="w-full rounded-full"
+					disabled={submitDisabled}
+					form="lead-form"
+					size="lg"
+					type="submit"
+				>
+					{isSubmitting ? (
+						<Loader2 className="mr-2 size-4 animate-spin" />
+					) : null}
+					{submitLabel}
+				</Button>
+			</div>
 		</div>
 	);
 }

@@ -1,18 +1,14 @@
 "use client";
 
 import {
-	Card,
-	CardContent,
-	CardHeader,
-	CardTitle,
-} from "@dashboard-leads-profills/ui/components/card";
-import {
 	Empty,
 	EmptyDescription,
 } from "@dashboard-leads-profills/ui/components/empty";
 import { Skeleton } from "@dashboard-leads-profills/ui/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { PageHeader } from "@/components/page/page-header";
+import { SectionHeading } from "@/components/page/section-heading";
 import { StatCard } from "@/components/stat-card";
 import { trpc } from "@/utils/trpc";
 import StatsCharts from "./stats-charts";
@@ -125,31 +121,32 @@ export default function StatsPanel() {
 	const isEmpty = !isLoadingStats && stats?.total === 0 && ranking.length === 0;
 
 	return (
-		<div>
-			<h1 className="mb-6 font-semibold text-xl">Estatisticas Globais</h1>
+		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-6">
+			<PageHeader eyebrow="Admin" title="Estatísticas globais" />
 
-			<StatsFilters
-				isLoading={statsQuery.isFetching}
-				onApply={setAppliedFilters}
-				segments={segmentsQuery.data ?? []}
-				vendors={vendorsQuery.data ?? []}
-			/>
+			<div className="px-4">
+				<StatsFilters
+					isLoading={statsQuery.isFetching}
+					onApply={setAppliedFilters}
+					segments={segmentsQuery.data ?? []}
+					vendors={vendorsQuery.data ?? []}
+				/>
+			</div>
 
 			{isLoadingStats ? (
-				<StatCardsSkeleton />
+				<div className="px-4">
+					<StatCardsSkeleton />
+				</div>
 			) : (
-				<div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-					<StatCard label="Total de Leads" value={stats?.total ?? 0} />
-					<StatCard label="Score Total" value={`${stats?.score ?? 0} pts`} />
-					<StatCard label="Leads Hoje" value={stats?.today ?? 0} />
-					<StatCard
-						label="Vendedores Ativos"
-						value={stats?.activeVendors ?? 0}
-					/>
+				<div className="grid grid-cols-2 gap-3 px-4 lg:grid-cols-4">
+					<StatCard label="Total" value={stats?.total ?? 0} />
+					<StatCard label="Score" value={stats?.score ?? 0} />
+					<StatCard label="Hoje" value={stats?.today ?? 0} />
+					<StatCard label="Ativos" value={stats?.activeVendors ?? 0} />
 				</div>
 			)}
 
-			<div className="mb-6">
+			<div className="px-4">
 				<StatsCharts
 					isLoading={timelineQuery.isLoading}
 					tagData={{
@@ -161,18 +158,16 @@ export default function StatsPanel() {
 				/>
 			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>Ranking</CardTitle>
-				</CardHeader>
-				<CardContent>
+			<section aria-labelledby="ranking-section">
+				<SectionHeading id="ranking-section" meta="Equipe" title="Ranking" />
+				<div className="mt-3 px-4">
 					<RankingContent
 						isEmpty={isEmpty}
 						isLoading={rankingQuery.isLoading}
 						ranking={ranking}
 					/>
-				</CardContent>
-			</Card>
+				</div>
+			</section>
 		</div>
 	);
 }

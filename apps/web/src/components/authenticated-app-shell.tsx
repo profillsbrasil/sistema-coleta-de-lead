@@ -10,7 +10,6 @@ import { useEffect } from "react";
 import AppSidebar from "@/components/app-sidebar";
 import BottomNav from "@/components/bottom-nav";
 import FAB from "@/components/fab";
-import { GlobalHeader } from "@/components/global-header";
 import { ServiceWorkerRegistrar } from "@/components/service-worker-registrar";
 import { SyncStatusProvider } from "@/components/sync-status-provider";
 import { AppAuthProvider, useAppAuth } from "./app-auth-provider";
@@ -84,14 +83,13 @@ function AuthenticatedAppShellContent({
 	return (
 		<SyncStatusProvider>
 			<ServiceWorkerRegistrar />
-			<div className="flex min-h-svh flex-col">
-				<GlobalHeader />
-				{/* Desktop: sidebar + content */}
-				<div className="hidden min-h-0 flex-1 md:flex">
+			<div className="flex min-h-svh flex-col md:h-svh md:min-h-0">
+				{/* Desktop: sticky sidebar + scrollable content */}
+				<div className="hidden h-svh overflow-hidden md:flex">
 					<SidebarProvider defaultOpen>
 						<AppSidebar isAdmin={isAdmin && isOnline} />
-						<SidebarInset>
-							<div className="flex-1 p-6">{children}</div>
+						<SidebarInset className="overflow-y-auto">
+							<div className="p-6">{children}</div>
 						</SidebarInset>
 					</SidebarProvider>
 				</div>

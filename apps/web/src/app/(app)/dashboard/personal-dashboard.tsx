@@ -12,7 +12,6 @@ import {
 	ChartTooltip,
 	ChartTooltipContent,
 } from "@dashboard-leads-profills/ui/components/chart";
-import { useSidebar } from "@dashboard-leads-profills/ui/components/sidebar";
 import { Skeleton } from "@dashboard-leads-profills/ui/components/skeleton";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
@@ -44,20 +43,21 @@ export default function PersonalDashboard({
 	overrideStats = null,
 }: PersonalDashboardProps) {
 	const localStats = useLiveQuery(() => getPersonalStats(userId), [userId]);
-	const { open } = useSidebar();
 
 	const stats = overrideStats ?? localStats;
 
 	if (!stats) {
 		return (
-			<div aria-busy="true" className="flex flex-col gap-4">
-				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			<div
+				aria-busy="true"
+				aria-live="polite"
+				className="flex flex-col gap-4"
+				role="status"
+			>
+				<span className="sr-only">Carregando suas estatísticas</span>
+				<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
 					<Skeleton className="h-20" />
 					<Skeleton className="h-20" />
-					<Skeleton className="h-20" />
-					<Skeleton className="h-20" />
-				</div>
-				<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					<Skeleton className="h-20" />
 					<Skeleton className="h-20" />
 				</div>
@@ -74,49 +74,42 @@ export default function PersonalDashboard({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-				<StatCard label="Total de Leads" value={stats.total} />
-				<StatCard label="Leads Hoje" value={stats.hoje} />
+			<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+				<StatCard label="Total" value={stats.total} />
+				<StatCard label="Hoje" value={stats.hoje} />
+				<StatCard label="Score" value={stats.score} />
 				<StatCard
-					className="[&_span:first-child]:text-tag-quente-text"
+					className="[&_span:nth-child(2)]:text-tag-quente-text"
 					label="Quentes"
 					value={stats.quente}
 				/>
-				<StatCard
-					className="[&_span:first-child]:text-tag-morno-text"
-					label="Mornos"
-					value={stats.morno}
-				/>
 			</div>
 
-			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-				<StatCard
-					className="[&_span:first-child]:text-tag-frio-text"
-					label="Frios"
-					value={stats.frio}
-				/>
-				<StatCard label="Seu Score" value={`${stats.score} pts`} />
-			</div>
-
-			<Card>
-				<CardHeader>
-					<CardTitle>Leads por Tag</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<ChartContainer
-						className="h-[120px] w-full"
-						config={chartConfig}
-						key={`leads-chart-${String(open)}`}
-					>
-						<BarChart data={chartData} layout="vertical">
-							<XAxis hide type="number" />
-							<YAxis dataKey="tag" type="category" width={60} />
-							<ChartTooltip content={<ChartTooltipContent />} />
-							<Bar dataKey="count" radius={4} />
-						</BarChart>
-					</ChartContainer>
-				</CardContent>
-			</Card>
+			{stats.total > 0 && (
+				<Card>
+					<CardHeader>
+						<CardTitle className="font-mono text-[11px] text-muted-foreground uppercase tracking-[0.16em]">
+							Leads por tag
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<ChartContainer className="h-[120px] w-full" config={chartConfig}>
+							<BarChart data={chartData} layout="vertical">
+								<XAxis hide type="number" />
+								<YAxis
+									axisLine={false}
+									dataKey="tag"
+									tickLine={false}
+									type="category"
+									width={60}
+								/>
+								<ChartTooltip content={<ChartTooltipContent />} />
+								<Bar dataKey="count" radius={4} />
+							</BarChart>
+						</ChartContainer>
+					</CardContent>
+				</Card>
+			)}
 		</div>
 	);
 }

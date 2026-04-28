@@ -18,7 +18,7 @@ export default function RootLayout({
 	return (
 		<html
 			className={cn("font-sans", GeistSans.variable, GeistMono.variable)}
-			lang="en"
+			lang="pt-BR"
 			suppressHydrationWarning
 		>
 			<body className="antialiased">

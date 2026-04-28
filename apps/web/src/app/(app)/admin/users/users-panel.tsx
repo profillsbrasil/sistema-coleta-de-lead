@@ -1,5 +1,6 @@
 "use client";
 
+import { authClient } from "@dashboard-leads-profills/auth/client";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -63,8 +64,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-
-import { authClient } from "@dashboard-leads-profills/auth/client";
+import { PageHeader } from "@/components/page/page-header";
 import { trpc } from "@/utils/trpc";
 import { AdminUserCard } from "./admin-user-card";
 
@@ -173,12 +173,27 @@ export default function UsersPanel() {
 	const start = (page - 1) * PER_PAGE + 1;
 	const end = Math.min(page * PER_PAGE, total);
 
-	return (
-		<div>
-			<h1 className="mb-6 font-semibold text-xl">Gerenciar Usuarios</h1>
+	const subtitle =
+		total > 0 ? (
+			<span>
+				<span className="text-foreground">{start}</span>
+				<span className="text-muted-foreground">
+					{" "}
+					— {end} de {total}
+				</span>
+			</span>
+		) : null;
 
-			<div className="relative mb-4">
-				<Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+	return (
+		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-6">
+			<PageHeader
+				eyebrow="Admin"
+				subtitle={subtitle}
+				title="Gerenciar usuários"
+			/>
+
+			<div className="relative px-4">
+				<Search className="absolute top-1/2 left-7 size-4 -translate-y-1/2 text-muted-foreground" />
 				<Input
 					className="pl-9"
 					onChange={(e) => setSearch(e.target.value)}
@@ -186,12 +201,6 @@ export default function UsersPanel() {
 					value={search}
 				/>
 			</div>
-
-			{total > 0 && (
-				<p className="mb-2 text-right text-muted-foreground text-sm">
-					Mostrando {start}-{end} de {total}
-				</p>
-			)}
 
 			<UsersContent
 				currentUserId={currentUserId}
@@ -282,14 +291,14 @@ function UsersContent({
 
 	if (usersQuery.isError) {
 		return (
-			<Empty>
+			<Empty className="mx-4">
 				<EmptyHeader>
 					<EmptyMedia variant="icon">
 						<Users />
 					</EmptyMedia>
-					<EmptyTitle>Erro ao carregar usuarios</EmptyTitle>
+					<EmptyTitle>Erro ao carregar usuários</EmptyTitle>
 					<EmptyDescription>
-						Nao foi possivel carregar a lista de usuarios. Tente novamente.
+						Não foi possível carregar a lista de usuários. Tente novamente.
 					</EmptyDescription>
 				</EmptyHeader>
 			</Empty>
@@ -300,16 +309,16 @@ function UsersContent({
 
 	if (users.length === 0) {
 		return (
-			<Empty>
+			<Empty className="mx-4">
 				<EmptyHeader>
 					<EmptyMedia variant="icon">
 						<Users />
 					</EmptyMedia>
-					<EmptyTitle>Nenhum usuario encontrado</EmptyTitle>
+					<EmptyTitle>Nenhum usuário encontrado</EmptyTitle>
 					<EmptyDescription>
 						{debouncedSearch
-							? "Nenhum usuario corresponde a busca. Tente outro termo."
-							: "Nenhum usuario cadastrado no sistema."}
+							? "Nenhum usuário corresponde à busca. Tente outro termo."
+							: "Nenhum usuário cadastrado no sistema."}
 					</EmptyDescription>
 				</EmptyHeader>
 			</Empty>
@@ -319,7 +328,7 @@ function UsersContent({
 	return (
 		<>
 			{/* Mobile: card list */}
-			<div className="flex flex-col gap-4 md:hidden">
+			<div className="flex flex-col gap-4 px-4 md:hidden">
 				{users.map((user) => (
 					<AdminUserCard
 						currentUserId={currentUserId}
@@ -336,7 +345,7 @@ function UsersContent({
 			</div>
 
 			{/* Desktop: table */}
-			<div className="hidden md:block">
+			<div className="hidden px-4 md:block">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -493,7 +502,7 @@ function UsersPagination({
 	totalPages: number;
 }) {
 	return (
-		<div className="mt-4">
+		<div className="mt-4 px-4">
 			<Pagination>
 				<PaginationContent>
 					<PaginationItem>
@@ -625,11 +634,7 @@ function StatusBadge({ isBanned }: { isBanned: boolean }) {
 	if (isBanned) {
 		return <Badge variant="destructive">Desativado</Badge>;
 	}
-	return (
-		<Badge className="bg-primary/10 text-primary">
-			Ativo
-		</Badge>
-	);
+	return <Badge className="bg-primary/10 text-primary">Ativo</Badge>;
 }
 
 function UsersTableSkeleton() {

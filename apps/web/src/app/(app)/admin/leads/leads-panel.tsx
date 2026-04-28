@@ -65,6 +65,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import InterestIcon from "@/components/interest-icon";
+import { PageHeader } from "@/components/page/page-header";
 import { StatCard } from "@/components/stat-card";
 import { buildExportFilename, exportLeadsCsv } from "@/lib/lead/export-csv";
 import { formatPhone, unmaskPhone } from "@/lib/masks/phone";
@@ -185,11 +186,11 @@ export default function LeadsPanel() {
 		"";
 
 	return (
-		<div className="flex flex-col gap-6">
-			<h1 className="font-semibold text-xl">Leads por Vendedor</h1>
+		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-6">
+			<PageHeader eyebrow="Admin" title="Leads por vendedor" />
 
 			<Select onValueChange={handleVendorChange} value={selectedVendor}>
-				<SelectTrigger className="w-full max-w-sm">
+				<SelectTrigger className="mx-4 w-[calc(100%-2rem)] max-w-sm">
 					<SelectValue placeholder="Selecionar vendedor" />
 				</SelectTrigger>
 				<SelectContent>
@@ -202,7 +203,7 @@ export default function LeadsPanel() {
 			</Select>
 
 			{!selectedVendor && (
-				<Empty>
+				<Empty className="mx-4">
 					<EmptyHeader>
 						<EmptyTitle>Nenhum vendedor selecionado</EmptyTitle>
 						<EmptyDescription>
@@ -213,15 +214,15 @@ export default function LeadsPanel() {
 			)}
 
 			{selectedVendor && statsQuery.data && (
-				<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-					<StatCard label="Total de Leads" value={statsQuery.data.total} />
+				<div className="grid grid-cols-3 gap-3 px-4">
+					<StatCard label="Total" value={statsQuery.data.total} />
 					<StatCard label="Score" value={statsQuery.data.score} />
-					<StatCard label="Leads Hoje" value={statsQuery.data.today} />
+					<StatCard label="Hoje" value={statsQuery.data.today} />
 				</div>
 			)}
 
 			{selectedVendor && leadsQuery.isLoading && (
-				<div className="flex flex-col gap-2">
+				<div className="flex flex-col gap-2 px-4">
 					{Array.from({ length: 5 }, (_, i) => (
 						<Skeleton className="h-12 w-full" key={`skeleton-${String(i)}`} />
 					))}
@@ -229,7 +230,7 @@ export default function LeadsPanel() {
 			)}
 
 			{selectedVendor && leadsQuery.isError && (
-				<Empty>
+				<Empty className="mx-4">
 					<EmptyHeader>
 						<EmptyTitle>Erro ao carregar dados</EmptyTitle>
 						<EmptyDescription>
@@ -240,7 +241,7 @@ export default function LeadsPanel() {
 			)}
 
 			{selectedVendor && leadsQuery.isSuccess && leads.length === 0 && (
-				<Empty>
+				<Empty className="mx-4">
 					<EmptyHeader>
 						<EmptyTitle>Nenhum lead encontrado</EmptyTitle>
 						<EmptyDescription>
@@ -252,12 +253,14 @@ export default function LeadsPanel() {
 
 			{selectedVendor && leadsQuery.isSuccess && leads.length > 0 && (
 				<>
-					<div className="flex items-center justify-between">
+					<div className="flex items-center justify-between px-4">
 						<Button
 							aria-label="Exportar leads como CSV"
 							disabled={adminLeadFilters === null || isExporting}
 							onClick={() => {
-								void handleExport();
+								handleExport().catch(() => {
+									// erros tratados em handleExport
+								});
 							}}
 							size="sm"
 							type="button"
@@ -272,7 +275,7 @@ export default function LeadsPanel() {
 					</div>
 
 					{/* Mobile: card list */}
-					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:hidden">
+					<div className="grid grid-cols-1 gap-4 px-4 sm:grid-cols-2 md:hidden">
 						{leads.map((lead) => (
 							<AdminLeadCard
 								key={lead.localId}
@@ -284,7 +287,7 @@ export default function LeadsPanel() {
 					</div>
 
 					{/* Desktop: table */}
-					<div className="hidden md:block">
+					<div className="hidden px-4 md:block">
 						<Table>
 							<TableHeader>
 								<TableRow>
@@ -376,7 +379,7 @@ export default function LeadsPanel() {
 					</div>
 
 					{totalPages > 1 && (
-						<Pagination>
+						<Pagination className="px-4">
 							<PaginationContent>
 								<PaginationItem>
 									<PaginationPrevious
