@@ -33,6 +33,14 @@ function checkRateLimit(ip: string): boolean {
 }
 
 export async function POST(req: Request) {
+	const inviteCode = env.SIGNUP_INVITE_CODE;
+	if (!inviteCode) {
+		return Response.json(
+			{ error: "Signup por convite indisponível neste ambiente." },
+			{ status: 503 }
+		);
+	}
+
 	const ip = getClientIp(req);
 	if (!checkRateLimit(ip)) {
 		return Response.json(
@@ -57,14 +65,11 @@ export async function POST(req: Request) {
 		return Response.json({ error: "Código obrigatório." }, { status: 400 });
 	}
 
-	if (!timingSafeEqual(code, env.SIGNUP_INVITE_CODE)) {
+	if (!timingSafeEqual(code, inviteCode)) {
 		return Response.json({ error: "Código inválido." }, { status: 401 });
 	}
 
-	const token = await computeInviteToken(
-		env.SIGNUP_INVITE_CODE,
-		env.BETTER_AUTH_SECRET
-	);
+	const token = await computeInviteToken(inviteCode, env.BETTER_AUTH_SECRET);
 
 	const isProd = env.NODE_ENV === "production";
 	const cookie = [
