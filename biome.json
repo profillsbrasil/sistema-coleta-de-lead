@@ -27,7 +27,9 @@
       "!**/.source",
       "!**/convex/_generated",
       "!**/.claude",
-      "!**/.codex"
+      "!**/.codex",
+      "!**/public/sw-manifest.json",
+      "!**/public/sw-build.js"
     ]
   },
   "formatter": {

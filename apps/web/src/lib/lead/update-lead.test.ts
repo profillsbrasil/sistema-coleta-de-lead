@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "../db/index";
 import type { Lead } from "../db/types";
-import type { LeadFormData } from "./validation";
 import { updateLead } from "./update-lead";
+import type { LeadFormData } from "./validation";
 
 function makeFormData(overrides: Partial<LeadFormData> = {}): LeadFormData {
 	return {
