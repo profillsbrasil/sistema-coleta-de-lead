@@ -2,79 +2,75 @@
 
 ## Fonte de Verdade
 
-- Este arquivo e a referencia canonica para contexto de produto, arquitetura e convencoes do projeto.
-- Em caso de conflito entre documentacao de agente e codigo, o codigo-fonte vence.
-- `AGENTS.md` e `.claude/CLAUDE.md` devem permanecer alinhados a este arquivo, sem manter uma segunda versao da arquitetura.
+- Este arquivo é a referência canônica de produto, arquitetura e convenções do projeto.
+- Em caso de conflito entre documentação e código, o código-fonte vence.
+- `AGENTS.md` aponta para este arquivo. Os CLAUDE.md por workspace (`apps/web`, `packages/db`, `packages/ui`) cobrem apenas convenções locais — nunca duplicam arquitetura.
 
 ## Objetivo do Produto
 
-- O sistema existe para coleta rapida de leads em eventos e congressos, com operacao offline-first.
-- O foco principal e nao perder dados quando a rede falha.
-- O app nao deve derivar para um CRM completo. Funis, automacoes complexas e fluxos de follow-up nao sao o centro do produto atual.
+- Coleta rápida de leads em eventos e congressos, com operação offline-first.
+- O foco principal é não perder dados quando a rede falha.
+- O app não deve derivar para um CRM completo. Funis, automações complexas e fluxos de follow-up não são o centro do produto.
 
-## Stack Atual
+## Stack
 
 - Monorepo: Turborepo + Bun workspaces
-- Frontend: Next.js 16, React 19, React Compiler, Tailwind CSS 4
+- Frontend: Next.js 16, React 19 (React Compiler ativo), Tailwind CSS 4
 - UI compartilhada: `packages/ui` com primitives shadcn/ui path-based
 - API: tRPC 11 em route handler Next.js
 - Banco: PostgreSQL + Drizzle ORM
 - Auth: Better Auth (Drizzle adapter pg + plugin admin) em `packages/auth`
-- Storage (fotos de leads): Supabase Storage bucket `lead-photos` via `@supabase/supabase-js` em `apps/web/src/lib/storage/client.ts`
+- Storage (fotos de leads): Supabase Storage bucket `lead-photos` via `@supabase/supabase-js` em `apps/web/src/lib/storage/client.ts` — somente Storage, sem Supabase Auth
 - Offline local: Dexie 4 + `dexie-react-hooks`
 - Testes: Vitest
 - Lint/format: Ultracite / Biome
 
-## Estrutura Real do Monorepo
+## Estrutura do Monorepo
 
 ```text
 apps/web        App Next.js na porta 3001
-packages/api    Routers tRPC, contexto auth e regras de negocio
+packages/api    Routers tRPC, contexto auth e regras de negócio
 packages/db     Schema Drizzle, migrations e acesso ao Postgres
-packages/env    Validacao de env para server e client
-packages/ui     Componentes e utilitarios de UI compartilhados
+packages/env    Validação de env para server e client
+packages/ui     Componentes e utilitários de UI compartilhados
 packages/auth   Instância Better Auth (server, client React, schema Drizzle)
 packages/config Base compartilhada de TypeScript
 ```
 
 Namespace de workspace: `@dashboard-leads-profills/*`
 
-## Auth Real
+## Auth
 
-- Auth via Better Auth em `packages/auth/src/index.ts` (Drizzle adapter `pg`, plugin `admin`).
-- Client React em `packages/auth/src/client.ts` — expõe `authClient`, `useSession`, `signIn`, `signUp`, `signOut` + `adminClient()` plugin.
-- Schema Drizzle gerado em `packages/auth/src/schema.ts` — tabelas `user` / `session` / `account` / `verification` com IDs `uuid defaultRandom`.
+- Better Auth em `packages/auth/src/index.ts` (Drizzle adapter `pg`, plugin `admin`). `packages/auth` é a integração de auth ativa e central do runtime.
+- Client React em `packages/auth/src/client.ts` — expõe `authClient`, `useSession`, `signIn`, `signUp`, `signOut` + plugin `adminClient()`.
+- Schema Drizzle em `packages/auth/src/schema.ts` — tabelas `user` / `session` / `account` / `verification` com IDs `uuid defaultRandom`.
 - Handler Next.js em `apps/web/src/app/api/auth/[...all]/route.ts` via `toNextJsHandler`.
 - Middleware em `apps/web/src/middleware.ts` usa `getSessionCookie` (Edge-safe, sem hit DB).
 - Contexto tRPC em `packages/api/src/context.ts` chama `auth.api.getSession({ headers })` e expõe `{ user, userRole, session, headers }`.
 - Guard admin em `apps/web/src/app/(app)/admin/layout.tsx` via `session.user.role === "admin"`.
 - Admin API usa `auth.api.listUsers/banUser/unbanUser/setRole` em `packages/api/src/routers/admin/users.ts`.
-- Providers: email/senha (auto-verificado, sem confirmação por email) + Google OAuth. Callback OAuth hospedado pelo Better Auth em `/api/auth/callback/google`.
-- Role é campo direto em `public.user.role` (não há tabela `user_roles` nem `custom_access_token_hook`).
-- Snapshot offline em `apps/web/src/lib/auth/auth-snapshot.ts` construído a partir de `session.user` (Better Auth).
+- Providers: email/senha (auto-verificado, sem confirmação por email) + Google OAuth (callback `/api/auth/callback/google`).
+- Role é campo direto em `public.user.role` (default `vendedor`). Não há tabela de roles separada em uso.
+- Snapshot offline em `apps/web/src/lib/auth/auth-snapshot.ts`, construído a partir de `session.user`.
 
 ## Arquitetura Offline-First
 
-- Lead CRUD salva primeiro no IndexedDB via Dexie em `apps/web/src/lib/db/index.ts`.
-- O schema local Dexie esta na versao 5.
-- A fila de sincronizacao local fica em `syncQueue`.
-- O sync engine esta em `apps/web/src/lib/sync/engine.ts` e trabalha com `create`, `update` e `delete`.
-- A estrategia atual e push, upload de fotos, pull e refresh do leaderboard.
-- Em conflitos, a regra pratica e server-wins para dados do servidor durante o pull.
+- Lead CRUD grava primeiro no IndexedDB via Dexie em `apps/web/src/lib/db/index.ts`. Schema local Dexie na versão 8.
+- A fila de sincronização local fica em `syncQueue`.
+- O sync engine está em `apps/web/src/lib/sync/engine.ts` e trabalha com `create`, `update` e `delete`.
+- Ciclo de sync: push → upload de fotos → push (se houve fotos) → pull → refresh do leaderboard.
+- Em conflitos, a regra é server-wins para dados do servidor durante o pull.
 - O status de sync exposto na UI vem de `apps/web/src/components/sync-status-provider.tsx`.
-- A deteccao de conectividade usa eventos do browser e polling em `/api/health` por `HEAD`, implementado em `apps/web/src/lib/sync/connectivity.ts`.
+- A detecção de conectividade usa eventos do browser e polling em `/api/health` por `HEAD`, em `apps/web/src/lib/sync/connectivity.ts`.
 
 ## Service Worker
 
-- O service worker existe para manter navegacao autenticada utilizavel offline no App Router.
-- Nao trate o app como PWA completa.
-- Nao existe manifest de instalacao, install prompt ou background sync.
-- O registro do SW fica em `apps/web/src/components/service-worker-registrar.tsx`.
-- O worker esta em `apps/web/public/sw.js`.
-- O build gera `sw-manifest.json` e `sw-build.js` via `apps/web/scripts/generate-sw-manifest.ts`.
-- O SW faz pre-cache de rotas autenticadas, assets estaticos e payloads RSC, com fallback para `/offline`.
+- Mantém navegação autenticada utilizável offline no App Router. Não é PWA completa: sem manifest de instalação, install prompt ou background sync.
+- Registro em `apps/web/src/components/service-worker-registrar.tsx`; worker em `apps/web/public/sw.js`.
+- O build gera `sw-manifest.json` e `sw-build.js` via `apps/web/scripts/generate-sw-manifest.ts` (passo `postbuild`).
+- O SW faz pré-cache de rotas autenticadas, assets estáticos e payloads RSC, com fallback para `/offline`.
 
-## Areas Funcionais Relevantes
+## Áreas Funcionais
 
 - Dashboard: `apps/web/src/app/(app)/dashboard`
 - Leads: `apps/web/src/app/(app)/leads`
@@ -85,32 +81,20 @@ Namespace de workspace: `@dashboard-leads-profills/*`
 
 ## Banco e Dados
 
-- Schema Drizzle em `packages/db/src/schema`
-- Tabelas centrais atuais:
-  - `leads`
-  - `user_roles`
-- O ranking usa SQL direto e consulta `auth.users` para nome do vendedor.
-- `drizzle.config.ts` carrega env de `../../apps/web/.env`; comandos `db:*` devem ser executados a partir da raiz do repo.
+- Schema Drizzle em `packages/db/src/schema`. Tabela ativa: `leads`.
+- As tabelas `todo` e `user_roles` (com o enum `app_role`) existem no banco como artefatos da migration `0000_smart_blockbuster.sql`, mas não estão no schema Drizzle ativo nem são usadas em nenhum código. São legado — não construa em cima delas.
+- O leaderboard usa SQL direto e faz JOIN de `leads` com `public."user"` (tabela Better Auth) para obter o nome do vendedor. Não consulta `auth.users`.
+- `drizzle.config.ts` carrega env de `../../apps/web/.env`; comandos `db:*` rodam a partir da raiz do repo.
 
-## Variaveis de Ambiente Reais
+## Variáveis de Ambiente
 
-Arquivo esperado no desenvolvimento: `apps/web/.env`
+Arquivo esperado no desenvolvimento: `apps/web/.env`. Validações em `packages/env/src/server.ts` e `packages/env/src/web.ts`.
 
-Server:
-- `DATABASE_URL`
-- `BETTER_AUTH_SECRET` (min 32 chars)
-- `BETTER_AUTH_URL` (ex: http://localhost:3001)
-- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (Google OAuth)
-- `NEXT_PUBLIC_SUPABASE_URL` (somente Storage `lead-photos`)
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (somente Storage)
-- `NODE_ENV`
+Server: `DATABASE_URL`, `BETTER_AUTH_SECRET` (min 32 chars), `BETTER_AUTH_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NODE_ENV`, `SIGNUP_INVITE_CODE` (opcional).
 
-Client:
-- `NEXT_PUBLIC_BETTER_AUTH_URL`
-- `NEXT_PUBLIC_SUPABASE_URL` (Storage)
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Storage)
+Client: `NEXT_PUBLIC_BETTER_AUTH_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_EVENT_END` (opcional).
 
-As validacoes ficam em `packages/env/src/server.ts` e `packages/env/src/web.ts`.
+`SUPABASE_SERVICE_ROLE_KEY` e `RESEND_API_KEY` aparecem no `.env` / `turbo.json` mas não são validados por `packages/env` — ver `docs/tech-debt.md`.
 
 ## Comandos do Workspace
 
@@ -128,29 +112,21 @@ bun run db:migrate   # drizzle-kit migrate no pacote db
 bun run db:studio    # drizzle-kit studio no pacote db
 ```
 
-## Convencoes de Codigo
+## Convenções de Código
 
-- Use imports path-based para `packages/ui`. Exemplo: `@dashboard-leads-profills/ui/components/button`
-- Evite barrel files novos para UI ou modulos internos.
+- Imports path-based para `packages/ui`: `@dashboard-leads-profills/ui/components/button`.
+- Evite barrel files novos para UI ou módulos internos.
 - `cn()` vem de `@dashboard-leads-profills/ui/lib/utils`.
 - Mantenha `type: "module"` e TypeScript estrito.
-- Nao introduza `any` sem justificativa; prefira `unknown`.
-- Nao deixe `console.log` em producao.
-- Para componentes/client code sensiveis a SSR, respeite fronteiras de runtime. Dexie e browser-only.
+- Não introduza `any` sem justificativa; prefira `unknown`.
+- Não deixe `console.log` em produção.
+- Dexie é browser-only; respeite fronteiras de runtime em código sensível a SSR.
 
 ## Guardrails para Agentes
 
-- Antes de descrever arquitetura, verifique o codigo correspondente.
-- Use sempre as superficies de auth baseadas em Better Auth (`packages/auth`) descritas neste repo.
-- Nao afirme que o health check de conectividade e `/api/trpc/healthCheck`. O endpoint usado pelo app e `/api/health`.
-- Nao tratar o service worker como PWA completa.
-- `packages/auth` agora é o ponto central de auth; não retorne a padrões Supabase Auth.
-- Quando tocar offline/sync, preserve a prioridade do dado local e o comportamento resiliente sem rede.
-
-## Hurdles Conhecidos
-
-- `packages/auth` ainda existe no monorepo, mas nao e a integracao principal do runtime atual.
-- O Dexie local ainda carrega migracoes de legado, incluindo limpeza do antigo `followUpStatus`.
-- O leaderboard depende de `auth.users` no Supabase para obter nomes.
-- O middleware ignora `/api/*`; autenticação de API e tratada dentro do contexto tRPC ou nos handlers.
-- Builds e testes que exigem env devem usar as mesmas variaveis reais do projeto.
+- Verifique o código antes de descrever arquitetura.
+- Use as superfícies de auth Better Auth (`packages/auth`); o app não usa Supabase Auth.
+- O health check de conectividade é `/api/health`, não `/api/trpc/healthCheck`.
+- O service worker não é PWA completa.
+- Ao tocar offline/sync, preserve a prioridade do dado local e o comportamento resiliente sem rede.
+- Dívida técnica conhecida está catalogada em `docs/tech-debt.md` — consulte antes de propor mudanças amplas.

@@ -1,52 +1,63 @@
 # Sistema Coleta de Lead
 
-Aplicacao offline-first para captacao rapida de leads em eventos e congressos.
+Aplicação offline-first para captação rápida de leads em eventos e congressos. O foco é
+não perder dados quando a rede falha.
+
+> Contexto completo de arquitetura e convenções: ver `CLAUDE.md` na raiz.
 
 ## Stack
 
-- Next.js 16 + React 19
-- tRPC 11
-- Supabase Auth
-- PostgreSQL + Drizzle ORM
-- Dexie + `dexie-react-hooks`
 - Turborepo + Bun workspaces
+- Next.js 16 + React 19 (React Compiler)
+- tRPC 11
+- Better Auth (auth) — Drizzle adapter pg + plugin admin
+- PostgreSQL + Drizzle ORM
+- Dexie + `dexie-react-hooks` (persistência local offline-first)
+- Supabase Storage (apenas fotos de leads, bucket `lead-photos`)
 - shadcn/ui em `packages/ui`
-- Ultracite / Biome
+- Vitest, Ultracite / Biome
 
 ## Estrutura
 
 ```text
-apps/web        Aplicacao web
-packages/api    Routers tRPC e regras de negocio
+apps/web        App Next.js (porta 3001)
+packages/api    Routers tRPC e regras de negócio
 packages/db     Schema Drizzle e migrations
-packages/env    Validacao de env
+packages/env    Validação de env
 packages/ui     Componentes compartilhados
-packages/auth   Pacote legado/utilitario, fora da superficie ativa do runtime
+packages/auth   Instância Better Auth
 packages/config Base compartilhada de TypeScript
 ```
 
 ## Ambiente
 
-Crie `apps/web/.env` com:
+Crie `apps/web/.env`. Variáveis validadas em `packages/env`:
 
 ```bash
 DATABASE_URL=
-NEXT_PUBLIC_SUPABASE_URL=
+BETTER_AUTH_SECRET=          # mínimo 32 caracteres
+BETTER_AUTH_URL=             # ex: http://localhost:3001
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+NEXT_PUBLIC_BETTER_AUTH_URL=
+NEXT_PUBLIC_SUPABASE_URL=    # apenas Storage
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
+NODE_ENV=
+SIGNUP_INVITE_CODE=          # opcional
+NEXT_PUBLIC_EVENT_END=       # opcional
 ```
 
 ## Comandos
 
 ```bash
 bun install
-bun run dev
-bun run dev:web
+bun run dev          # todos os apps
+bun run dev:web      # apenas o app web (porta 3001)
 bun run build
 bun run check-types
 bun run test
-bun run check
-bun run fix
+bun run check        # lint
+bun run fix          # lint + format
 bun run db:push
 bun run db:generate
 bun run db:migrate
@@ -54,20 +65,3 @@ bun run db:studio
 ```
 
 O app web roda em `http://localhost:3001`.
-
-## Arquitetura
-
-- Auth ativa via Supabase em `apps/web/src/lib/supabase/*` e `packages/api/src/context.ts`
-- Persistencia local via Dexie em `apps/web/src/lib/db`
-- Sync offline-first via `apps/web/src/lib/sync`
-- Service worker apenas para cache de navegacao offline, sem PWA completa
-
-## UI Compartilhada
-
-- Ajuste tokens e estilos globais em `packages/ui/src/styles/globals.css`
-- Reutilize componentes de `packages/ui/src/components/*`
-- Use imports path-based, por exemplo:
-
-```tsx
-import { Button } from "@dashboard-leads-profills/ui/components/button";
-```
