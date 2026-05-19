@@ -24,7 +24,7 @@ export const adminUsersRouter = router({
 				search: z.string().optional(),
 				page: z.number().min(1).default(1),
 				perPage: z.number().min(1).max(100).default(20),
-			}),
+			})
 		)
 		.query(async ({ ctx, input }) => {
 			const result = (await auth.api.listUsers({
@@ -43,13 +43,13 @@ export const adminUsersRouter = router({
 							.select({ userId: leads.userId, leadCount: count(leads.id) })
 							.from(leads)
 							.where(
-								and(inArray(leads.userId, userIds), isNull(leads.deletedAt)),
+								and(inArray(leads.userId, userIds), isNull(leads.deletedAt))
 							)
 							.groupBy(leads.userId)
 					: [];
 
 			const leadCountByUserId = new Map(
-				leadsResult.map((r) => [r.userId, r.leadCount]),
+				leadsResult.map((r) => [r.userId, r.leadCount])
 			);
 
 			let users = result.users.map((u) => ({
@@ -66,7 +66,7 @@ export const adminUsersRouter = router({
 				users = users.filter(
 					(u) =>
 						u.name.toLowerCase().includes(term) ||
-						u.email.toLowerCase().includes(term),
+						u.email.toLowerCase().includes(term)
 				);
 			}
 
@@ -78,7 +78,7 @@ export const adminUsersRouter = router({
 			z.object({
 				userId: z.string().uuid(),
 				role: z.enum(["admin", "vendedor"]),
-			}),
+			})
 		)
 		.mutation(async ({ ctx, input }) => {
 			await auth.api.setRole({

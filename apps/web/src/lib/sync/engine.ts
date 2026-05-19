@@ -109,7 +109,8 @@ async function pushChanges(): Promise<void> {
 	}
 
 	// 3. React to failed operation — increment retryCount so persistent failures are visible
-	const failedOperation = "failedOperation" in result ? result.failedOperation : undefined;
+	const failedOperation =
+		"failedOperation" in result ? result.failedOperation : undefined;
 	if (failedOperation) {
 		const failedItem = pendingOps.find(
 			(p) =>
@@ -348,7 +349,9 @@ export function startSync(
 	}
 
 	function retry(): void {
-		if (!_detector.isOnline) return;
+		if (!_detector.isOnline) {
+			return;
+		}
 		if (isSyncing) {
 			pendingResync = true;
 			return;

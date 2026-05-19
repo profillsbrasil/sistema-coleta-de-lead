@@ -3,7 +3,7 @@ import type { AppAuthSnapshot } from "./auth-snapshot";
 export const SESSION_TIMEOUT_MS = 1200;
 
 export function coerceSnapshotToOfflineSeller(
-	snapshot: AppAuthSnapshot | null,
+	snapshot: AppAuthSnapshot | null
 ): AppAuthSnapshot | null {
 	if (!snapshot) {
 		return null;
@@ -17,7 +17,7 @@ export function coerceSnapshotToOfflineSeller(
 
 export function resolveWithTimeout<T>(
 	promise: Promise<T>,
-	timeoutMs: number,
+	timeoutMs: number
 ): Promise<T | null> {
 	return new Promise((resolve) => {
 		const timeoutId = globalThis.setTimeout(() => {

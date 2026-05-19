@@ -59,7 +59,7 @@ export function readAuthSnapshot(): AppAuthSnapshot | null {
 	}
 
 	return parseAuthSnapshot(
-		window.localStorage.getItem(AUTH_SNAPSHOT_STORAGE_KEY),
+		window.localStorage.getItem(AUTH_SNAPSHOT_STORAGE_KEY)
 	);
 }
 
@@ -70,7 +70,7 @@ export function writeAuthSnapshot(snapshot: AppAuthSnapshot): void {
 
 	window.localStorage.setItem(
 		AUTH_SNAPSHOT_STORAGE_KEY,
-		JSON.stringify(snapshot),
+		JSON.stringify(snapshot)
 	);
 }
 
@@ -96,7 +96,7 @@ function getUserName(user: Pick<AppUser, "email" | "name">): string {
 
 export async function createAuthSnapshot(
 	user: AppUser,
-	userRole: AppUserRole,
+	userRole: AppUserRole
 ): Promise<AppAuthSnapshot> {
 	const userEmail = user.email ?? "";
 
@@ -112,7 +112,7 @@ export async function createAuthSnapshot(
 
 export function resolveUserRole(
 	role: string | null | undefined,
-	fallbackRole: AppUserRole = "vendedor",
+	fallbackRole: AppUserRole = "vendedor"
 ): AppUserRole {
 	return isUserRole(role) ? role : fallbackRole;
 }

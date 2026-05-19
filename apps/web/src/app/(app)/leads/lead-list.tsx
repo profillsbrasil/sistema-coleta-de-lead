@@ -121,7 +121,7 @@ export default function LeadList({ userId }: LeadListProps) {
 
 	const filteredLeads = useMemo(() => {
 		if (leads === undefined) {
-			return undefined;
+			return;
 		}
 
 		const term = searchTerm.trim().toLowerCase();
