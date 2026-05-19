@@ -25,6 +25,7 @@
   "dependencies": {
     "better-auth": "^1.3.10",
     "@dashboard-leads-profills/db": "workspace:*",
+    "@dashboard-leads-profills/env": "workspace:*",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {
