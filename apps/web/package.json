@@ -13,6 +13,7 @@
   "dependencies": {
     "@dashboard-leads-profills/api": "workspace:*",
     "@dashboard-leads-profills/auth": "workspace:*",
+    "@dashboard-leads-profills/db": "workspace:*",
     "@dashboard-leads-profills/env": "workspace:*",
     "@dashboard-leads-profills/ui": "workspace:*",
     "@supabase/supabase-js": "^2.100.0",
@@ -25,6 +26,7 @@
     "dexie": "catalog:",
     "dexie-react-hooks": "catalog:",
     "dotenv": "catalog:",
+    "drizzle-orm": "catalog:",
     "lucide-react": "catalog:",
     "next": "catalog:",
     "next-themes": "catalog:",
@@ -37,8 +39,6 @@
   },
   "devDependencies": {
     "@dashboard-leads-profills/config": "workspace:*",
-    "@dashboard-leads-profills/db": "workspace:*",
-    "drizzle-orm": "catalog:",
     "@tailwindcss/postcss": "^4.1.18",
     "@tanstack/react-query-devtools": "^5.91.1",
     "@types/node": "^20",
