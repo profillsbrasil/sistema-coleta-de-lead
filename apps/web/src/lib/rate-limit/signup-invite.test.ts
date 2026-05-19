@@ -1,4 +1,6 @@
 // @vitest-environment node
+// Teste de integração: requer um Postgres com as migrations aplicadas
+// (`bun run db:migrate`) acessível via TEST_DATABASE_URL. Sem a env var, é pulado.
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
@@ -30,13 +32,6 @@ describe.skipIf(!TEST_DATABASE_URL)("checkSignupInviteRateLimit", () => {
 		({ checkSignupInviteRateLimit, cleanupExpiredRateLimits } = await import(
 			"./signup-invite"
 		));
-		await db.execute(sql`
-			CREATE TABLE IF NOT EXISTS signup_invite_rate_limit (
-				ip text PRIMARY KEY,
-				count integer NOT NULL,
-				reset_at timestamptz NOT NULL
-			)
-		`);
 	});
 
 	afterEach(async () => {
