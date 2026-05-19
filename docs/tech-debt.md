@@ -36,6 +36,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   podem renderizar ícones diferentes ou faltantes.
 - **Ação sugerida:** alinhar `packages/ui` ao catalog (`lucide-react: "catalog:"`).
 - **Issue:** #21
+- **Status:** resolvido em 2026-05-19 — lucide-react alinhado em 1.16.0 via catalog; packages/ui passou a usar catalog:.
 
 ### 4. `dexie` / `dexie-react-hooks` duplicados e divergentes
 
