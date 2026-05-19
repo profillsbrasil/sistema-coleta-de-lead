@@ -28,6 +28,7 @@ describe("Dexie database", () => {
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
 			syncStatus: "pending",
+			uploadFailed: false,
 			userId: crypto.randomUUID(),
 		});
 
@@ -77,6 +78,7 @@ describe("Dexie database", () => {
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,
 			syncStatus: "synced",
+			uploadFailed: false,
 			userId: crypto.randomUUID(),
 		});
 

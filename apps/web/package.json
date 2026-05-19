@@ -7,6 +7,7 @@
     "build": "next build",
     "postbuild": "bun scripts/generate-sw-manifest.ts",
     "start": "next start",
+    "check-types": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {

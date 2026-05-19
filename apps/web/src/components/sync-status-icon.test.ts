@@ -16,6 +16,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 3,
 				lastSync: null,
 				lastError: "x",
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			});
 			expect(result).toBe("offline");
 		});
@@ -28,6 +32,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 0,
 				lastSync: null,
 				lastError: null,
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			});
 			expect(result).toBe("syncing");
 		});
@@ -40,6 +48,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 0,
 				lastSync: null,
 				lastError: "Network error",
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			});
 			expect(result).toBe("error");
 		});
@@ -52,6 +64,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 3,
 				lastSync: "2026-01-01",
 				lastError: null,
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			});
 			expect(result).toBe("pending");
 		});
@@ -64,6 +80,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 0,
 				lastSync: "2026-01-01",
 				lastError: null,
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			});
 			expect(result).toBe("synced");
 		});
@@ -78,6 +98,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 0,
 				lastSync: null,
 				lastError: null,
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			};
 			expect(getTooltipText("offline", status)).toBe("Sem conexao");
 		});
@@ -90,6 +114,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 0,
 				lastSync: null,
 				lastError: null,
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			};
 			expect(getTooltipText("syncing", status)).toBe("Sincronizando...");
 		});
@@ -102,6 +130,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 0,
 				lastSync: null,
 				lastError: "fail",
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			};
 			expect(getTooltipText("error", status)).toBe("Erro no ultimo sync");
 		});
@@ -114,6 +146,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 1,
 				lastSync: null,
 				lastError: null,
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			};
 			expect(getTooltipText("pending", status)).toBe("1 alteracao pendente");
 		});
@@ -126,6 +162,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 5,
 				lastSync: null,
 				lastError: null,
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			};
 			expect(getTooltipText("pending", status)).toBe("5 alteracoes pendentes");
 		});
@@ -138,6 +178,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 0,
 				lastSync: "2026-01-01T00:00:00Z",
 				lastError: null,
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			};
 			expect(getTooltipText("synced", status)).toBe("Atualizado ha 2 min");
 		});
@@ -150,6 +194,10 @@ describe("sync-status-icon", () => {
 				pendingCount: 0,
 				lastSync: null,
 				lastError: null,
+				authExpired: false,
+				isStalled: false,
+				retryAttempt: null,
+				totalRetries: 5,
 			};
 			expect(getTooltipText("synced", status)).toBe("Sincronizado");
 		});
