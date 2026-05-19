@@ -10,11 +10,11 @@ vi.mock("@dashboard-leads-profills/env/server", () => ({
 	},
 }));
 
-type MockDb = {
+interface MockDb {
 	insert: ReturnType<typeof vi.fn>;
-	update: ReturnType<typeof vi.fn>;
 	select: ReturnType<typeof vi.fn>;
-};
+	update: ReturnType<typeof vi.fn>;
+}
 
 async function loadSyncRouter(mockDb: MockDb) {
 	vi.doMock("@dashboard-leads-profills/db", () => ({ db: mockDb }));

@@ -4,12 +4,12 @@ export const AUTH_SNAPSHOT_STORAGE_KEY = "app-auth-snapshot";
 
 export type AppUserRole = "admin" | "vendedor";
 
-export type AppUser = {
-	id: string;
+export interface AppUser {
 	email: string;
+	id: string;
 	name: string | null | undefined;
 	role?: string | null;
-};
+}
 
 export interface AppAuthSnapshot {
 	gravatarUrl: string;

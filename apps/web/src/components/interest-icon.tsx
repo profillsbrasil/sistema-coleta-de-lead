@@ -67,6 +67,7 @@ export default function InterestIcon({
 				selected ? config.activeClasses : config.inactiveClasses,
 				className
 			)}
+			role="img"
 		>
 			<Icon className={sizeConfig.icon} />
 		</span>

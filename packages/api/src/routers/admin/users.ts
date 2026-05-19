@@ -7,15 +7,15 @@ import z from "zod";
 
 import { adminProcedure, router } from "../../index";
 
-type AuthUser = {
-	id: string;
-	email: string;
-	name: string;
-	role: string | null;
+interface AuthUser {
+	banExpires?: Date | string | null;
 	banned?: boolean | null;
 	banReason?: string | null;
-	banExpires?: Date | string | null;
-};
+	email: string;
+	id: string;
+	name: string;
+	role: string | null;
+}
 
 export const adminUsersRouter = router({
 	list: adminProcedure
