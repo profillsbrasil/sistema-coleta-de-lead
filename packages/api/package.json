@@ -27,6 +27,6 @@
   },
   "devDependencies": {
     "@dashboard-leads-profills/config": "workspace:*",
-    "typescript": "^5"
+    "typescript": "catalog:"
   }
 }

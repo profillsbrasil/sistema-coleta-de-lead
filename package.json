@@ -21,7 +21,8 @@
       "@types/react-dom": "^19.2.3",
       "tailwindcss": "^4.1.18",
       "drizzle-orm": "^0.45.1",
-      "@types/pg": "^8.16.0"
+      "@types/pg": "^8.16.0",
+      "typescript": "^6.0.3"
     }
   },
   "type": "module",
@@ -58,7 +59,7 @@
     "jsdom": "~29.1.1",
     "shadcn": "^4.7.0",
     "turbo": "^2.9.14",
-    "typescript": "^6.0.3",
+    "typescript": "catalog:",
     "ultracite": "7.7.0",
     "vitest": "^4.1.6",
     "web": "workspace:*"

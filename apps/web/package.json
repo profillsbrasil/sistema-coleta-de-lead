@@ -45,6 +45,6 @@
     "geist": "^1.7.0",
     "jsdom": "~26.0.0",
     "tailwindcss": "catalog:",
-    "typescript": "^5"
+    "typescript": "catalog:"
   }
 }
