@@ -91,6 +91,9 @@ em perda de dados, segurança ou bloqueio de evolução.
   contorna o limite.
 - **Ação sugerida:** migrar para um store persistente (Redis) ou estratégia stateless.
 - **Issue:** #27
+- **Status:** resolvido em 2026-05-19 — store migrado para a tabela Postgres
+  `signup_invite_rate_limit` via upsert atômico; rate limit agora é compartilhado
+  entre instâncias serverless.
 
 ## Severidade Média
 

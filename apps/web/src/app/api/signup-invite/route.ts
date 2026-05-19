@@ -5,10 +5,7 @@ import {
 	timingSafeEqual,
 } from "@dashboard-leads-profills/auth/invite-token";
 import { env } from "@dashboard-leads-profills/env/server";
-
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 5;
-const attempts = new Map<string, { count: number; resetAt: number }>();
+import { checkSignupInviteRateLimit } from "@/lib/rate-limit/signup-invite";
 
 function getClientIp(req: Request): string {
 	const forwarded = req.headers.get("x-forwarded-for");
@@ -16,20 +13,6 @@ function getClientIp(req: Request): string {
 		return (forwarded.split(",")[0] ?? "").trim();
 	}
 	return req.headers.get("x-real-ip") ?? "unknown";
-}
-
-function checkRateLimit(ip: string): boolean {
-	const now = Date.now();
-	const entry = attempts.get(ip);
-	if (!entry || entry.resetAt < now) {
-		attempts.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-		return true;
-	}
-	if (entry.count >= RATE_LIMIT_MAX) {
-		return false;
-	}
-	entry.count += 1;
-	return true;
 }
 
 export async function POST(req: Request) {
@@ -42,7 +25,7 @@ export async function POST(req: Request) {
 	}
 
 	const ip = getClientIp(req);
-	if (!checkRateLimit(ip)) {
+	if (!(await checkSignupInviteRateLimit(ip))) {
 		return Response.json(
 			{ error: "Muitas tentativas. Tente novamente em 1 minuto." },
 			{ status: 429 }
