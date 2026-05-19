@@ -10,6 +10,7 @@
     }
   },
   "scripts": {
+    "check-types": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
@@ -27,6 +28,6 @@
   },
   "devDependencies": {
     "@dashboard-leads-profills/config": "workspace:*",
-    "typescript": "^5"
+    "typescript": "catalog:"
   }
 }

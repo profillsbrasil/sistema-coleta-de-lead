@@ -17,6 +17,8 @@ function makeLead(overrides: Partial<Lead> = {}): Lead {
 		notes: null,
 		interestTag: "morno",
 		photo: null,
+		photoUrl: null,
+		uploadFailed: false,
 		createdAt: new Date().toISOString(),
 		updatedAt: new Date().toISOString(),
 		deletedAt: null,

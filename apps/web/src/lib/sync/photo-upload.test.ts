@@ -84,6 +84,7 @@ describe("uploadPendingPhotos", () => {
 			interestTag: "morno",
 			photo: photoBlob,
 			photoUrl: null,
+			uploadFailed: false,
 			createdAt: new Date().toISOString(),
 			updatedAt: new Date().toISOString(),
 			deletedAt: null,

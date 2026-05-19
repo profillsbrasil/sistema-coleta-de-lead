@@ -68,15 +68,6 @@ em perda de dados, segurança ou bloqueio de evolução.
 - **Ação sugerida:** declarar as variáveis no schema `env` ou remover as não usadas.
 - **Issue:** #24
 
-### 7. TypeScript em major divergente entre raiz e packages
-
-- **Arquivo:** `package.json` (raiz)
-- **Causa raiz:** a raiz declara `typescript@^6.0.3` enquanto os packages declaram
-  `^5`. Bun pode resolver versões diferentes, criando divergência de compilação não
-  detectável sem CI.
-- **Ação sugerida:** padronizar uma única versão de TypeScript via catalog.
-- **Issue:** #25
-
 ### 8. `pullChanges` não filtra leads soft-deletados
 
 - **Arquivo:** `packages/api/src/routers/sync.ts:157`
@@ -105,20 +96,6 @@ em perda de dados, segurança ou bloqueio de evolução.
   `packages/config/tsconfig.base.json`. Flags estritas (`noUnusedLocals`,
   `noUncheckedIndexedAccess`, `noUnusedParameters`) não se aplicam ao app.
 - **Ação sugerida:** estender o tsconfig base e resolver os erros que surgirem.
-
-### 11. `packages/api` e `packages/db` sem script `check-types`
-
-- **Arquivo:** `packages/api/package.json`, `packages/db/package.json`
-- **Causa raiz:** sem o script, `turbo check-types` simplesmente pula esses packages.
-  Erros de tipo só aparecem no `build`.
-- **Ação sugerida:** adicionar `"check-types": "tsc --noEmit"` em ambos.
-
-### 12. `apps/web` sem script `check-types`
-
-- **Arquivo:** `apps/web/package.json`
-- **Causa raiz:** o app nunca roda `tsc --noEmit`; erros de tipo só aparecem no
-  `next build`.
-- **Ação sugerida:** adicionar o script `check-types` ao app.
 
 ### 13. `getInitials` duplicada em 5 arquivos
 

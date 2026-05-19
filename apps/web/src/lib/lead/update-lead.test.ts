@@ -1,7 +1,22 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "../db/index";
 import type { Lead } from "../db/types";
+import type { LeadFormData } from "./validation";
 import { updateLead } from "./update-lead";
+
+function makeFormData(overrides: Partial<LeadFormData> = {}): LeadFormData {
+	return {
+		name: "John Doe",
+		phone: "+5511999999999",
+		email: "",
+		interestTag: "morno",
+		company: "Acme",
+		position: "",
+		segment: "",
+		notes: "",
+		...overrides,
+	};
+}
 
 function makeLead(overrides: Partial<Lead> = {}): Lead {
 	return {
@@ -35,7 +50,7 @@ describe("updateLead", () => {
 	});
 
 	it("updates the lead with new name, updatedAt and syncStatus=pending", async () => {
-		await updateLead("lead-1", { name: "Jane Doe" });
+		await updateLead("lead-1", makeFormData({ name: "Jane Doe" }));
 
 		const lead = await db.leads.get("lead-1");
 		expect(lead?.name).toBe("Jane Doe");
@@ -47,7 +62,7 @@ describe("updateLead", () => {
 		const photoBlob = new Blob(["photo-data"], { type: "image/jpeg" });
 		await db.leads.update("lead-1", { photo: photoBlob });
 
-		await updateLead("lead-1", { name: "Updated Name" });
+		await updateLead("lead-1", makeFormData({ name: "Updated Name" }));
 
 		const lead = await db.leads.get("lead-1");
 		expect(lead?.photo).not.toBeNull();
@@ -56,7 +71,7 @@ describe("updateLead", () => {
 	it("replaces photo when photo param is a Blob", async () => {
 		const newPhoto = new Blob(["new-photo"], { type: "image/png" });
 
-		await updateLead("lead-1", { name: "Same" }, newPhoto);
+		await updateLead("lead-1", makeFormData({ name: "Same" }), newPhoto);
 
 		const lead = await db.leads.get("lead-1");
 		expect(lead?.photo).not.toBeNull();
@@ -66,14 +81,14 @@ describe("updateLead", () => {
 		const photoBlob = new Blob(["photo-data"], { type: "image/jpeg" });
 		await db.leads.update("lead-1", { photo: photoBlob });
 
-		await updateLead("lead-1", { name: "Same" }, null);
+		await updateLead("lead-1", makeFormData({ name: "Same" }), null);
 
 		const lead = await db.leads.get("lead-1");
 		expect(lead?.photo).toBeNull();
 	});
 
 	it("enqueues syncQueue item with operation=update", async () => {
-		await updateLead("lead-1", { name: "New Name" });
+		await updateLead("lead-1", makeFormData({ name: "New Name" }));
 
 		const queue = await db.syncQueue.toArray();
 		expect(queue).toHaveLength(1);
@@ -85,7 +100,7 @@ describe("updateLead", () => {
 	});
 
 	it("inclui photoUrl: null no payload quando foto é removida (photo = null)", async () => {
-		await updateLead("lead-1", { name: "Same" }, null);
+		await updateLead("lead-1", makeFormData({ name: "Same" }), null);
 
 		const queue = await db.syncQueue.toArray();
 		const payload = JSON.parse(queue[0].payload);
@@ -97,14 +112,14 @@ describe("updateLead", () => {
 			photoUrl: "https://example.com/old.jpg",
 		});
 
-		await updateLead("lead-1", { name: "Same" }, null);
+		await updateLead("lead-1", makeFormData({ name: "Same" }), null);
 
 		const lead = await db.leads.get("lead-1");
 		expect(lead?.photoUrl).toBeNull();
 	});
 
 	it("não inclui photoUrl no payload quando photo é undefined (sem alteração)", async () => {
-		await updateLead("lead-1", { name: "New Name" });
+		await updateLead("lead-1", makeFormData({ name: "New Name" }));
 
 		const queue = await db.syncQueue.toArray();
 		const payload = JSON.parse(queue[0].payload);
@@ -113,7 +128,7 @@ describe("updateLead", () => {
 
 	it("não inclui photoUrl no payload quando photo é um Blob (nova foto)", async () => {
 		const blob = new Blob(["img"], { type: "image/jpeg" });
-		await updateLead("lead-1", { name: "Same" }, blob);
+		await updateLead("lead-1", makeFormData({ name: "Same" }), blob);
 
 		const queue = await db.syncQueue.toArray();
 		const payload = JSON.parse(queue[0].payload);
