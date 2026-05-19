@@ -37,6 +37,8 @@
   },
   "devDependencies": {
     "@dashboard-leads-profills/config": "workspace:*",
+    "@dashboard-leads-profills/db": "workspace:*",
+    "drizzle-orm": "catalog:",
     "@tailwindcss/postcss": "^4.1.18",
     "@tanstack/react-query-devtools": "^5.91.1",
     "@types/node": "^20",
