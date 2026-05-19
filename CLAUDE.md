@@ -94,8 +94,6 @@ Server: `DATABASE_URL`, `BETTER_AUTH_SECRET` (min 32 chars), `BETTER_AUTH_URL`, 
 
 Client: `NEXT_PUBLIC_BETTER_AUTH_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_EVENT_END` (opcional).
 
-`SUPABASE_SERVICE_ROLE_KEY` e `RESEND_API_KEY` aparecem no `.env` / `turbo.json` mas não são validados por `packages/env` — ver `docs/tech-debt.md`.
-
 ## Comandos do Workspace
 
 ```bash

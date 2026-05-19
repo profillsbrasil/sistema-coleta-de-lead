@@ -70,6 +70,8 @@ em perda de dados, segurança ou bloqueio de evolução.
   usada — pode ser segredo desnecessário exposto.
 - **Ação sugerida:** declarar as variáveis no schema `env` ou remover as não usadas.
 - **Issue:** #24
+- **Status:** resolvido em 2026-05-19 — `SUPABASE_SERVICE_ROLE_KEY` e `RESEND_API_KEY`
+  eram código morto (zero uso em produção); removidos de `apps/web/.env` e `turbo.json`.
 
 ### 8. `pullChanges` não filtra leads soft-deletados
 
