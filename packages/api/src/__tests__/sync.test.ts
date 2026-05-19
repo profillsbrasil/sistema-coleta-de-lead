@@ -301,3 +301,30 @@ describe("syncRouter.pushChanges", () => {
 		expect(result.failedOperation).toBeUndefined();
 	});
 });
+
+describe("syncRouter.pullChanges", () => {
+	beforeEach(() => {
+		vi.resetModules();
+		vi.clearAllMocks();
+	});
+
+	it("filtra leads soft-deletados — where inclui isNull(deletedAt)", async () => {
+		const whereMock = vi.fn().mockResolvedValue([]);
+		const selectChain = {
+			from: vi.fn().mockReturnThis(),
+			where: whereMock,
+		};
+		const mockDb: MockDb = {
+			insert: vi.fn(),
+			update: vi.fn(),
+			select: vi.fn().mockReturnValue(selectChain),
+		};
+
+		const { caller } = await loadSyncRouter(mockDb);
+
+		await caller.pullChanges({ since: "2026-01-01T00:00:00.000Z" });
+
+		const whereArg = whereMock.mock.calls[0]?.[0] as { and: unknown[] };
+		expect(whereArg.and).toContainEqual({ isNull: "deletedAt" });
+	});
+});
