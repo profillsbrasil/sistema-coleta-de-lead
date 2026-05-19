@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getSessionUserRole, parseAuthSnapshot } from "./auth-snapshot";
+import { parseAuthSnapshot, resolveUserRole } from "./auth-snapshot";
 
 describe("parseAuthSnapshot", () => {
 	it("retorna null para JSON invalido", () => {
@@ -33,16 +33,16 @@ describe("parseAuthSnapshot", () => {
 	});
 });
 
-describe("getSessionUserRole", () => {
-	it("usa a role do claim quando ela e valida", () => {
-		expect(getSessionUserRole({ user_role: "admin" })).toBe("admin");
+describe("resolveUserRole", () => {
+	it("usa a role informada quando ela e valida", () => {
+		expect(resolveUserRole("admin")).toBe("admin");
 	});
 
-	it("faz fallback para vendedor quando o claim nao existe", () => {
-		expect(getSessionUserRole(undefined)).toBe("vendedor");
+	it("faz fallback para vendedor quando a role nao existe", () => {
+		expect(resolveUserRole(undefined)).toBe("vendedor");
 	});
 
-	it("mantem o fallback informado quando o claim e invalido", () => {
-		expect(getSessionUserRole({ user_role: "root" }, "admin")).toBe("admin");
+	it("usa o fallback informado quando a role e invalida", () => {
+		expect(resolveUserRole("root", "admin")).toBe("admin");
 	});
 });
