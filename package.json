@@ -22,7 +22,9 @@
       "tailwindcss": "^4.1.18",
       "drizzle-orm": "^0.45.1",
       "@types/pg": "^8.16.0",
-      "typescript": "^6.0.3"
+      "typescript": "^6.0.3",
+      "dexie": "^4.4.2",
+      "dexie-react-hooks": "^4.4.0"
     }
   },
   "type": "module",
@@ -45,8 +47,6 @@
   "dependencies": {
     "@dashboard-leads-profills/env": "workspace:*",
     "@dashboard-leads-profills/ui": "workspace:*",
-    "dexie": "^4.4.2",
-    "dexie-react-hooks": "^4.4.0",
     "dotenv": "^17.4.2",
     "zod": "^4.4.3"
   },

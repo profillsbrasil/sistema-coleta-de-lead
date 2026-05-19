@@ -47,6 +47,9 @@ em perda de dados, segurança ou bloqueio de evolução.
   distintos.
 - **Ação sugerida:** remover Dexie da raiz e fazer `apps/web` consumir do catalog.
 - **Issue:** #22
+- **Status:** resolvido em 2026-05-19 — `dexie@^4.4.2` / `dexie-react-hooks@^4.4.0`
+  movidos para o `catalog` da raiz e removidos das `dependencies` da raiz; `apps/web`
+  passou a usar `catalog:`. Lockfile resolve fonte única.
 
 ### 5. `packages/auth` lê `process.env` cru
 
