@@ -157,6 +157,7 @@ em perda de dados, segurança ou bloqueio de evolução.
 - **Causa raiz:** `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY` lidos com `!`, sem o pacote
   `env`. Variáveis ausentes criam um client inválido que falha silenciosamente no upload.
 - **Ação sugerida:** consumir o pacote `env` validado.
+- **Status:** resolvido no PR #30 — `storage/client.ts` passou a usar `env/web` validado.
 
 ### 18. `pushChanges` do servidor: loop sequencial fail-fast
 
@@ -204,6 +205,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   auditoria de 2026-05-19.
 - **Ação sugerida:** rodar `bun run fix` para o que é auto-corrigível, tratar o
   restante manualmente e incluir `check` no CI para travar regressões.
+- **Status:** resolvido no PR #30 — `bun run check` agora sai em exit 0.
 
 ### 34. Baseline de testes quebrado
 
@@ -214,6 +216,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   auditoria de 2026-05-19.
 - **Ação sugerida:** investigar se o erro está no teste ou no `leadFormSchema`,
   corrigir os 8 testes e incluir `test` no CI.
+- **Status:** resolvido no PR #31 — os 8 testes corrigidos, suíte verde.
 
 ## Severidade Baixa
 
