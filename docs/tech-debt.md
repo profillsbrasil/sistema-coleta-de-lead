@@ -16,6 +16,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   pull requests. O desenvolvimento ativo não tem guardrail automatizado.
 - **Ação sugerida:** GitHub Actions rodando `bun run check-types`, `bun run test` e
   `bun run build` em PRs e na branch principal.
+- **Issue:** #19
 
 ### 2. Sem Row-Level Security no Postgres
 
@@ -25,6 +26,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   nas queries Drizzle. Um filtro esquecido expõe dados de todos os usuários — risco
   agravado pela `SUPABASE_SERVICE_ROLE_KEY` disponível, que bypassa RLS.
 - **Ação sugerida:** habilitar RLS em todas as tabelas e criar policies por `userId`.
+- **Issue:** #20
 
 ### 3. `lucide-react` em versões major divergentes
 
@@ -33,6 +35,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   workspace usa `^0.546.0`. São versões com breaking changes; `apps/web` e `packages/ui`
   podem renderizar ícones diferentes ou faltantes.
 - **Ação sugerida:** alinhar `packages/ui` ao catalog (`lucide-react: "catalog:"`).
+- **Issue:** #21
 
 ### 4. `dexie` / `dexie-react-hooks` duplicados e divergentes
 
@@ -42,6 +45,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   sem usar o catalog. Dois exemplares de Dexie no bundle podem instanciar bancos
   distintos.
 - **Ação sugerida:** remover Dexie da raiz e fazer `apps/web` consumir do catalog.
+- **Issue:** #22
 
 ### 5. `packages/auth` lê `process.env` cru
 
@@ -51,6 +55,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   `@dashboard-leads-profills/env`. Variáveis ausentes deixam Better Auth inicializar com
   `undefined` silenciosamente.
 - **Ação sugerida:** consumir o pacote `env` validado em `packages/auth`.
+- **Issue:** #23
 
 ### 6. Segredos fora do schema de validação de env
 
@@ -60,6 +65,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   runtime. `SUPABASE_SERVICE_ROLE_KEY` é chave privilegiada e não há rastro de onde é
   usada — pode ser segredo desnecessário exposto.
 - **Ação sugerida:** declarar as variáveis no schema `env` ou remover as não usadas.
+- **Issue:** #24
 
 ### 7. TypeScript em major divergente entre raiz e packages
 
@@ -68,6 +74,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   `^5`. Bun pode resolver versões diferentes, criando divergência de compilação não
   detectável sem CI.
 - **Ação sugerida:** padronizar uma única versão de TypeScript via catalog.
+- **Issue:** #25
 
 ### 8. `pullChanges` não filtra leads soft-deletados
 
@@ -77,6 +84,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   como `synced`, ocupando IndexedDB e entrando no loop de conflito.
 - **Ação sugerida:** adicionar `isNull(leads.deletedAt)` ao filtro do pull (ou tratar
   tombstones explicitamente no cliente).
+- **Issue:** #26
 
 ### 9. Rate limit de `/api/signup-invite` é in-memory
 
@@ -85,6 +93,7 @@ em perda de dados, segurança ou bloqueio de evolução.
   deploy serverless cada cold start zera o `Map`; um atacante rotaciona instâncias e
   contorna o limite.
 - **Ação sugerida:** migrar para um store persistente (Redis) ou estratégia stateless.
+- **Issue:** #27
 
 ## Severidade Média
 
