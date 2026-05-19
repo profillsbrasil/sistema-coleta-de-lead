@@ -1,4 +1,5 @@
 import { db } from "@dashboard-leads-profills/db";
+import { env } from "@dashboard-leads-profills/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
@@ -16,8 +17,8 @@ export const auth = betterAuth({
 		provider: "pg",
 		schema: authSchema,
 	}),
-	baseURL: process.env.BETTER_AUTH_URL,
-	secret: process.env.BETTER_AUTH_SECRET,
+	baseURL: env.BETTER_AUTH_URL,
+	secret: env.BETTER_AUTH_SECRET,
 	emailAndPassword: {
 		enabled: true,
 		autoSignIn: true,
@@ -26,8 +27,8 @@ export const auth = betterAuth({
 	},
 	socialProviders: {
 		google: {
-			clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+			clientId: env.GOOGLE_CLIENT_ID,
+			clientSecret: env.GOOGLE_CLIENT_SECRET,
 		},
 	},
 	user: {
@@ -60,8 +61,8 @@ export const auth = betterAuth({
 					if (ctx?.path?.startsWith("/admin/")) {
 						return;
 					}
-					const inviteCode = process.env.SIGNUP_INVITE_CODE ?? "";
-					const secret = process.env.BETTER_AUTH_SECRET ?? "";
+					const inviteCode = env.SIGNUP_INVITE_CODE ?? "";
+					const secret = env.BETTER_AUTH_SECRET;
 					if (!(inviteCode && secret)) {
 						throw new APIError("INTERNAL_SERVER_ERROR", {
 							message: "Servidor mal configurado (invite gate).",
@@ -90,7 +91,7 @@ export const auth = betterAuth({
 			},
 		},
 	},
-	trustedOrigins: [process.env.BETTER_AUTH_URL ?? "http://localhost:3001"],
+	trustedOrigins: [env.BETTER_AUTH_URL],
 	advanced: {
 		database: {
 			generateId: false,

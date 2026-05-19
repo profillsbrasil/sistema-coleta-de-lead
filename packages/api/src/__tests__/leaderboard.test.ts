@@ -5,7 +5,10 @@ vi.mock("@dashboard-leads-profills/env/server", () => ({
 		DATABASE_URL: "postgresql://test:test@localhost:5432/test",
 		NEXT_PUBLIC_SUPABASE_URL: "https://test.supabase.co",
 		NEXT_PUBLIC_SUPABASE_ANON_KEY: "test-anon-key",
-		SUPABASE_SERVICE_ROLE_KEY: "test-service-role-key",
+		BETTER_AUTH_SECRET: "test-better-auth-secret-min-32-chars-long",
+		BETTER_AUTH_URL: "http://localhost:3001",
+		GOOGLE_CLIENT_ID: "test-google-client-id",
+		GOOGLE_CLIENT_SECRET: "test-google-client-secret",
 		NODE_ENV: "test",
 	},
 }));
