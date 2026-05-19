@@ -205,6 +205,16 @@ em perda de dados, segurança ou bloqueio de evolução.
 - **Ação sugerida:** rodar `bun run fix` para o que é auto-corrigível, tratar o
   restante manualmente e incluir `check` no CI para travar regressões.
 
+### 34. Baseline de testes quebrado
+
+- **Arquivo:** `apps/web/src/lib/lead/validation.test.ts` (e mais um arquivo de teste)
+- **Causa raiz:** `bun run test` falha com 8 testes em 2 arquivos na branch `main`. Ex:
+  `leadFormSchema.parse` não aplica default de string vazia ao campo `company` (recebe
+  `undefined`). Sem CI (item #1), regressões de teste passam sem barreira. Detectado na
+  auditoria de 2026-05-19.
+- **Ação sugerida:** investigar se o erro está no teste ou no `leadFormSchema`,
+  corrigir os 8 testes e incluir `test` no CI.
+
 ## Severidade Baixa
 
 ### 23. `syncStatus: "conflict"` declarado mas nunca escrito
