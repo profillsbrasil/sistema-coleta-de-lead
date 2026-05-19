@@ -108,7 +108,9 @@ describe("adminStatsRouter", () => {
 		const { adminStatsRouter } = await loadAdminStatsRouter(rankingRows);
 
 		const caller = adminStatsRouter.createCaller({
-			user: { id: "admin-user" } as never, headers: new Headers(), session: null,
+			user: { id: "admin-user" } as never,
+			headers: new Headers(),
+			session: null,
 			userRole: "admin",
 		});
 

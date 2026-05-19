@@ -17,7 +17,9 @@ export default function HomePage() {
 			router.replace("/dashboard");
 			return;
 		}
-		if (isPending) return;
+		if (isPending) {
+			return;
+		}
 		router.replace(session || readAuthSnapshot() ? "/dashboard" : "/login");
 	}, [router, session, isPending]);
 

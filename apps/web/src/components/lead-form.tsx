@@ -467,7 +467,7 @@ export default function LeadForm({
 				) : null}
 			</form>
 
-			<div className="-mx-4 fixed inset-x-0 bottom-[68px] z-20 border-border-subtle border-t bg-background/95 px-4 pt-3 pb-3 backdrop-blur md:relative md:inset-auto md:mx-0 md:border-0 md:bg-transparent md:px-4 md:pt-0 md:pb-0 md:backdrop-blur-none">
+			<div className="fixed inset-x-0 bottom-[68px] z-20 -mx-4 border-border-subtle border-t bg-background/95 px-4 pt-3 pb-3 backdrop-blur md:relative md:inset-auto md:mx-0 md:border-0 md:bg-transparent md:px-4 md:pt-0 md:pb-0 md:backdrop-blur-none">
 				<Button
 					aria-busy={isSubmitting}
 					className="w-full rounded-full"

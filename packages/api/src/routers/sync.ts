@@ -130,6 +130,9 @@ export const syncRouter = router({
 							});
 							break;
 						}
+						default: {
+							throw new Error("Operacao de sync desconhecida");
+						}
 					}
 				} catch (err) {
 					// Fail-fast: para ao primeiro erro, retorna ACKs parciais + operação falhada

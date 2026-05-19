@@ -1707,7 +1707,7 @@ describe("sync engine", () => {
 				retryCount: 0,
 			});
 
-			let resolveFirst: () => void;
+			let resolveFirst: () => void = () => undefined;
 			const firstPromise = new Promise<void>((resolve) => {
 				resolveFirst = resolve;
 			});
@@ -1725,7 +1725,7 @@ describe("sync engine", () => {
 			const first = syncCycle();
 			const second = syncCycle();
 
-			resolveFirst!();
+			resolveFirst();
 			await first;
 			await second;
 

@@ -12,7 +12,9 @@ async function updateLeaderboardOptimistically(
 ): Promise<void> {
 	try {
 		const cached = await db.leaderboardCache.toArray();
-		if (cached.length === 0) return;
+		if (cached.length === 0) {
+			return;
+		}
 
 		const scoreIncrement = SCORE_MAP[interestTag] ?? 1;
 		const now = new Date().toISOString();
@@ -31,7 +33,9 @@ async function updateLeaderboardOptimistically(
 			return entry;
 		});
 
-		if (!found) return;
+		if (!found) {
+			return;
+		}
 
 		updated.sort((a, b) => b.score - a.score || b.totalLeads - a.totalLeads);
 		for (let i = 0; i < updated.length; i++) {

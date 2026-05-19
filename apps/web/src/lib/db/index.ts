@@ -121,5 +121,5 @@ export type {
 	PhotoUploadMeta,
 	SyncMeta,
 	SyncQueueItem,
-};
+} from "./types";
 export { db };

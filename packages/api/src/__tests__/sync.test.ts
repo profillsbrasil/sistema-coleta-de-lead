@@ -10,11 +10,11 @@ vi.mock("@dashboard-leads-profills/env/server", () => ({
 	},
 }));
 
-type MockDb = {
+interface MockDb {
 	insert: ReturnType<typeof vi.fn>;
-	update: ReturnType<typeof vi.fn>;
 	select: ReturnType<typeof vi.fn>;
-};
+	update: ReturnType<typeof vi.fn>;
+}
 
 async function loadSyncRouter(mockDb: MockDb) {
 	vi.doMock("@dashboard-leads-profills/db", () => ({ db: mockDb }));
@@ -36,7 +36,9 @@ async function loadSyncRouter(mockDb: MockDb) {
 
 	const module = await import("../routers/sync");
 	const caller = module.syncRouter.createCaller({
-		user: { id: "user-123" } as never, headers: new Headers(), session: null,
+		user: { id: "user-123" } as never,
+		headers: new Headers(),
+		session: null,
 		userRole: "vendedor",
 	});
 	return { caller };

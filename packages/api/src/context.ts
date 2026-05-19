@@ -1,12 +1,12 @@
 import { auth, type Session } from "@dashboard-leads-profills/auth";
 import type { NextRequest } from "next/server";
 
-export type Context = {
+export interface Context {
 	headers: Headers;
 	session: Session["session"] | null;
 	user: Session["user"] | null;
 	userRole: "admin" | "vendedor" | null;
-};
+}
 
 export async function createContext(req: NextRequest): Promise<Context> {
 	const session = await auth.api.getSession({ headers: req.headers });

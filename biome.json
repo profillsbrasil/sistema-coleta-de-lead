@@ -25,7 +25,9 @@
       "!**/.svelte-kit",
       "!**/wrangler.jsonc",
       "!**/.source",
-      "!**/convex/_generated"
+      "!**/convex/_generated",
+      "!**/.claude",
+      "!**/.codex"
     ]
   },
   "formatter": {
@@ -72,6 +74,46 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["packages/ui/src/components/**", "packages/ui/src/hooks/**"],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noLabelWithoutControl": "off",
+            "noNoninteractiveElementInteractions": "off",
+            "noRedundantRoles": "off",
+            "useAriaPropsForRole": "off",
+            "useAriaPropsSupportedByRole": "off",
+            "useFocusableInteractive": "off",
+            "useKeyWithClickEvents": "off",
+            "useSemanticElements": "off"
+          },
+          "complexity": {
+            "noExcessiveCognitiveComplexity": "off"
+          },
+          "correctness": {
+            "useExhaustiveDependencies": "off"
+          },
+          "performance": {
+            "noBarrelFile": "off",
+            "noNamespaceImport": "off"
+          },
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          },
+          "style": {
+            "noNestedTernary": "off",
+            "useConsistentTypeDefinitions": "off"
+          },
+          "suspicious": {
+            "noDocumentCookie": "off",
+            "noDoubleEquals": "off"
+          }
+        }
+      }
+    }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "double"

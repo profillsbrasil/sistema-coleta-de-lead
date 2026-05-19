@@ -35,8 +35,7 @@ describe("queryLeadExportScope", () => {
 			makeLead({
 				localId: `lead-${String(index + 1).padStart(2, "0")}`,
 				name: `Lead ${index + 1}`,
-				interestTag:
-					index % 3 === 0 ? "quente" : index % 3 === 1 ? "morno" : "frio",
+				interestTag: (["quente", "morno", "frio"] as const)[index % 3],
 				createdAt: `2026-01-${String(22 - index).padStart(2, "0")}T12:00:00.000Z`,
 			})
 		);

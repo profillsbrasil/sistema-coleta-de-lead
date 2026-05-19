@@ -28,7 +28,7 @@ const AppAuthContext = createContext<AppAuthContextValue>({
 export function AppAuthProvider({ children }: { children: React.ReactNode }) {
 	const [snapshot, setSnapshot] = useState<AppAuthSnapshot | null>(null);
 	const [isOnline, setIsOnline] = useState(
-		typeof navigator === "undefined" ? true : navigator.onLine,
+		typeof navigator === "undefined" ? true : navigator.onLine
 	);
 	const { data: session, isPending } = authClient.useSession();
 
@@ -47,19 +47,27 @@ export function AppAuthProvider({ children }: { children: React.ReactNode }) {
 	}, []);
 
 	useEffect(() => {
-		if (snapshot) return;
+		if (snapshot) {
+			return;
+		}
 		const stored = coerceSnapshotToOfflineSeller(readAuthSnapshot());
-		if (stored) setSnapshot(stored);
+		if (stored) {
+			setSnapshot(stored);
+		}
 	}, [snapshot]);
 
 	useEffect(() => {
 		let active = true;
 
 		async function sync() {
-			if (isPending) return;
+			if (isPending) {
+				return;
+			}
 
 			if (!session?.user) {
-				if (!active) return;
+				if (!active) {
+					return;
+				}
 				clearAuthSnapshot();
 				setSnapshot(null);
 				return;
@@ -74,7 +82,9 @@ export function AppAuthProvider({ children }: { children: React.ReactNode }) {
 			const role = resolveUserRole(user.role);
 			const next = await createAuthSnapshot(user, role);
 
-			if (!active) return;
+			if (!active) {
+				return;
+			}
 			setSnapshot((prev) => {
 				if (
 					prev &&

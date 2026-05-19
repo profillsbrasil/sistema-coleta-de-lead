@@ -23,7 +23,7 @@ export function SyncStatusIndicator() {
 	return (
 		<div className="flex items-center justify-center gap-1.5 px-4 py-2.5">
 			<span className={`size-1.5 shrink-0 rounded-full ${dotColor}`} />
-			<span className="text-xs text-muted-foreground">{label}</span>
+			<span className="text-muted-foreground text-xs">{label}</span>
 		</div>
 	);
 }

@@ -8,7 +8,8 @@ const TAG_CONFIG = {
 		icon: Flame,
 		label: "Quente",
 		textClass: "text-tag-quente-text",
-		activeClasses: "border-tag-quente-text bg-tag-quente-bg text-tag-quente-text",
+		activeClasses:
+			"border-tag-quente-text bg-tag-quente-bg text-tag-quente-text",
 		inactiveClasses: "border-border bg-background text-muted-foreground",
 	},
 	morno: {
@@ -34,10 +35,10 @@ const SIZE_CONFIG = {
 } as const;
 
 interface InterestIconProps {
-	tag: InterestTag;
-	size?: "sm" | "md" | "lg";
-	selected?: boolean;
 	className?: string;
+	selected?: boolean;
+	size?: "sm" | "md" | "lg";
+	tag: InterestTag;
 }
 
 export type { InterestTag };
@@ -64,8 +65,9 @@ export default function InterestIcon({
 				sizeConfig.circle,
 				sizeConfig.border,
 				selected ? config.activeClasses : config.inactiveClasses,
-				className,
+				className
 			)}
+			role="img"
 		>
 			<Icon className={sizeConfig.icon} />
 		</span>

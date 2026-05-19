@@ -8,9 +8,9 @@ const email = process.env.SEED_ADMIN_EMAIL;
 const password = process.env.SEED_ADMIN_PASSWORD;
 const name = process.env.SEED_ADMIN_NAME ?? "Admin";
 
-if (!email || !password) {
+if (!(email && password)) {
 	console.error(
-		"Defina SEED_ADMIN_EMAIL e SEED_ADMIN_PASSWORD antes de rodar o seed.",
+		"Defina SEED_ADMIN_EMAIL e SEED_ADMIN_PASSWORD antes de rodar o seed."
 	);
 	process.exit(1);
 }

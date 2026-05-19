@@ -1,6 +1,9 @@
 "use client";
 
-import { Button, buttonVariants } from "@dashboard-leads-profills/ui/components/button";
+import {
+	Button,
+	buttonVariants,
+} from "@dashboard-leads-profills/ui/components/button";
 import { AlertTriangle, Lock, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { deriveSyncState } from "@/components/sync-status-icon";
@@ -44,7 +47,11 @@ export function SyncErrorBanner() {
 			)}
 			{state === "authExpired" && (
 				<Link
-					className={buttonVariants({ size: "sm", variant: "outline", className: "ml-4 shrink-0" })}
+					className={buttonVariants({
+						size: "sm",
+						variant: "outline",
+						className: "ml-4 shrink-0",
+					})}
 					href="/login"
 				>
 					Fazer login
