@@ -29,6 +29,13 @@
       "when": 1779211362981,
       "tag": "0003_signup_invite_rate_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779374422265,
+      "tag": "0004_enable_rls_drop_legacy",
+      "breakpoints": true
     }
   ]
 }
