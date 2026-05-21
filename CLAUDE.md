@@ -81,8 +81,9 @@ Namespace de workspace: `@dashboard-leads-profills/*`
 
 ## Banco e Dados
 
-- Schema Drizzle em `packages/db/src/schema`. Tabela ativa: `leads`.
-- As tabelas `todo` e `user_roles` (com o enum `app_role`) existem no banco como artefatos da migration `0000_smart_blockbuster.sql`, mas não estão no schema Drizzle ativo nem são usadas em nenhum código. São legado — não construa em cima delas.
+- Schema Drizzle em `packages/db/src/schema`. Tabela ativa: `leads` (+ `signup_invite_rate_limit`).
+- Tabelas Better Auth (`user`, `session`, `account`, `verification`) ficam em `packages/auth/src/schema.ts`.
+- Toda tabela `public.*` tem RLS habilitada (migration `0004_enable_rls_drop_legacy`). O app conecta como role owner e tem bypass implícito; PostgREST/anon é default-deny. Ao adicionar tabela nova, habilitar RLS na mesma migration.
 - O leaderboard usa SQL direto e faz JOIN de `leads` com `public."user"` (tabela Better Auth) para obter o nome do vendedor. Não consulta `auth.users`.
 - `drizzle.config.ts` carrega env de `../../apps/web/.env`; comandos `db:*` rodam a partir da raiz do repo.
 

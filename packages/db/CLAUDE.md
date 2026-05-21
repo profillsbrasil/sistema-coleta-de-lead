@@ -11,7 +11,11 @@ Arquitetura e stack: ver `../../CLAUDE.md`.
 ## Schema
 
 - Schema Drizzle em `src/schema`. Tabela ativa: `leads`.
-- `todo`, `user_roles` e o enum `app_role` são artefatos da migration
-  `0000_smart_blockbuster.sql` (scaffolding Better-T-Stack e auth legada). Não são
-  usados em nenhum código. Não construa em cima deles — ver item de backlog em
-  `docs/tech-debt.md`.
+- `signup_invite_rate_limit` é a única outra tabela própria do `packages/db`.
+- Tabelas Better Auth (`user`, `session`, `account`, `verification`) vivem em
+  `packages/auth/src/schema.ts` e são incluídas no schema do drizzle-kit via o
+  `schema` array em `drizzle.config.ts`.
+- Toda tabela `public.*` tem RLS habilitada (migration `0004_enable_rls_drop_legacy`).
+  O app Drizzle conecta como role owner e tem bypass implícito; PostgREST/anon é
+  default-deny. Se for adicionar uma nova tabela: lembre de habilitar RLS na
+  mesma migration.

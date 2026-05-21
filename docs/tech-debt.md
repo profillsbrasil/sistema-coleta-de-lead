@@ -27,6 +27,11 @@ em perda de dados, segurança ou bloqueio de evolução.
   agravado pela `SUPABASE_SERVICE_ROLE_KEY` disponível, que bypassa RLS.
 - **Ação sugerida:** habilitar RLS em todas as tabelas e criar policies por `userId`.
 - **Issue:** #20
+- **Status:** resolvido em 2026-05-21 — migration `0004_enable_rls_drop_legacy`
+  habilitou RLS em todas as tabelas `public.*`. Sem policies: o app Drizzle
+  conecta como role owner (`postgres`) e tem bypass implícito; PostgREST/anon
+  passa a ser default-deny, fechando o vetor real (vazamento via anon key
+  pública em `/rest/v1/<tabela>`).
 
 ### 3. `lucide-react` em versões major divergentes
 
@@ -219,6 +224,9 @@ em perda de dados, segurança ou bloqueio de evolução.
 - **Causa raiz:** `todo`, `user_roles` e o enum `app_role` existem no banco e no schema
   (no caso de `todo`) mas não são referenciados em nenhum código.
 - **Ação sugerida:** remover do schema e dropar via migration dedicada.
+- **Status:** resolvido em 2026-05-21 — `todo`, `user_roles` e o enum `app_role`
+  dropados pela migration `0004_enable_rls_drop_legacy`; schema Drizzle e
+  client `packages/db/src/index.ts` limpos.
 
 ### 25. Conflito com timestamps iguais → server-wins implícito
 
