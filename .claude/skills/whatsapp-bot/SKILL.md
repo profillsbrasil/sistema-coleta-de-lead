@@ -1,5 +1,5 @@
 ---
-name: whatsapp-raffle-bot
+name: whatsapp-bot
 description: "Construa um chatbot de sorteio para eventos usando WhatsApp Cloud API (Meta) + Next.js + Vercel + Supabase. Use sempre que o usuário mencionar: chatbot WhatsApp, bot de sorteio, integração WhatsApp Business API, QR Code com fluxo WhatsApp, coleta de leads via WhatsApp, webhook WhatsApp Meta, wa.me link, Cloud API, ou quando quiser construir qualquer fluxo conversacional no WhatsApp que colete dados (nome/email), peça consentimento LGPD, ou envie códigos/cupons. Aplica-se tanto a projetos novos do zero quanto à INTEGRAÇÃO em projetos Next.js + Supabase existentes na Vercel. Cobre setup Meta for Developers, webhook handler com validação HMAC, máquina de estados de conversa, schema Postgres, conformidade LGPD, geração de QR Code, testes locais com ngrok e deploy."
 ---
 
