@@ -38,7 +38,7 @@ set +a
 : "${WHATSAPP_BUSINESS_ACCOUNT_ID:?precisa estar em apps/web/.env}"
 : "${WHATSAPP_APP_SECRET:?precisa estar em apps/web/.env}"
 : "${WHATSAPP_VERIFY_TOKEN:?precisa estar em apps/web/.env}"
-: "${WHATSAPP_API_VERSION:=v23.0}"
+: "${WHATSAPP_API_VERSION:=v25.0}"
 
 DOMAIN="${DOMAIN:-https://lead.profills.com}"
 WEBHOOK_URL="$DOMAIN/api/whatsapp/webhook"

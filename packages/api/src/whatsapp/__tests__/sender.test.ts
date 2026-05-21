@@ -4,11 +4,11 @@ vi.mock("@dashboard-leads-profills/env/server", () => ({
 	env: {
 		WHATSAPP_ACCESS_TOKEN: "test-token",
 		WHATSAPP_PHONE_NUMBER_ID: "1234567890",
-		WHATSAPP_API_VERSION: "v23.0",
+		WHATSAPP_API_VERSION: "v25.0",
 	},
 }));
 
-const EXPECTED_URL = "https://graph.facebook.com/v23.0/1234567890/messages";
+const EXPECTED_URL = "https://graph.facebook.com/v25.0/1234567890/messages";
 const EXPECTED_AUTH = "Bearer test-token";
 
 function makeFetchOk(wamid = "wamid.ABCDEF") {

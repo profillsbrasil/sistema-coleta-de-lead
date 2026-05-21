@@ -21,7 +21,7 @@ export const env = createEnv({
 		WHATSAPP_BUSINESS_ACCOUNT_ID: z.string().min(1),
 		WHATSAPP_APP_SECRET: z.string().min(1),
 		WHATSAPP_VERIFY_TOKEN: z.string().min(1),
-		WHATSAPP_API_VERSION: z.string().min(1).default("v23.0"),
+		WHATSAPP_API_VERSION: z.string().min(1).default("v25.0"),
 		SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
 		TERMS_VERSION: z.string().min(1).default("v1"),
 	},
