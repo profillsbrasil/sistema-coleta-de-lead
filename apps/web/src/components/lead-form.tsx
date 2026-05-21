@@ -9,6 +9,7 @@ import {
 import { Input } from "@dashboard-leads-profills/ui/components/input";
 import { Label } from "@dashboard-leads-profills/ui/components/label";
 import { Textarea } from "@dashboard-leads-profills/ui/components/textarea";
+import { useMutation } from "@tanstack/react-query";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
@@ -19,6 +20,7 @@ import { saveLead } from "@/lib/lead/save-lead";
 import { updateLead } from "@/lib/lead/update-lead";
 import { type LeadFormData, leadFormSchema } from "@/lib/lead/validation";
 import { formatPhone, maskPhoneInput, unmaskPhone } from "@/lib/masks/phone";
+import { trpc } from "@/utils/trpc";
 
 import PhotoCapture from "./photo-capture";
 import TagSelector from "./tag-selector";
@@ -58,6 +60,31 @@ function getInitialState(lead: Lead | undefined) {
 	};
 }
 
+function maskPhoneForLog(value: string): string {
+	const digits = value.replace(/\D/g, "");
+	if (digits.length <= 4) {
+		return digits;
+	}
+	return `***${digits.slice(-4)}`;
+}
+
+function readDomValue(form: HTMLFormElement, id: string): string {
+	const el = form.elements.namedItem(id);
+	if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+		return el.value;
+	}
+	return "";
+}
+
+function collectInvalidSelectors(form: HTMLFormElement): string[] {
+	const invalid = form.querySelectorAll(":invalid");
+	return Array.from(invalid).map((el) => {
+		const id = (el as HTMLElement).id;
+		const tag = el.tagName.toLowerCase();
+		return id ? `#${id}` : `<${tag}>`;
+	});
+}
+
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form component with many fields requires co-located state and validation logic
 export default function LeadForm({
 	lead,
@@ -69,6 +96,14 @@ export default function LeadForm({
 }: LeadFormProps) {
 	const router = useRouter();
 	const isEditMode = !!lead;
+
+	const diagnosticMutation = useMutation(
+		trpc.debug.logFormDiagnostic.mutationOptions({
+			onError: () => {
+				// instrumentação não pode quebrar o fluxo do form
+			},
+		})
+	);
 
 	const initial = useMemo(() => getInitialState(lead), [lead]);
 
@@ -143,8 +178,83 @@ export default function LeadForm({
 		}
 	}
 
+	function handleInvalid(e: React.FormEvent<HTMLFormElement>) {
+		const target = e.target as HTMLInputElement;
+		const form = e.currentTarget;
+		const validity = target.validity;
+		const payload = {
+			source: "onInvalid" as const,
+			ts: Date.now(),
+			userAgent: navigator.userAgent.slice(0, 500),
+			viewport: { w: window.innerWidth, h: window.innerHeight },
+			reactState: {
+				name,
+				company,
+				phone: maskPhoneForLog(phone),
+				email,
+				interestTag,
+			},
+			domValues: {
+				"lead-name": readDomValue(form, "lead-name"),
+				"lead-company": readDomValue(form, "lead-company"),
+				"lead-phone": maskPhoneForLog(readDomValue(form, "lead-phone")),
+				"lead-email": readDomValue(form, "lead-email"),
+			},
+			invalidField: {
+				id: target.id || "",
+				name: target.name || null,
+				validationMessage: target.validationMessage,
+				validity: {
+					valueMissing: validity.valueMissing,
+					typeMismatch: validity.typeMismatch,
+					patternMismatch: validity.patternMismatch,
+					tooShort: validity.tooShort,
+					tooLong: validity.tooLong,
+					badInput: validity.badInput,
+					customError: validity.customError,
+				},
+			},
+		};
+		console.warn("[lead-form-debug]", payload);
+		const truncatedMsg =
+			`${target.id || "?"}: ${target.validationMessage}`.slice(0, 120);
+		toast.error(`Debug invalid → ${truncatedMsg}`, { duration: 6000 });
+		diagnosticMutation.mutate(payload);
+	}
+
 	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form submit with optional callback paths requires branching logic
 	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+		const form = e.currentTarget;
+		const nativeEvent = e.nativeEvent as SubmitEvent;
+		const submitterId =
+			nativeEvent.submitter instanceof HTMLElement
+				? nativeEvent.submitter.id || null
+				: null;
+		const handleSubmitPayload = {
+			source: "handleSubmit" as const,
+			ts: Date.now(),
+			userAgent: navigator.userAgent.slice(0, 500),
+			viewport: { w: window.innerWidth, h: window.innerHeight },
+			reactState: {
+				name,
+				company,
+				phone: maskPhoneForLog(phone),
+				email,
+				interestTag,
+			},
+			domValues: {
+				"lead-name": readDomValue(form, "lead-name"),
+				"lead-company": readDomValue(form, "lead-company"),
+				"lead-phone": maskPhoneForLog(readDomValue(form, "lead-phone")),
+				"lead-email": readDomValue(form, "lead-email"),
+			},
+			checkValidity: form.checkValidity(),
+			invalidSelectors: collectInvalidSelectors(form),
+			submitter: submitterId,
+		};
+		console.warn("[lead-form-debug]", handleSubmitPayload);
+		diagnosticMutation.mutate(handleSubmitPayload);
+
 		e.preventDefault();
 		setErrors({});
 
@@ -237,6 +347,7 @@ export default function LeadForm({
 				aria-busy={isSubmitting}
 				className="flex flex-col gap-5 px-4"
 				id="lead-form"
+				onInvalid={handleInvalid}
 				onSubmit={handleSubmit}
 			>
 				<div className="flex flex-col gap-2">
