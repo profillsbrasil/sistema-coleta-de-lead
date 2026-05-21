@@ -4,7 +4,17 @@ import {
 	participants,
 } from "@dashboard-leads-profills/db/schema/whatsapp";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, isNotNull, isNull, like, or, sql } from "drizzle-orm";
+import {
+	and,
+	desc,
+	eq,
+	isNotNull,
+	isNull,
+	like,
+	or,
+	type SQL,
+	sql,
+} from "drizzle-orm";
 import z from "zod";
 
 import { adminProcedure, router } from "../index";
@@ -47,6 +57,10 @@ function buildWinnerMessage(
 			return winnerChurrasqueira({ name, raffleCode }).body;
 		case "cooler":
 			return winnerCooler({ name, raffleCode }).body;
+		default: {
+			const _exhaustive: never = prize;
+			throw new Error(`Unknown prize: ${_exhaustive}`);
+		}
 	}
 }
 
@@ -78,7 +92,7 @@ export const whatsappRouter = router({
 			})
 		)
 		.query(async ({ input }) => {
-			const conditions = [];
+			const conditions: SQL[] = [];
 
 			if (input.state) {
 				conditions.push(eq(participants.state, input.state));
@@ -86,14 +100,15 @@ export const whatsappRouter = router({
 
 			if (input.search) {
 				const term = `%${input.search}%`;
-				conditions.push(
-					or(
-						like(participants.name, term),
-						like(participants.company, term),
-						like(participants.raffleCode, term),
-						like(participants.waId, term)
-					)
+				const searchCond = or(
+					like(participants.name, term),
+					like(participants.company, term),
+					like(participants.raffleCode, term),
+					like(participants.waId, term)
 				);
+				if (searchCond !== undefined) {
+					conditions.push(searchCond);
+				}
 			}
 
 			if (input.onlyEligibleForRaffle) {
@@ -293,8 +308,7 @@ export const whatsappRouter = router({
 
 			if (
 				!(
-					participant &&
-					participant.winnerOf &&
+					participant?.winnerOf &&
 					participant.name &&
 					participant.raffleCode &&
 					participant.waId

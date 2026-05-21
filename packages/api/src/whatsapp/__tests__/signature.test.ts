@@ -18,7 +18,7 @@ describe("verifySignature", () => {
 
 	it("retorna false quando o corpo foi adulterado", () => {
 		const sig = makeSignature(BODY, SECRET);
-		const tamperedBody = BODY + " ";
+		const tamperedBody = `${BODY} `;
 		expect(verifySignature(tamperedBody, sig, SECRET)).toBe(false);
 	});
 

@@ -53,18 +53,18 @@ export type OutboundAction =
 	| { kind: "image"; link: string; caption?: string }
 	| { kind: "generateAndSendCode" };
 
-export type StateMachineConfig = {
+export interface StateMachineConfig {
 	eventName: string;
 	raffleDate?: string;
 	termsVersion: string;
 	welcomeImageUrl?: string;
-};
+}
 
-export type HandleResult = {
-	participantPatch: ParticipantPatch | null;
+export interface HandleResult {
 	createParticipant?: { waId: string; state: ParticipantState };
 	outbounds: OutboundAction[];
-};
+	participantPatch: ParticipantPatch | null;
+}
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -94,6 +94,8 @@ function normalize(s: string): string {
 
 const YES_RE = /^(aceito|sim|quero|ok)$/;
 const NO_RE = /^(nao|recusar|recuso|nao aceito)$/;
+const STATUS_RE = /^status$|^!status|^\/status/i;
+const HELP_RE = /^ajuda|^help|^\?/i;
 
 function isYes(normalized: string): boolean {
 	return YES_RE.test(normalized);
@@ -275,7 +277,7 @@ function handleCompleted(args: {
 	if (body !== null) {
 		const trimmed = body.trim();
 
-		if (/^status$|^!status|^\/status/i.test(trimmed)) {
+		if (STATUS_RE.test(trimmed)) {
 			return {
 				participantPatch: null,
 				outbounds: [
@@ -284,7 +286,7 @@ function handleCompleted(args: {
 			};
 		}
 
-		if (/^ajuda|^help|^\?/i.test(trimmed)) {
+		if (HELP_RE.test(trimmed)) {
 			return {
 				participantPatch: null,
 				outbounds: [toTextAction(help())],
@@ -354,8 +356,8 @@ export function handleInbound(args: {
 
 		default: {
 			// Exhaustiveness guard — unreachable at runtime if DB state is always valid
-			void (state as never);
-			return { participantPatch: null, outbounds: [] };
+			const _exhaustive: never = state as never;
+			return _exhaustive;
 		}
 	}
 }

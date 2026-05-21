@@ -9,7 +9,9 @@ import {
 import { verifySignature } from "@dashboard-leads-profills/api/whatsapp/signature";
 import {
 	handleInbound,
+	type OutboundAction,
 	type Participant,
+	type StateMachineConfig,
 } from "@dashboard-leads-profills/api/whatsapp/state-machine";
 import {
 	type InboundMessage,
@@ -201,80 +203,7 @@ async function processMessage(
 
 		// 8. Process outbound actions
 		for (const action of result.outbounds) {
-			if (action.kind === "text") {
-				await loggedSend(
-					waId,
-					() => sendText(waId, action.body),
-					participant,
-					"text",
-					{ body: action.body }
-				);
-			} else if (action.kind === "interactive") {
-				await loggedSend(
-					waId,
-					() => sendInteractive(waId, action.interactive),
-					participant,
-					"interactive",
-					{ interactive: action.interactive }
-				);
-			} else if (action.kind === "image") {
-				await loggedSend(
-					waId,
-					() => sendImage(waId, action.link, action.caption),
-					participant,
-					"image",
-					{ link: action.link, caption: action.caption }
-				);
-			} else if (action.kind === "generateAndSendCode") {
-				if (participant === null) {
-					console.error(
-						JSON.stringify({
-							tag: "whatsapp:webhook",
-							event: "error",
-							err: "generateAndSendCode called with null participant",
-							waId,
-						})
-					);
-					continue;
-				}
-				const raffleCode = await assignCodeWithRetry(db, participant.id);
-				if (raffleCode === null) {
-					// Exhausted retries — send fallback message
-					console.error(
-						JSON.stringify({
-							tag: "whatsapp:webhook",
-							event: "code_generation_exhausted",
-							waId,
-							participantId: participant.id,
-						})
-					);
-					await loggedSend(
-						waId,
-						() =>
-							sendText(
-								waId,
-								"Tivemos um problema ao gerar seu codigo de sorteio. Tente novamente em alguns minutos."
-							),
-						participant,
-						"text",
-						{ body: "fallback_code_error" }
-					);
-				} else {
-					const name = participant.name ?? "";
-					const codeMsgBody = codeGenerated({
-						name,
-						raffleCode,
-						raffleDate: config.raffleDate,
-					}).body;
-					await loggedSend(
-						waId,
-						() => sendText(waId, codeMsgBody),
-						participant,
-						"text",
-						{ body: codeMsgBody, raffleCode }
-					);
-				}
-			}
+			await handleOutboundAction(action, waId, participant, config);
 		}
 
 		console.log(
@@ -297,6 +226,92 @@ async function processMessage(
 				err: String(err),
 			})
 		);
+	}
+}
+
+// ---------------------------------------------------------------------------
+// handleOutboundAction — dispatches a single outbound action
+// ---------------------------------------------------------------------------
+
+async function handleOutboundAction(
+	action: OutboundAction,
+	waId: string,
+	participant: Participant | null,
+	config: StateMachineConfig
+): Promise<void> {
+	if (action.kind === "text") {
+		await loggedSend(
+			waId,
+			() => sendText(waId, action.body),
+			participant,
+			"text",
+			{ body: action.body }
+		);
+	} else if (action.kind === "interactive") {
+		await loggedSend(
+			waId,
+			() => sendInteractive(waId, action.interactive),
+			participant,
+			"interactive",
+			{ interactive: action.interactive }
+		);
+	} else if (action.kind === "image") {
+		await loggedSend(
+			waId,
+			() => sendImage(waId, action.link, action.caption),
+			participant,
+			"image",
+			{ link: action.link, caption: action.caption }
+		);
+	} else if (action.kind === "generateAndSendCode") {
+		if (participant === null) {
+			console.error(
+				JSON.stringify({
+					tag: "whatsapp:webhook",
+					event: "error",
+					err: "generateAndSendCode called with null participant",
+					waId,
+				})
+			);
+			return;
+		}
+		const raffleCode = await assignCodeWithRetry(db, participant.id);
+		if (raffleCode === null) {
+			// Exhausted retries — send fallback message
+			console.error(
+				JSON.stringify({
+					tag: "whatsapp:webhook",
+					event: "code_generation_exhausted",
+					waId,
+					participantId: participant.id,
+				})
+			);
+			await loggedSend(
+				waId,
+				() =>
+					sendText(
+						waId,
+						"Tivemos um problema ao gerar seu codigo de sorteio. Tente novamente em alguns minutos."
+					),
+				participant,
+				"text",
+				{ body: "fallback_code_error" }
+			);
+		} else {
+			const name = participant.name ?? "";
+			const codeMsgBody = codeGenerated({
+				name,
+				raffleCode,
+				raffleDate: config.raffleDate,
+			}).body;
+			await loggedSend(
+				waId,
+				() => sendText(waId, codeMsgBody),
+				participant,
+				"text",
+				{ body: codeMsgBody, raffleCode }
+			);
+		}
 	}
 }
 

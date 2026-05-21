@@ -21,7 +21,9 @@ export class WhatsappSendError extends Error {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-type SendResult = { wamid: string };
+interface SendResult {
+	wamid: string;
+}
 
 function apiUrl(): string {
 	return `https://graph.facebook.com/${env.WHATSAPP_API_VERSION}/${env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
@@ -59,7 +61,7 @@ async function postMessage(body: unknown): Promise<SendResult> {
 // ---------------------------------------------------------------------------
 
 export async function sendText(to: string, body: string): Promise<SendResult> {
-	return postMessage({
+	return await postMessage({
 		messaging_product: "whatsapp",
 		recipient_type: "individual",
 		to,
@@ -72,7 +74,7 @@ export async function sendInteractive(
 	to: string,
 	interactive: InteractiveMessage["interactive"]
 ): Promise<SendResult> {
-	return postMessage({
+	return await postMessage({
 		messaging_product: "whatsapp",
 		recipient_type: "individual",
 		to,
@@ -86,7 +88,7 @@ export async function sendImage(
 	link: string,
 	caption?: string
 ): Promise<SendResult> {
-	return postMessage({
+	return await postMessage({
 		messaging_product: "whatsapp",
 		recipient_type: "individual",
 		to,

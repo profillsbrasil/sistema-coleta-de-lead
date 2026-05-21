@@ -67,9 +67,7 @@ describe("sendText", () => {
 		await sendText("5511999990000", "test");
 
 		const [, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
-		const authHeader = (init.headers as Record<string, string>)[
-			"Authorization"
-		];
+		const authHeader = (init.headers as Record<string, string>).Authorization;
 		expect(authHeader).toBe(EXPECTED_AUTH);
 	});
 
