@@ -77,6 +77,11 @@ em perda de dados, segurança ou bloqueio de evolução.
 - **Issue:** #24
 - **Status:** resolvido em 2026-05-19 — `SUPABASE_SERVICE_ROLE_KEY` e `RESEND_API_KEY`
   eram código morto (zero uso em produção); removidos de `apps/web/.env` e `turbo.json`.
+  Atualizado em 2026-05-21: `SUPABASE_SERVICE_ROLE_KEY` voltou ao `.env` como
+  `.optional()` no schema Zod (uso reservado para upload futuro de mídia do bot
+  WhatsApp via API); as novas envs `WHATSAPP_*`, `TERMS_VERSION` e quatro
+  `NEXT_PUBLIC_EVENT_*` / `_WHATSAPP_*` passaram pelo Zod no mesmo PR e estão
+  declaradas em `turbo.json`. Nenhum segredo fora do schema.
 
 ### 8. `pullChanges` não filtra leads soft-deletados
 
