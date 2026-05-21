@@ -8,8 +8,7 @@ vi.mock("@dashboard-leads-profills/env/server", () => ({
 	},
 }));
 
-const EXPECTED_URL =
-	"https://graph.facebook.com/v23.0/1234567890/messages";
+const EXPECTED_URL = "https://graph.facebook.com/v23.0/1234567890/messages";
 const EXPECTED_AUTH = "Bearer test-token";
 
 function makeFetchOk(wamid = "wamid.ABCDEF") {
@@ -27,7 +26,12 @@ function makeFetchError(status: number, body: string) {
 	});
 }
 
-import { WhatsappSendError, sendImage, sendInteractive, sendText } from "../sender";
+import {
+	sendImage,
+	sendInteractive,
+	sendText,
+	WhatsappSendError,
+} from "../sender";
 
 describe("sendText", () => {
 	beforeEach(() => {
@@ -63,7 +67,9 @@ describe("sendText", () => {
 		await sendText("5511999990000", "test");
 
 		const [, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
-		const authHeader = (init.headers as Record<string, string>)["Authorization"];
+		const authHeader = (init.headers as Record<string, string>)[
+			"Authorization"
+		];
 		expect(authHeader).toBe(EXPECTED_AUTH);
 	});
 
@@ -133,7 +139,7 @@ describe("sendImage", () => {
 		await sendImage(
 			"5511999990000",
 			"https://example.com/photo.jpg",
-			"Veja nossa oferta!",
+			"Veja nossa oferta!"
 		);
 
 		const [, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
@@ -151,7 +157,7 @@ describe("WhatsappSendError", () => {
 		vi.stubGlobal("fetch", makeFetchError(400, '{"error":"invalid phone"}'));
 
 		await expect(sendText("bad-number", "test")).rejects.toThrow(
-			WhatsappSendError,
+			WhatsappSendError
 		);
 
 		try {
@@ -168,7 +174,7 @@ describe("WhatsappSendError", () => {
 		vi.stubGlobal("fetch", makeFetchError(503, "Service Unavailable"));
 
 		await expect(sendText("5511999990000", "test")).rejects.toThrow(
-			WhatsappSendError,
+			WhatsappSendError
 		);
 	});
 });

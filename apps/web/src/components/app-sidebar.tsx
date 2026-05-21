@@ -25,6 +25,7 @@ import {
 	BarChart3,
 	ChevronUp,
 	ClipboardList,
+	Gift,
 	LogOut,
 	Moon,
 	PlusCircle,
@@ -51,6 +52,7 @@ const ADMIN_ITEMS = [
 	{ href: "/admin/leads", label: "Leads", icon: ClipboardList },
 	{ href: "/admin/users", label: "Usuários", icon: Users },
 	{ href: "/admin/stats", label: "Stats globais", icon: BarChart3 },
+	{ href: "/admin/sorteio", label: "Sorteio", icon: Gift },
 ] as const;
 
 const WHITESPACE_RE = /\s+/;

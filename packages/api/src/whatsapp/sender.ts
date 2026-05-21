@@ -70,7 +70,7 @@ export async function sendText(to: string, body: string): Promise<SendResult> {
 
 export async function sendInteractive(
 	to: string,
-	interactive: InteractiveMessage["interactive"],
+	interactive: InteractiveMessage["interactive"]
 ): Promise<SendResult> {
 	return postMessage({
 		messaging_product: "whatsapp",
@@ -84,13 +84,13 @@ export async function sendInteractive(
 export async function sendImage(
 	to: string,
 	link: string,
-	caption?: string,
+	caption?: string
 ): Promise<SendResult> {
 	return postMessage({
 		messaging_product: "whatsapp",
 		recipient_type: "individual",
 		to,
 		type: "image",
-		image: { link, ...(caption !== undefined ? { caption } : {}) },
+		image: { link, ...(caption === undefined ? {} : { caption }) },
 	});
 }

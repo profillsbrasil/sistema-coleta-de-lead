@@ -155,9 +155,7 @@
         "leads_local_id_unique": {
           "name": "leads_local_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "local_id"
-          ]
+          "columns": ["local_id"]
         }
       },
       "policies": {},
@@ -282,12 +280,8 @@
           "tableFrom": "messages",
           "tableTo": "participants",
           "schemaTo": "whatsapp",
-          "columnsFrom": [
-            "participant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["participant_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -297,9 +291,7 @@
         "messages_wamid_unique": {
           "name": "messages_wamid_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "wamid"
-          ]
+          "columns": ["wamid"]
         }
       },
       "policies": {},
@@ -444,16 +436,12 @@
         "participants_wa_id_unique": {
           "name": "participants_wa_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "wa_id"
-          ]
+          "columns": ["wa_id"]
         },
         "participants_raffle_code_unique": {
           "name": "participants_raffle_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "raffle_code"
-          ]
+          "columns": ["raffle_code"]
         }
       },
       "policies": {},
@@ -598,12 +586,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -697,12 +681,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -712,9 +692,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -805,9 +783,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -887,11 +863,7 @@
     "public.interest_tag": {
       "name": "interest_tag",
       "schema": "public",
-      "values": [
-        "quente",
-        "morno",
-        "frio"
-      ]
+      "values": ["quente", "morno", "frio"]
     }
   },
   "schemas": {

@@ -1,4 +1,4 @@
-import { randomInt } from 'node:crypto';
+import { randomInt } from "node:crypto";
 
 /** Regex para validar o formato do código de sorteio. */
 export const RAFFLE_CODE_PATTERN = /^PROFILLS-\d{4}$/;
@@ -11,6 +11,6 @@ export const RAFFLE_CODE_PATTERN = /^PROFILLS-\d{4}$/;
  * (constraint UNIQUE + retry no chamador).
  */
 export function generateRaffleCode(): string {
-	const n = randomInt(0, 10000);
-	return `PROFILLS-${String(n).padStart(4, '0')}`;
+	const n = randomInt(0, 10_000);
+	return `PROFILLS-${String(n).padStart(4, "0")}`;
 }

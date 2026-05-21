@@ -1,5 +1,5 @@
-import { db } from '@dashboard-leads-profills/db';
-import { sql } from 'drizzle-orm';
+import { db } from "@dashboard-leads-profills/db";
+import { sql } from "drizzle-orm";
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 30;

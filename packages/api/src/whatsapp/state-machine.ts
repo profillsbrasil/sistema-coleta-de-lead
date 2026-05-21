@@ -6,21 +6,21 @@
  */
 
 import type { participants as ParticipantTable } from "@dashboard-leads-profills/db/schema/whatsapp";
-import type { InboundMessage } from "./types";
 import type { InteractiveMessage } from "./messages";
 import {
-	welcome,
-	askName,
+	alreadyParticipated,
 	askCompany,
+	askName,
+	companyInvalid,
 	declined,
-	reoffer,
+	help,
 	invalidConsentRetry,
 	nameInvalid,
-	companyInvalid,
-	alreadyParticipated,
+	reoffer,
 	status,
-	help,
+	welcome,
 } from "./messages";
+import type { InboundMessage } from "./types";
 
 // ---------------------------------------------------------------------------
 // Domain types
@@ -105,7 +105,9 @@ function isNo(normalized: string): boolean {
 
 /** Extrai o body de texto cru da mensagem, se disponível. */
 function getTextBody(message: InboundMessage): string | null {
-	if (message.type !== "text") return null;
+	if (message.type !== "text") {
+		return null;
+	}
 	// Narrowed to the text branch — `text` field is a well-typed object here.
 	const m = message as Extract<InboundMessage, { type: "text" }>;
 	return m.text.body;
@@ -113,7 +115,9 @@ function getTextBody(message: InboundMessage): string | null {
 
 /** Verifica se a mensagem é um button_reply interativo com o id fornecido. */
 function isButtonReply(message: InboundMessage, id: string): boolean {
-	if (message.type !== "interactive") return false;
+	if (message.type !== "interactive") {
+		return false;
+	}
 	const m = message as Extract<InboundMessage, { type: "interactive" }>;
 	return (
 		m.interactive.type === "button_reply" &&
@@ -157,7 +161,8 @@ function handleAwaitingConsent(args: {
 	// Accept: button OR text match
 	if (
 		isButtonReply(message, "accept") ||
-		(getTextBody(message) !== null && isYes(normalize(getTextBody(message) as string)))
+		(getTextBody(message) !== null &&
+			isYes(normalize(getTextBody(message) as string)))
 	) {
 		return {
 			participantPatch: {
@@ -172,7 +177,8 @@ function handleAwaitingConsent(args: {
 	// Decline: button OR text match
 	if (
 		isButtonReply(message, "decline") ||
-		(getTextBody(message) !== null && isNo(normalize(getTextBody(message) as string)))
+		(getTextBody(message) !== null &&
+			isNo(normalize(getTextBody(message) as string)))
 	) {
 		return {
 			participantPatch: {
@@ -199,9 +205,7 @@ function handleAwaitingConsent(args: {
 	};
 }
 
-function handleAwaitingName(args: {
-	message: InboundMessage;
-}): HandleResult {
+function handleAwaitingName(args: { message: InboundMessage }): HandleResult {
 	const { message } = args;
 	const body = getTextBody(message);
 
@@ -274,7 +278,9 @@ function handleCompleted(args: {
 		if (/^status$|^!status|^\/status/i.test(trimmed)) {
 			return {
 				participantPatch: null,
-				outbounds: [toTextAction(status({ raffleCode: participant.raffleCode ?? "" }))],
+				outbounds: [
+					toTextAction(status({ raffleCode: participant.raffleCode ?? "" })),
+				],
 			};
 		}
 
@@ -294,7 +300,7 @@ function handleCompleted(args: {
 				alreadyParticipated({
 					name: participant.name ?? "",
 					raffleCode: participant.raffleCode ?? "",
-				}),
+				})
 			),
 		],
 	};

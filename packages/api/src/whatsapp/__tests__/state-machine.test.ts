@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { handleInbound } from "../state-machine";
 import type { Participant, StateMachineConfig } from "../state-machine";
+import { handleInbound } from "../state-machine";
 import type { InboundMessage } from "../types";
 
 // ---------------------------------------------------------------------------
@@ -98,7 +98,7 @@ describe("handleInbound — participant=null (first inbound)", () => {
 		expect(result.outbounds).toHaveLength(2);
 		expect(result.outbounds[0]?.kind).toBe("image");
 		expect((result.outbounds[0] as { kind: "image"; link: string }).link).toBe(
-			"https://example.com/banner.jpg",
+			"https://example.com/banner.jpg"
 		);
 		expect(result.outbounds[1]?.kind).toBe("interactive");
 	});
@@ -247,7 +247,10 @@ describe("handleInbound — state=AWAITING_CONSENT", () => {
 
 	it("resposta inválida → incrementa retryCount e reenvia interactive", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_CONSENT", retryCount: 0 }),
+			participant: makeParticipant({
+				state: "AWAITING_CONSENT",
+				retryCount: 0,
+			}),
 			message: textMsg("talvez"),
 			config: BASE_CONFIG,
 		});
@@ -259,7 +262,10 @@ describe("handleInbound — state=AWAITING_CONSENT", () => {
 
 	it("2ª resposta inválida → retryCount=2 e ainda reenvia interactive", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_CONSENT", retryCount: 1 }),
+			participant: makeParticipant({
+				state: "AWAITING_CONSENT",
+				retryCount: 1,
+			}),
 			message: textMsg("sei lá"),
 			config: BASE_CONFIG,
 		});
@@ -271,7 +277,10 @@ describe("handleInbound — state=AWAITING_CONSENT", () => {
 
 	it("3ª resposta inválida (retryCount=2 → 3) → outbounds vazio (silent timeout)", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_CONSENT", retryCount: 2 }),
+			participant: makeParticipant({
+				state: "AWAITING_CONSENT",
+				retryCount: 2,
+			}),
 			message: textMsg("hmm"),
 			config: BASE_CONFIG,
 		});
@@ -282,7 +291,10 @@ describe("handleInbound — state=AWAITING_CONSENT", () => {
 
 	it("whole-word: 'simsim' não deve casar como yes", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_CONSENT", retryCount: 0 }),
+			participant: makeParticipant({
+				state: "AWAITING_CONSENT",
+				retryCount: 0,
+			}),
 			message: textMsg("simsim"),
 			config: BASE_CONFIG,
 		});
@@ -294,7 +306,10 @@ describe("handleInbound — state=AWAITING_CONSENT", () => {
 
 	it("whole-word: 'naozinho' não deve casar como no", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_CONSENT", retryCount: 0 }),
+			participant: makeParticipant({
+				state: "AWAITING_CONSENT",
+				retryCount: 0,
+			}),
 			message: textMsg("naozinho"),
 			config: BASE_CONFIG,
 		});
@@ -411,7 +426,10 @@ describe("handleInbound — state=AWAITING_COMPANY", () => {
 
 	it("empresa com espaços é trimada antes de salvar", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_COMPANY", name: "Maria" }),
+			participant: makeParticipant({
+				state: "AWAITING_COMPANY",
+				name: "Maria",
+			}),
 			message: textMsg("  Emach Digital  "),
 			config: BASE_CONFIG,
 		});
@@ -421,7 +439,10 @@ describe("handleInbound — state=AWAITING_COMPANY", () => {
 
 	it("empresa vazia (só espaços) → companyInvalid", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_COMPANY", name: "Pedro" }),
+			participant: makeParticipant({
+				state: "AWAITING_COMPANY",
+				name: "Pedro",
+			}),
 			message: textMsg("   "),
 			config: BASE_CONFIG,
 		});
@@ -433,7 +454,10 @@ describe("handleInbound — state=AWAITING_COMPANY", () => {
 	it("empresa com 81 chars → companyInvalid", () => {
 		const longCompany = "C".repeat(81);
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_COMPANY", name: "Pedro" }),
+			participant: makeParticipant({
+				state: "AWAITING_COMPANY",
+				name: "Pedro",
+			}),
 			message: textMsg(longCompany),
 			config: BASE_CONFIG,
 		});

@@ -4,20 +4,15 @@ import {
 	participants,
 } from "@dashboard-leads-profills/db/schema/whatsapp";
 import { TRPCError } from "@trpc/server";
-import {
-	and,
-	desc,
-	eq,
-	isNotNull,
-	isNull,
-	like,
-	or,
-	sql,
-} from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, like, or, sql } from "drizzle-orm";
 import z from "zod";
 
 import { adminProcedure, router } from "../index";
-import { winnerChurrasqueira, winnerCooler, winnerTv } from "../whatsapp/messages";
+import {
+	winnerChurrasqueira,
+	winnerCooler,
+	winnerTv,
+} from "../whatsapp/messages";
 import { sendText } from "../whatsapp/sender";
 
 // ---------------------------------------------------------------------------
@@ -43,7 +38,7 @@ const PARTICIPANT_STATES = [
 function buildWinnerMessage(
 	prize: Prize,
 	name: string,
-	raffleCode: string,
+	raffleCode: string
 ): string {
 	switch (prize) {
 		case "tv_65":
@@ -56,7 +51,9 @@ function buildWinnerMessage(
 }
 
 function escapeCsvField(value: string | null | undefined): string {
-	if (value === null || value === undefined) return "";
+	if (value === null || value === undefined) {
+		return "";
+	}
 	const str = String(value);
 	if (str.includes(",") || str.includes('"') || str.includes("\n")) {
 		return `"${str.replace(/"/g, '""')}"`;
@@ -78,7 +75,7 @@ export const whatsappRouter = router({
 				onlyWinners: z.boolean().optional(),
 				limit: z.number().int().min(1).max(200).default(50),
 				offset: z.number().int().min(0).default(0),
-			}),
+			})
 		)
 		.query(async ({ input }) => {
 			const conditions = [];
@@ -94,15 +91,15 @@ export const whatsappRouter = router({
 						like(participants.name, term),
 						like(participants.company, term),
 						like(participants.raffleCode, term),
-						like(participants.waId, term),
-					),
+						like(participants.waId, term)
+					)
 				);
 			}
 
 			if (input.onlyEligibleForRaffle) {
 				conditions.push(
 					eq(participants.state, "COMPLETED"),
-					isNull(participants.winnerOf),
+					isNull(participants.winnerOf)
 				);
 			}
 
@@ -192,8 +189,8 @@ export const whatsappRouter = router({
 					.where(
 						and(
 							eq(participants.state, "COMPLETED"),
-							isNull(participants.winnerOf),
-						),
+							isNull(participants.winnerOf)
+						)
 					)
 					.orderBy(sql`random()`)
 					.limit(1)
@@ -224,7 +221,7 @@ export const whatsappRouter = router({
 			z.object({
 				participantId: z.string().uuid(),
 				prize: PRIZE_ENUM,
-			}),
+			})
 		)
 		.mutation(async ({ input }) => {
 			try {
@@ -234,8 +231,8 @@ export const whatsappRouter = router({
 					.where(
 						and(
 							eq(participants.id, input.participantId),
-							eq(participants.state, "COMPLETED"),
-						),
+							eq(participants.state, "COMPLETED")
+						)
 					)
 					.returning();
 
@@ -248,7 +245,9 @@ export const whatsappRouter = router({
 
 				return updated[0];
 			} catch (err) {
-				if (err instanceof TRPCError) throw err;
+				if (err instanceof TRPCError) {
+					throw err;
+				}
 				// Postgres unique constraint violation (winner_of unique index per prize)
 				const message = err instanceof Error ? err.message : String(err);
 				if (message.includes("unique") || message.includes("duplicate")) {
@@ -293,11 +292,13 @@ export const whatsappRouter = router({
 			const participant = rows[0];
 
 			if (
-				!participant ||
-				!participant.winnerOf ||
-				!participant.name ||
-				!participant.raffleCode ||
-				!participant.waId
+				!(
+					participant &&
+					participant.winnerOf &&
+					participant.name &&
+					participant.raffleCode &&
+					participant.waId
+				)
 			) {
 				throw new TRPCError({
 					code: "BAD_REQUEST",
@@ -313,8 +314,8 @@ export const whatsappRouter = router({
 				.where(
 					and(
 						eq(messagesTable.participantId, input.participantId),
-						eq(messagesTable.direction, "inbound"),
-					),
+						eq(messagesTable.direction, "inbound")
+					)
 				)
 				.orderBy(desc(messagesTable.createdAt))
 				.limit(1);
@@ -333,7 +334,7 @@ export const whatsappRouter = router({
 			const body = buildWinnerMessage(
 				participant.winnerOf as Prize,
 				participant.name,
-				participant.raffleCode,
+				participant.raffleCode
 			);
 
 			// 4. Send
@@ -344,7 +345,8 @@ export const whatsappRouter = router({
 			} catch (err) {
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
-					message: err instanceof Error ? err.message : "Failed to send message",
+					message:
+						err instanceof Error ? err.message : "Failed to send message",
 				});
 			}
 
@@ -387,8 +389,8 @@ export const whatsappRouter = router({
 			.where(
 				or(
 					eq(participants.state, "COMPLETED"),
-					eq(participants.state, "DECLINED"),
-				),
+					eq(participants.state, "DECLINED")
+				)
 			)
 			.orderBy(desc(participants.createdAt));
 
@@ -409,7 +411,7 @@ export const whatsappRouter = router({
 				escapeCsvField(r.consentAt?.toISOString()),
 				escapeCsvField(r.declinedAt?.toISOString()),
 				escapeCsvField(r.termsVersion),
-			].join(","),
+			].join(",")
 		);
 
 		const csv = [header, ...lines].join("\n");

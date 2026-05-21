@@ -82,16 +82,16 @@ export const webhookPayloadSchema = z.object({
 									z.object({
 										wa_id: z.string(),
 										profile: z.object({ name: z.string() }).optional(),
-									}),
+									})
 								)
 								.optional(),
 							messages: z.array(inboundMessageSchema).optional(),
 							statuses: z.array(inboundStatusSchema).optional(),
 						})
 						.passthrough(),
-				}),
+				})
 			),
-		}),
+		})
 	),
 });
 

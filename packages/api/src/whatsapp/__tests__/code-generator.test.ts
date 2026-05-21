@@ -1,28 +1,28 @@
-import { describe, expect, it } from 'vitest';
-import { RAFFLE_CODE_PATTERN, generateRaffleCode } from '../code-generator';
+import { describe, expect, it } from "vitest";
+import { generateRaffleCode, RAFFLE_CODE_PATTERN } from "../code-generator";
 
-describe('generateRaffleCode', () => {
-	it('segue o formato PROFILLS-XXXX', () => {
+describe("generateRaffleCode", () => {
+	it("segue o formato PROFILLS-XXXX", () => {
 		const code = generateRaffleCode();
 		expect(code).toMatch(RAFFLE_CODE_PATTERN);
 	});
 
-	it('100 gerações seguem o padrão', () => {
+	it("100 gerações seguem o padrão", () => {
 		for (let i = 0; i < 100; i++) {
 			expect(generateRaffleCode()).toMatch(RAFFLE_CODE_PATTERN);
 		}
 	});
 
-	it('zero é formatado com zero-padding (PROFILLS-0000)', () => {
+	it("zero é formatado com zero-padding (PROFILLS-0000)", () => {
 		// Valida que o padding funciona — RAFFLE_CODE_PATTERN exige exatamente 4 dígitos
-		expect('PROFILLS-0000').toMatch(RAFFLE_CODE_PATTERN);
-		expect('PROFILLS-0001').toMatch(RAFFLE_CODE_PATTERN);
-		expect('PROFILLS-9999').toMatch(RAFFLE_CODE_PATTERN);
+		expect("PROFILLS-0000").toMatch(RAFFLE_CODE_PATTERN);
+		expect("PROFILLS-0001").toMatch(RAFFLE_CODE_PATTERN);
+		expect("PROFILLS-9999").toMatch(RAFFLE_CODE_PATTERN);
 		// Sem padding não deve bater (5 dígitos)
-		expect('PROFILLS-10000').not.toMatch(RAFFLE_CODE_PATTERN);
+		expect("PROFILLS-10000").not.toMatch(RAFFLE_CODE_PATTERN);
 	});
 
-	it('gera valores suficientemente distintos (sanidade de aleatoriedade)', () => {
+	it("gera valores suficientemente distintos (sanidade de aleatoriedade)", () => {
 		const codes = new Set<string>();
 		for (let i = 0; i < 50; i++) {
 			codes.add(generateRaffleCode());

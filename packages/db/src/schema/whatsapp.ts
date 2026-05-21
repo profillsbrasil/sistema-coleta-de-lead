@@ -49,7 +49,7 @@ export const participants = whatsappSchema.table(
 	(table) => [
 		index("participants_state_idx").on(table.state),
 		index("participants_winner_of_idx").on(table.winnerOf),
-	],
+	]
 );
 
 export const messages = whatsappSchema.table(
@@ -70,7 +70,7 @@ export const messages = whatsappSchema.table(
 	(table) => [
 		index("messages_participant_id_idx").on(table.participantId),
 		index("messages_wamid_idx").on(table.wamid),
-	],
+	]
 );
 
 export const rateLimit = whatsappSchema.table("rate_limit", {
