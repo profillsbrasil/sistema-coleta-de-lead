@@ -4,6 +4,35 @@ Erros mais comuns e como resolver, organizados por sintoma.
 
 ## 🔴 Setup da Meta
 
+### Mensagens de erro da Meta UI são falsos positivos com frequência
+
+A interface do Business Manager exibe erros que mentem ou são genéricos demais. Padrões observados:
+
+| Erro exibido | Realidade frequente |
+|---|---|
+| "Você escolheu um nome de usuário do sistema inválido" | Pode aparecer mesmo com nome aceito. **Recarregue a lista** — o User pode ter sido criado |
+| "O usuário administrador deve ter sido criado há mais de 7 dias para criar outros admins" | Pode ser bypassado em casos de primeiro admin do portfólio. **Recarregue e verifique** |
+| "Verificar token" falha sem detalhes | Geralmente o domínio é alcançável mas o GET handler retorna JSON em vez de texto puro |
+
+**Regra geral:** depois de um erro da UI da Meta, **sempre recarregue a página e verifique o estado real** antes de tentar novamente. Você economiza tempo importante.
+
+### "Nome inválido" ao criar System User
+
+A Meta tem blacklist de termos que rejeita silenciosamente:
+
+- `WhatsApp` (proteção de marca)
+- `Bot` (política de transparência)
+- `Sorteio`, `Promoção` (política de promoções; Meta restringe para evitar abuso)
+- Possivelmente sua marca/empresa também, se cair em alguma flag
+
+**Solução:** use nomes técnicos neutros: `Integracao Backend`, `API Service`, `Servico Eventos`. Função do System User é interna, nome não precisa ser bonito.
+
+### Não consigo achar "Usuários do sistema" na sidebar do Business Manager
+
+Você provavelmente está em **Pessoas** (humanos com login Facebook) ou em **Parceiros** (outras empresas). **Usuários do sistema** é um item separado no submenu de Usuários, geralmente o terceiro item, às vezes truncado visualmente.
+
+URL direta: `https://business.facebook.com/latest/settings/system_users?business_id=<SEU_PORTFOLIO_ID>`
+
 ### "Verify and save" falha na configuração do webhook
 
 **Sintomas**: ao clicar em "Verify and save" no painel da Meta, recebe erro genérico.
@@ -47,10 +76,34 @@ Resposta esperada: HTTP 200, body `test123`, sem aspas, sem JSON wrapper.
 - Phone Number ID: inteiro tipo `123456789012345` (15 dígitos)
 - Número: `5511987654321` (E.164 sem +)
 
-O Phone Number ID vai na URL: `graph.facebook.com/v23.0/{PHONE_NUMBER_ID}/messages`.
+O Phone Number ID vai na URL: `graph.facebook.com/v25.0/{PHONE_NUMBER_ID}/messages`.
 O número do destinatário vai no body: `"to": "5511987654321"`.
 
 ## 🔴 Webhook
+
+### Mandei mensagem pro Test Number e o webhook não recebeu nada
+
+Comportamento conhecido do Test Number da Meta (`+1 555 675 9095`):
+
+**Mensagens enviadas pelo usuário só são retransmitidas para o webhook se o bot já tiver enviado pelo menos uma mensagem antes.** Antes disso, a Meta engole o inbound silenciosamente.
+
+**Solução**: dispare um template `hello_world` direto via curl PARA O TESTER, antes de pedir pro tester mandar mensagem:
+
+```bash
+curl -X POST "https://graph.facebook.com/v25.0/<PHONE_NUMBER_ID>/messages" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messaging_product": "whatsapp",
+    "to": "5551996474579",
+    "type": "template",
+    "template": {"name": "hello_world", "language": {"code": "en_US"}}
+  }'
+```
+
+Depois que o tester recebe o "Hello World", **ele responde nessa mesma conversa** e a mensagem chega ao webhook normalmente.
+
+Isso **não vale em números reais (Live)** — apenas no Test Number.
 
 ### "Funcionou no Test mas mensagens reais não chegam"
 
@@ -62,7 +115,7 @@ O número do destinatário vai no body: `"to": "5511987654321"`.
 
 ```bash
 curl -X POST \
-  "https://graph.facebook.com/v23.0/<WABA_ID>/subscribed_apps" \
+  "https://graph.facebook.com/v25.0/<WABA_ID>/subscribed_apps" \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
@@ -70,7 +123,7 @@ Verifique:
 
 ```bash
 curl -X GET \
-  "https://graph.facebook.com/v23.0/<WABA_ID>/subscribed_apps" \
+  "https://graph.facebook.com/v25.0/<WABA_ID>/subscribed_apps" \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
@@ -157,6 +210,28 @@ return NextResponse.json({ ok: true });
 
 ## 🔴 Envio de mensagens
 
+### Erro 131030: "Recipient phone number not in allowed list" (nono dígito brasileiro)
+
+**Sintoma**: webhook recebe mensagem do usuário normalmente, bot tenta responder e falha com:
+```
+WhatsApp API error 400:
+{"error":{"message":"(#131030) Recipient phone number not in allowed list", ...}}
+```
+
+**Causa #1 (mais comum) — você está em Test Number e o destinatário não foi cadastrado**: adicione o número via painel Meta → API Setup → "Até" → Gerenciar lista de números.
+
+**Causa #2 (sutil, fácil de não ver) — nono dígito brasileiro**: o `wa_id` recebido no payload pode estar em **formato canônico do WhatsApp** (12 dígitos, sem o 9 do celular brasileiro antigo), enquanto seu cadastro tem 13 dígitos (com 9). A Meta vê como números diferentes.
+
+Exemplo:
+- Você cadastrou: `+55 51 99647-4579` (13 dígitos)
+- Webhook entregou: `wa_id: 555196474579` (12 dígitos, sem o 9)
+- A Meta rejeita o outbound porque "555196474579" não está na allow list
+
+**Solução**:
+1. No painel Meta, adicione **a versão sem o 9** na allow list (ou ambas; você tem 5 vagas no Test Number)
+2. No código, **NÃO normalize** o `wa_id` no client — use exatamente como veio do webhook
+3. Se o número é novo (pós-2014, SP/MG/RJ/etc), provavelmente não verá esse problema. RS/SC/PR têm muitos números antigos.
+
 ### Erro 131026: "Message Undeliverable"
 
 **Causa**: você está tentando enviar mensagem não-template para um usuário com quem não tem janela de 24h aberta.
@@ -197,7 +272,7 @@ return NextResponse.json({ ok: true });
 ```bash
 # Tente enviar via curl direto
 curl -X POST \
-  "https://graph.facebook.com/v23.0/PHONE_NUMBER_ID/messages" \
+  "https://graph.facebook.com/v25.0/PHONE_NUMBER_ID/messages" \
   -H "Authorization: Bearer ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -341,9 +416,27 @@ Não use template literals diretos no texto.
 
 ### "Não sei o que está dando errado, só sei que não funciona"
 
-Roteiro de diagnóstico:
+**Antes do roteiro abaixo**, sempre faça este teste de isolamento — é o mais barato:
 
-1. **Logs da Vercel** (Project → Logs → Realtime) — tem alguma exception?
+```bash
+# Valida o token (passou OAuth?)
+curl "https://graph.facebook.com/v25.0/me?access_token=<TOKEN>"
+
+# Valida que outbound funciona ponta a ponta (token + WABA + Phone ID + allow list)
+curl -X POST "https://graph.facebook.com/v25.0/<PHONE_NUMBER_ID>/messages" \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"messaging_product":"whatsapp","to":"<TESTER>","type":"template",
+       "template":{"name":"hello_world","language":{"code":"en_US"}}}'
+```
+
+Se outbound chega: o problema é só inbound (webhook não recebe, ou recebe e falha ao processar). Vá pro roteiro abaixo focando nos passos 1-3.
+
+Se outbound não chega: problema na config base (token, WABA, allow list, app não Live). Resolva isso primeiro — o bot inteiro depende disso funcionar.
+
+**Roteiro de diagnóstico** (assumindo outbound já validado):
+
+1. **Logs da Vercel** (Project → Logs → Realtime, ou `vercel logs <url> --expand --since 5m`) — tem alguma exception?
 2. **Painel da Meta** (WhatsApp → Configuration → Webhook) — Last Delivery Status mostra erro?
 3. **Tabela received_messages no Supabase** — entries chegam quando você envia?
 4. **Tabela participants** — estado avança após cada interação?
@@ -351,7 +444,7 @@ Roteiro de diagnóstico:
 Se 4 falha mas 1, 2, 3 estão OK: problema na máquina de estados.
 Se 3 falha mas 1, 2 estão OK: webhook não chegou no DB (erro de query, RLS bloqueando).
 Se 2 falha mas 1 está OK: assinatura HMAC ou response com status != 2xx.
-Se 1 está vazio: webhook não está sendo chamado (Callback URL errada, app não inscrito na WABA).
+Se 1 está vazio: webhook não está sendo chamado (Callback URL errada, app não inscrito na WABA, ou Test Number aguardando outbound prévio).
 
 ### Como gerar trace completo de uma mensagem
 
@@ -420,7 +513,7 @@ Se travou em algo por mais de 1h sem progresso:
 5. **Supabase Discord**: <https://discord.supabase.com>
 
 Inclua nas perguntas:
-- Versão da Graph API (`v23.0`)
+- Versão da Graph API (`v25.0`)
 - Código do erro (se houver)
 - Trecho mínimo de código que reproduz
 - O que você já tentou

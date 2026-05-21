@@ -361,9 +361,10 @@ O botão **Test** no painel da Meta só dispara um evento sintético — não us
 
 ### "Recebo evento mas não consigo responder"
 
-- Token expirou (token temporário dura 24h) → use System User token permanente
-- O `to` no envio precisa ser E.164 sem `+` (igual ao `from` que veio)
-- A janela de 24h fechou → precisa template
+- Token expirou (o token "Generate access token" do Quick Start dura ~24h) → use System User token permanente (`references/01-meta-setup.md` passo 7)
+- Validou o token? `curl "https://graph.facebook.com/v25.0/me?access_token=<TOKEN>"` deve retornar `{"name": ...}`. Se 400/401, regere.
+- O `to` no envio precisa ser **exatamente o `wa_id` que veio no payload** — não normalize, não adicione 9 do nono dígito brasileiro. Erro `131030 Recipient phone number not in allowed list` quase sempre é isso em Test Number (o cadastro tem 13 dígitos mas o webhook entrega 12 — adicione ambos na allow list).
+- A janela de 24h fechou → precisa template aprovado
 
 ### "HMAC sempre inválido"
 

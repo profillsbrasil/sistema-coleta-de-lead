@@ -16,6 +16,26 @@ Esta é a fase de cadastro externo. Não tem código aqui, mas é a base de tudo
 
 **Você precisa da Cloud API.** O número usado na Cloud API NÃO pode estar simultaneamente ativo no app WhatsApp consumidor — precisa ser dedicado, ou migrar.
 
+### ⚠️ AVISO CRÍTICO: NÃO use o número principal de atendimento
+
+Migrar um número do app WhatsApp Business para a Cloud API é **destrutivo e demorado para reverter**:
+
+| Antes da migração | Depois da migração |
+|---|---|
+| Atendentes respondem do celular | App WhatsApp Business **desconectado permanentemente** desse número |
+| Catálogo, etiquetas, mensagens automáticas do app | Tudo perdido (não migra para Cloud API) |
+| WhatsApp Web tradicional funciona | Para de funcionar (Cloud API é só via Graph API) |
+| Conversas em andamento acessíveis | Ficam órfãs no aparelho, sem como responder |
+
+**Reverter** exige offboarding manual no painel Meta (~24h+) e durante esse tempo o número fica em limbo (nem no app, nem na Cloud API).
+
+**Regra de ouro:** sempre use um **chip dedicado** (linha sobressalente, chip novo pré-pago R$15-30) para o bot. Mantenha o número comercial principal intocado. Para eventos pontuais, depois é possível desativar o chip.
+
+Cenários alternativos se o número que você quer usar JÁ está no app WhatsApp Business:
+- **Opção 1 (recomendada):** comprar/separar um chip novo, registrar o app WhatsApp Business nele, e aí migrar esse chip novo para a Cloud API
+- **Opção 2:** desativar a conta WhatsApp Business no número atual (Settings → Account → Delete account), esperar ~30min, e cadastrar como novo na Cloud API. Perde-se conversas mas mantém o número
+- **Opção 3:** convivência via solução multi-agente (Twilio, Zenvia, ManyChat) — investimento extra, semanas de setup
+
 ### On-Premises API foi descontinuada
 
 A documentação oficial da Meta (`developers.facebook.com/docs/whatsapp/on-premises/sunset`) afirma textualmente: *"The final supported version of the On-Premise API client expired on October 23, 2025. On-Premises API can't be used to send messages to WhatsApp users anymore."* Novos números só rodam na Cloud API hospedada pela Meta.
@@ -59,32 +79,78 @@ Regra da Meta: a conta inicial precisa estar em nome de uma **pessoa física**, 
 2. Encontre **App Secret** → clique em **Mostrar** → digite sua senha
 3. Anote — vai no `.env` como `WHATSAPP_APP_SECRET`. **Este valor é o segredo HMAC** para validar webhooks.
 
-### Passo 6: Token de acesso TEMPORÁRIO (apenas para testes iniciais)
+### Passo 6: Token de acesso — PULE o temporário, vá direto para o System User
 
-Em **WhatsApp → API Setup**, há um botão "Generate access token" — este token **expira em 24h**. Use APENAS para validar que o setup está funcionando. Nunca em produção.
+Em **WhatsApp → API Setup**, há um botão "Generate access token" que gera um token **temporário válido por ~24h**.
 
-### Passo 7: Token de acesso PERMANENTE (via System User) — OBRIGATÓRIO para produção
+**Recomendação forte: ignore esse botão.** Mesmo "só para testar" ele atrapalha — você gera, cola no `.env`, faz deploys, e em algumas horas o bot para de funcionar no meio do desenvolvimento. Aí volta no painel, gera de novo, atualiza Vercel, redeploy... ciclo cansativo que se evita criando o token permanente UMA vez agora.
 
-Esta é a etapa que muita gente erra. Siga exatamente nesta ordem (procedimento oficial da Meta, página "Get Started" atualizada em 01/10/2025):
+**Vá direto para o passo 7.**
 
-1. Vá para **Business Settings** (<https://business.facebook.com/settings>)
-2. No menu esquerdo: **Users → System Users**
-3. Clique em **Add** → preencha:
-   - Nome: `whatsapp-bot-prod` (ou qualquer identificador)
-   - Role: **Admin**
-4. Clique no System User criado → **Add Assets**
-5. Selecione **Apps** → escolha o app criado no passo 3 → ative **Manage app**
-6. Selecione **WhatsApp Accounts** → escolha a WABA → ative **Manage WhatsApp Business Accounts**
-7. Volte para o System User → clique em **Generate New Token**
-8. Selecione o app
-9. Marque permissões:
+### Passo 7: Token de acesso PERMANENTE via System User
+
+Procedimento oficial atualizado (verificado contra implementações reais em 2026):
+
+#### 7.1 — Navegar até Usuários do Sistema (atenção: caminho confunde)
+
+1. Abra <https://business.facebook.com/settings>
+2. Selecione o **portfólio empresarial** correto no topo (não confunda com outro portfólio que você tenha acesso)
+3. No menu esquerdo, expanda **Usuários** (não é o item raiz "Usuários" do nível superior, é o submenu)
+4. Você verá:
+   - **Pessoas** — humanos com login Facebook (NÃO É AQUI)
+   - **Parceiros** — outras empresas (NÃO É AQUI)
+   - **Usuários do sistema** ← **é este**
+
+O item "Usuários do sistema" às vezes aparece truncado/cortado na sidebar dependendo do zoom — role um pouco se não estiver vendo.
+
+#### 7.2 — Criar o System User
+
+1. Clique em **+ Adicionar** (canto superior direito) → abre modal "Create system user"
+2. **Nome:** use algo neutro/técnico — **NÃO use** as palavras `WhatsApp`, `Bot`, `Sorteio`, `Promoção`, `Profills` (a Meta tem blacklist de marca e termos promocionais; rejeitará com "nome inválido")
+   - Bons exemplos: `Integracao Backend`, `API Service`, `Servico Eventos`
+3. **Role:** **Admin** (necessário para gerar token)
+
+⚠️ **Atenção aos falsos positivos:** a interface da Meta às vezes exibe erros que mentem:
+- **"Você escolheu um nome de usuário do sistema inválido"** — pode aparecer mesmo quando o nome é aceito. O System User pode ter sido criado no submit anterior. **Antes de tentar outro nome, feche o modal e role a lista** para ver se já existe.
+- **"O usuário administrador do sistema deve ter sido criado há mais de 7 dias para criar outros admins"** — também pode ser falso positivo se você for o primeiro admin do portfólio. Tente mesmo assim e verifique a lista.
+
+Em ambos os casos: depois de receber o erro, **clique fora do modal, recarregue a página, e cheque a lista**. Se o User aparecer com role "Admin", ignore o erro — funcionou.
+
+#### 7.3 — Atribuir ativos
+
+1. Clique no System User recém-criado → abre o painel lateral direito
+2. Clique em **Atribuir ativos** (botão central ou superior direito)
+3. **Aba Apps:** selecione seu app → ative **"Gerenciar app"** com **"Controle total"** → Atribuir
+4. **Aba Contas do WhatsApp:** selecione a WABA → ative **"Gerenciar contas do WhatsApp Business"** com **"Controle total"** → Atribuir
+
+#### 7.4 — Gerar token
+
+1. De volta no painel do System User → **Gerar token**
+2. **Selecionar app:** o app criado no passo 3
+3. **Vencimento do token:** **Nunca** (importante; o default às vezes é 60 dias)
+4. **Permissões:** marque as três:
    - `whatsapp_business_messaging`
    - `whatsapp_business_management`
-10. Token expiration: **Never** (60 dias é o padrão; mude para Never)
-11. Clique em **Generate Token**
-12. **COPIE O TOKEN IMEDIATAMENTE — ele só aparece uma vez**
+   - `business_management`
+5. **Gerar token** → o token aparece UMA VEZ na tela. Comece com `EAA...`
+6. **COPIE IMEDIATAMENTE** para um lugar seguro — ao fechar o popup, não é mais possível ver. Apenas revogar e gerar outro.
 
-Esse é o valor de `WHATSAPP_ACCESS_TOKEN` no `.env`.
+#### 7.5 — Validar o token antes de qualquer coisa
+
+Antes de colar no `.env`, valide via `GET /me`:
+
+```bash
+curl "https://graph.facebook.com/v25.0/me?access_token=COLE_O_TOKEN_AQUI"
+```
+
+Resposta esperada:
+```json
+{"name":"Integracao Backend","id":"122095555881340807"}
+```
+
+Se vier `{"error":...}`, o token está inválido ou faltou permissão. Não avance até resolver — você economiza horas de debug em produção.
+
+Após validado, esse valor vai em `WHATSAPP_ACCESS_TOKEN` no `.env`.
 
 ### Passo 8: Definir o Verify Token
 
@@ -120,7 +186,7 @@ Execute via curl:
 
 ```bash
 curl -X POST \
-  "https://graph.facebook.com/v23.0/<WABA_ID>/subscribed_apps" \
+  "https://graph.facebook.com/v25.0/<WABA_ID>/subscribed_apps" \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
@@ -128,19 +194,41 @@ Verifique se funcionou:
 
 ```bash
 curl -X GET \
-  "https://graph.facebook.com/v23.0/<WABA_ID>/subscribed_apps" \
+  "https://graph.facebook.com/v25.0/<WABA_ID>/subscribed_apps" \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 ```
 
 Resposta esperada: lista com seu app.
 
-### Passo 11: Adicionar número de teste de destinatário
+### Passo 11: Adicionar números de teste à allow list
 
-Em modo **Development**, apenas números pré-cadastrados podem **receber** mensagens do bot.
+Em modo **Development** com o **Test Number da Meta** (o `+1 555 675 9095` que aparece como "Número de teste" no dropdown De), todo número que vai trocar mensagens precisa estar pré-cadastrado em uma allow list.
 
-1. **WhatsApp → API Setup → Add phone number → To** (destinatário)
-2. Adicione seu próprio celular (e o de quem vai testar)
-3. Confirme via OTP
+1. Em **WhatsApp → Configuração da API** → seção **Etapa 1: Selecione números de telefone**
+2. No dropdown **"Até"** clique → **Gerenciar lista de números de telefone**
+3. **Adicionar telefone** → escolher código do país (BR +55) → digitar o número
+4. Você concorda em receber mensagens nesse número (clicar "Avançar")
+5. Confirmar via OTP enviado por WhatsApp ou SMS
+
+#### ⚠️ Cuidado: nono dígito brasileiro
+
+Números brasileiros antigos (pré-2014, especialmente RS/SC/PR) podem estar registrados no WhatsApp **sem o 9 do celular**. Exemplo: você cadastra `+55 51 99647-4579` (13 dígitos), mas o WhatsApp normaliza para `+55 51 9647-4579` (12 dígitos sem o 9).
+
+Sintoma: o webhook recebe `wa_id: 555196474579` (12 dígitos) e a tentativa de responder falha com `(#131030) Recipient phone number not in allowed list` — porque o cadastro está com 13 dígitos mas o destinatário internamente tem 12.
+
+**Solução:** cadastre **ambas as versões** na allow list (com e sem o 9). Você tem até 5 vagas no Test Number; sobra espaço.
+
+#### ⚠️ Comportamento do Test Number: inbound só após outbound prévio
+
+O Test Number (+1 555 675 9095) tem uma limitação não documentada explicitamente: **mensagens enviadas pelo usuário só são retransmitidas para o webhook se o bot já tiver enviado pelo menos uma mensagem antes** (abrindo uma "conversação" do lado da Meta). Antes disso, inbounds são silenciosamente engolidos.
+
+Para destravar: dispare um template `hello_world` (passo 12) **antes** de testar o fluxo de inbound. Daí em diante, todas as mensagens do usuário chegam ao webhook normalmente.
+
+Esta limitação **não existe em números reais** — apenas no Test Number.
+
+#### Custos do Test Number
+
+Gratuito por **90 dias** desde o primeiro uso, ilimitado dentro dos 5 testers. Após esse prazo o número expira e você precisa registrar um número real.
 
 ### Passo 12: Teste inicial com `hello_world`
 
@@ -148,7 +236,7 @@ Valide que o setup todo está funcionando antes de escrever uma linha de código
 
 ```bash
 curl -X POST \
-  "https://graph.facebook.com/v23.0/<PHONE_NUMBER_ID>/messages" \
+  "https://graph.facebook.com/v25.0/<PHONE_NUMBER_ID>/messages" \
   -H "Authorization: Bearer <ACCESS_TOKEN>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -211,11 +299,13 @@ Antes de começar a codar, confirme que tem:
 - [ ] WhatsApp Business Account ID (WABA ID) anotado
 - [ ] App ID anotado
 - [ ] App Secret anotado
-- [ ] System User criado com permissões `whatsapp_business_messaging` e `whatsapp_business_management`
-- [ ] Access Token permanente (Never expire) gerado e copiado
+- [ ] System User criado com role Admin + ativos atribuídos (app + WABA em Controle total)
+- [ ] Access Token permanente (Never expire) gerado, com 3 permissões (`whatsapp_business_messaging`, `whatsapp_business_management`, `business_management`)
+- [ ] **Token validado via `GET /me`** — retorna `{name, id}` HTTP 200
 - [ ] Verify Token gerado (com `openssl rand -hex 32`)
 - [ ] App inscrito na WABA via POST `/{WABA_ID}/subscribed_apps`
-- [ ] Pelo menos 1 número de teste adicionado em API Setup
-- [ ] Teste `hello_world` funcionou (mensagem chegou no celular)
+- [ ] Pelo menos 1 número de teste na allow list (e se for número BR antigo, **ambas as versões** com e sem o 9)
+- [ ] Teste `hello_world` funcionou (mensagem chegou no celular) — **antes** do teste de inbound, para destravar o Test Number
+- [ ] **Sabendo que o número de produção será um chip dedicado**, não o número comercial principal
 
 Próximo passo: leia `references/02-database-schema.md`.

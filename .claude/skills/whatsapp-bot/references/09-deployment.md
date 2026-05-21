@@ -22,7 +22,7 @@ Antes de fazer `git push`, confirme:
 | `WHATSAPP_BUSINESS_ACCOUNT_ID` | All | Não |
 | `WHATSAPP_APP_SECRET` | All | ✅ Secret |
 | `WHATSAPP_VERIFY_TOKEN` | All | ✅ Secret |
-| `WHATSAPP_API_VERSION` | All | Não (default v23.0) |
+| `WHATSAPP_API_VERSION` | All | Não (default v25.0 — confirme no painel WhatsApp → Configuração da API antes de fixar) |
 | `NEXT_PUBLIC_SUPABASE_URL` | All | Não (público) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | All | Não (público) |
 | `SUPABASE_SERVICE_ROLE_KEY` | All | ✅ Secret |
@@ -97,6 +97,13 @@ Se o handshake falhar:
 ## Sair do modo Development → ir para Live
 
 Em **Development**, apenas números pré-cadastrados em "Recipient phone numbers" recebem mensagens. Em produção real, todo número pode receber.
+
+> ⚠️ **Antes de ir Live, troque o Test Number (+1 555) por um número definitivo da empresa.**
+>
+> - O Test Number da Meta é gratuito por 90 dias mas tem teto de 5 testers — útil só para smoke test em dev.
+> - **NUNCA migre o número comercial principal da empresa** (o que atende clientes via app WhatsApp Business). Migrar para Cloud API é destrutivo: desconecta o número do app, conversas em andamento ficam inacessíveis no celular, vendedores perdem o canal, e o offboarding para reverter leva 24h+. Detalhe em `references/01-meta-setup.md` (warning no topo).
+> - Use **chip dedicado** (SIM nova, chip eSIM, número virtual habilitado para SMS/voz da operadora). Coloque em um celular qualquer só para receber o SMS/ligação de verificação no Passo 5 do setup Meta.
+> - Atualize `NEXT_PUBLIC_EVENT_WHATSAPP_NUMBER` (E.164 sem `+`) na Vercel ao trocar o número — é o link `wa.me` do QR code.
 
 ### Passos
 

@@ -20,7 +20,7 @@ Arquivo: `lib/whatsapp.ts`
 // ============================================
 // Configuração
 // ============================================
-const API_VERSION = process.env.WHATSAPP_API_VERSION ?? "v23.0";
+const API_VERSION = process.env.WHATSAPP_API_VERSION ?? "v25.0";
 const PHONE_ID = process.env.WHATSAPP_PHONE_NUMBER_ID!;
 const TOKEN = process.env.WHATSAPP_ACCESS_TOKEN!;
 const BASE_URL = `https://graph.facebook.com/${API_VERSION}/${PHONE_ID}`;
@@ -254,12 +254,39 @@ A Graph API retorna erros estruturados. Mapeamento:
 | Código | Significado | Como tratar |
 |---|---|---|
 | `131026` | Mensagem fora da janela de 24h | Use template aprovado |
+| `131030` | Recipient não está na allow list | Test Number: cadastrar destinatário no painel (em ambas as versões se for número BR antigo, ver abaixo). Live: confirmar que `to` está correto |
 | `131047` | Número não está no WhatsApp | NÃO retente; marque o usuário como inválido |
 | `130429` | Rate limit (throughput) | Backoff exponencial: 1s, 2s, 4s |
 | `131048` | Spam rate limit | PARE imediatamente — número pode ser banido |
 | `368` | Conta temporariamente bloqueada | Abra ticket no support Meta |
 | `131056` | Par (business, consumer) tem volume alto demais | Reduzir frequência |
 | `133010` | Phone number not registered | Registre o número antes |
+
+### Detalhe especial: erro 131030 e o nono dígito brasileiro
+
+Sintoma: o webhook recebe mensagem do usuário normalmente, mas ao tentar responder o `sendText` falha com:
+
+```
+WhatsApp API error 400:
+{"error":{"message":"(#131030) Recipient phone number not in allowed list",
+"code":131030, "type":"OAuthException", ...}}
+```
+
+Causa: o `wa_id` que o webhook entregou pode estar em formato canônico do WhatsApp (sem o 9 inicial do celular, no caso de números brasileiros antigos), enquanto a allow list ou seu DB têm a versão completa.
+
+**Não tente normalizar adicionando ou removendo o 9** no client — você não tem como saber se o número é antigo ou novo. Sempre use o `wa_id` exatamente como veio:
+
+```ts
+// ❌ ERRADO — quebra para números com 9 digitos válidos
+const to = waId.startsWith("55") && waId.length === 12
+  ? `5511${waId.slice(4)}`  // tentativa errada de adicionar 9
+  : waId;
+
+// ✅ CERTO — use o waId cru, sempre
+await sendText(message.from, "resposta...");
+```
+
+A solução é no setup: cadastrar AMBAS as versões do número na allow list do Test Number (ou no Live, o número real já está canônico). Detalhe em `references/01-meta-setup.md`.
 
 Para tratamento robusto, expanda `WhatsAppApiError`:
 
@@ -290,6 +317,13 @@ export class WhatsAppApiError extends Error {
 
   get isInvalidRecipient(): boolean {
     return this.errorCode === 131047 || this.errorCode === 133010;
+  }
+
+  get isNotInAllowList(): boolean {
+    // 131030: Recipient phone number not in allowed list
+    // Em dev (Test Number): adicionar destinatário no painel
+    // Em prod: provavelmente bug no `to` enviado
+    return this.errorCode === 131030;
   }
 }
 ```
