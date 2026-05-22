@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { calculateDimensions, checkStorageAndCompress } from "./compression";
+import {
+	calculateDimensions,
+	compressForStorage,
+	getStorageStatus,
+} from "./compression";
 
 describe("calculateDimensions", () => {
 	it("scales down when width exceeds MAX_DIMENSION", () => {
@@ -38,59 +42,66 @@ describe("calculateDimensions", () => {
 	});
 });
 
-describe("checkStorageAndCompress", () => {
+function stubStorage(usage: number, quota: number | undefined): void {
+	vi.stubGlobal("navigator", {
+		storage: {
+			estimate: vi.fn().mockResolvedValue({ usage, quota }),
+		},
+	});
+}
+
+describe("getStorageStatus", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
 	});
 
-	it("retorna o blob sem modificação quando espaço está abaixo de 80%", async () => {
-		vi.stubGlobal("navigator", {
-			storage: {
-				estimate: vi
-					.fn()
-					.mockResolvedValue({ usage: 400_000_000, quota: 1_000_000_000 }), // 40%
-			},
-		});
-
-		const blob = new Blob(["photo-data"], { type: "image/jpeg" });
-		const result = await checkStorageAndCompress(blob);
-		expect(result).toBe(blob);
+	it("retorna 'ok' quando uso está abaixo de 80%", async () => {
+		stubStorage(400_000_000, 1_000_000_000); // 40%
+		expect(await getStorageStatus()).toBe("ok");
 	});
 
-	it("lança erro quando uso de espaço está acima de 90%", async () => {
-		vi.stubGlobal("navigator", {
-			storage: {
-				estimate: vi
-					.fn()
-					.mockResolvedValue({ usage: 950_000_000, quota: 1_000_000_000 }), // 95%
-			},
-		});
-
-		const blob = new Blob(["photo-data"], { type: "image/jpeg" });
-		await expect(checkStorageAndCompress(blob)).rejects.toThrow(
-			"Armazenamento cheio"
-		);
+	it("retorna 'warning' quando uso está entre 80% e 90%", async () => {
+		stubStorage(850_000_000, 1_000_000_000); // 85%
+		expect(await getStorageStatus()).toBe("warning");
 	});
 
-	it("trata quota undefined como espaço ilimitado (não comprime nem rejeita)", async () => {
-		vi.stubGlobal("navigator", {
-			storage: {
-				estimate: vi
-					.fn()
-					.mockResolvedValue({ usage: 500_000_000, quota: undefined }),
-			},
-		});
-
-		const blob = new Blob(["photo-data"], { type: "image/jpeg" });
-		const result = await checkStorageAndCompress(blob);
-		expect(result).toBe(blob);
+	it("retorna 'full' quando uso está em 90% ou acima", async () => {
+		stubStorage(950_000_000, 1_000_000_000); // 95%
+		expect(await getStorageStatus()).toBe("full");
 	});
 
-	it("retorna blob sem modificação quando navigator.storage não está disponível", async () => {
+	it("retorna 'ok' quando quota é undefined", async () => {
+		stubStorage(500_000_000, undefined);
+		expect(await getStorageStatus()).toBe("ok");
+	});
+
+	it("retorna 'ok' quando navigator.storage não está disponível", async () => {
 		vi.stubGlobal("navigator", {});
+		expect(await getStorageStatus()).toBe("ok");
+	});
+});
+
+describe("compressForStorage", () => {
+	beforeEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	it("retorna o blob sem modificação quando há espaço (status ok)", async () => {
+		stubStorage(400_000_000, 1_000_000_000); // 40%
 
 		const blob = new Blob(["photo-data"], { type: "image/jpeg" });
-		const result = await checkStorageAndCompress(blob);
+		const result = await compressForStorage(blob);
 		expect(result).toBe(blob);
+	});
+
+	it("não lança quando o armazenamento está cheio", async () => {
+		stubStorage(950_000_000, 1_000_000_000); // 95%
+		vi.stubGlobal(
+			"createImageBitmap",
+			vi.fn().mockResolvedValue({ width: 100, height: 100, close: vi.fn() })
+		);
+
+		const blob = new Blob(["photo-data"], { type: "image/jpeg" });
+		await expect(compressForStorage(blob)).resolves.toBeInstanceOf(Blob);
 	});
 });

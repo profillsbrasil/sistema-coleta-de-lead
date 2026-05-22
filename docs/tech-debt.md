@@ -214,6 +214,20 @@ em perda de dados, segurança ou bloqueio de evolução.
   corrigir os 8 testes e incluir `test` no CI.
 - **Status:** resolvido no PR #31 — os 8 testes corrigidos, suíte verde.
 
+### 36. Shell renderiza `{children}` duas vezes (desktop + mobile)
+
+- **Arquivo:** `apps/web/src/components/authenticated-app-shell.tsx`
+- **Causa raiz:** o shell tem dois blocos de layout — `hidden md:flex` (desktop) e
+  `md:hidden` (mobile) — e renderiza `{children}` dentro de cada um, alternando por
+  CSS. Toda página autenticada é montada 2× no DOM simultaneamente: efeitos, hooks e
+  subscriptions Dexie rodam em dobro, e qualquer componente com `id` / `htmlFor` /
+  `form` fixo gera IDs duplicados. Foi a origem do bug em que criar lead não
+  funcionava no mobile (PR #43): o botão `form="lead-form"` resolvia para o primeiro
+  `#lead-form`, o bloco desktop oculto.
+- **Ação sugerida:** renderizar `{children}` uma única vez e alternar apenas o chrome
+  (sidebar vs bottom-nav) por CSS. Enquanto isso, componentes reutilizáveis devem
+  gerar IDs com `useId()` em vez de strings fixas.
+
 ## Severidade Baixa
 
 ### 23. `syncStatus: "conflict"` declarado mas nunca escrito
@@ -291,25 +305,6 @@ em perda de dados, segurança ou bloqueio de evolução.
 - **Causa raiz:** os testes admin mocam o banco inteiro; queries com SQL raw
   (`leaderboard.ts`, `admin/leads.ts`) não são exercidas contra Postgres real.
 - **Ação sugerida:** adicionar testes de integração com banco real (ex: container).
-
-### 35. Instrumentação temporária no `LeadForm` para diagnóstico mobile
-
-- **Arquivo:** `apps/web/src/components/lead-form.tsx` + `packages/api/src/routers/debug.ts`
-- **Causa raiz:** erro `An invalid form control with name='' is not focusable` reportado
-  no mobile (desktop OK). Instrumentação tripla adicionada (`onInvalid` handler,
-  `console.warn`, toast, mutation tRPC `debug.logFormDiagnostic`) para capturar estado
-  React vs DOM, viewport, user agent, validity e selectors invalid.
-- **Origem:** spec `docs/superpowers/specs/2026-05-21-lead-form-mobile-debug-design.md`,
-  plano `docs/superpowers/plans/2026-05-21-lead-form-mobile-debug.md`.
-- **Ação após o diagnóstico:**
-  1. Implementar fix definitivo (provavelmente `noValidate` + atributo `name` nos
-     inputs, mas confirmar pelo padrão observado no log).
-  2. Remover `handleInvalid`, helpers (`maskPhoneForLog`, `readDomValue`,
-     `collectInvalidSelectors`), `diagnosticMutation` e imports relacionados em
-     `lead-form.tsx`. Reverter `handleSubmit` para a versão simples.
-  3. Remover `packages/api/src/routers/debug.ts` e desregistrar `debug: debugRouter`
-     em `routers/index.ts` (a menos que outra feature passe a usá-lo).
-  4. Fechar esta entrada.
 
 ## Recomendações de Automação Claude Code
 

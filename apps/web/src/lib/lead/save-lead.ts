@@ -1,6 +1,6 @@
 import { db } from "../db/index";
 import type { LeaderboardEntry } from "../db/types";
-import { checkStorageAndCompress } from "./compression";
+import { compressForStorage } from "./compression";
 import { emptyToNull } from "./helpers";
 import type { LeadFormData } from "./validation";
 
@@ -57,7 +57,7 @@ export async function saveLead(
 	const localId = crypto.randomUUID();
 	const now = new Date().toISOString();
 
-	const processedPhoto = photo ? await checkStorageAndCompress(photo) : null;
+	const processedPhoto = photo ? await compressForStorage(photo) : null;
 
 	await db.transaction("rw", db.leads, db.syncQueue, async () => {
 		await db.leads.add({

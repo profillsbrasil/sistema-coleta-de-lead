@@ -16,16 +16,26 @@ describe("leadFormSchema", () => {
 		expect(result.interestTag).toBe("morno");
 	});
 
-	it("rejects empty name with 'Nome e obrigatorio'", () => {
+	it("rejects empty name with 'Nome é obrigatório'", () => {
 		expect(() =>
 			leadFormSchema.parse({ name: "", phone: "11999", company: "Acme" })
-		).toThrow("Nome e obrigatorio");
+		).toThrow("Nome é obrigatório");
 	});
 
-	it("rejects empty company with 'Empresa e obrigatoria'", () => {
+	it("rejects empty company with 'Empresa é obrigatória'", () => {
 		expect(() =>
 			leadFormSchema.parse({ name: "Joao", phone: "11999", company: "" })
-		).toThrow("Empresa e obrigatoria");
+		).toThrow("Empresa é obrigatória");
+	});
+
+	it("rejects invalid email with 'Email inválido'", () => {
+		expect(() =>
+			leadFormSchema.parse({
+				name: "Joao",
+				company: "Acme",
+				email: "nao-e-email",
+			})
+		).toThrow("Email inválido");
 	});
 
 	it("rejects when neither phone nor email is provided", () => {

@@ -1,5 +1,5 @@
 import { db } from "../db/index";
-import { checkStorageAndCompress } from "./compression";
+import { compressForStorage } from "./compression";
 import { emptyToNull } from "./helpers";
 import type { LeadFormData } from "./validation";
 
@@ -11,7 +11,7 @@ export async function updateLead(
 	const now = new Date().toISOString();
 
 	const processedPhoto =
-		photo instanceof Blob ? await checkStorageAndCompress(photo) : photo;
+		photo instanceof Blob ? await compressForStorage(photo) : photo;
 
 	const updates: Record<string, unknown> = {
 		name: data.name,

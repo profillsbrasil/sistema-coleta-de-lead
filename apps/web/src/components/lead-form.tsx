@@ -9,18 +9,17 @@ import {
 import { Input } from "@dashboard-leads-profills/ui/components/input";
 import { Label } from "@dashboard-leads-profills/ui/components/label";
 import { Textarea } from "@dashboard-leads-profills/ui/components/textarea";
-import { useMutation } from "@tanstack/react-query";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/page/page-header";
 import type { Lead } from "@/lib/db/types";
+import { getStorageStatus } from "@/lib/lead/compression";
 import { saveLead } from "@/lib/lead/save-lead";
 import { updateLead } from "@/lib/lead/update-lead";
 import { type LeadFormData, leadFormSchema } from "@/lib/lead/validation";
 import { formatPhone, maskPhoneInput, unmaskPhone } from "@/lib/masks/phone";
-import { trpc } from "@/utils/trpc";
 
 import PhotoCapture from "./photo-capture";
 import TagSelector from "./tag-selector";
@@ -60,31 +59,6 @@ function getInitialState(lead: Lead | undefined) {
 	};
 }
 
-function maskPhoneForLog(value: string): string {
-	const digits = value.replace(/\D/g, "");
-	if (digits.length <= 4) {
-		return digits;
-	}
-	return `***${digits.slice(-4)}`;
-}
-
-function readDomValue(form: HTMLFormElement, id: string): string {
-	const el = form.elements.namedItem(id);
-	if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-		return el.value;
-	}
-	return "";
-}
-
-function collectInvalidSelectors(form: HTMLFormElement): string[] {
-	const invalid = form.querySelectorAll(":invalid");
-	return Array.from(invalid).map((el) => {
-		const id = (el as HTMLElement).id;
-		const tag = el.tagName.toLowerCase();
-		return id ? `#${id}` : `<${tag}>`;
-	});
-}
-
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form component with many fields requires co-located state and validation logic
 export default function LeadForm({
 	lead,
@@ -96,14 +70,6 @@ export default function LeadForm({
 }: LeadFormProps) {
 	const router = useRouter();
 	const isEditMode = !!lead;
-
-	const diagnosticMutation = useMutation(
-		trpc.debug.logFormDiagnostic.mutationOptions({
-			onError: () => {
-				// instrumentação não pode quebrar o fluxo do form
-			},
-		})
-	);
 
 	const initial = useMemo(() => getInitialState(lead), [lead]);
 
@@ -122,16 +88,34 @@ export default function LeadForm({
 	const [photo, setPhoto] = useState<Blob | null>(initial.photo);
 	const [photoChanged, setPhotoChanged] = useState(false);
 	const [extrasOpen, setExtrasOpen] = useState(isEditMode);
+	const [storageFull, setStorageFull] = useState(false);
 
 	const nameRef = useRef<HTMLInputElement>(null);
 	const phoneRef = useRef<HTMLInputElement>(null);
 	const emailRef = useRef<HTMLInputElement>(null);
 	const companyRef = useRef<HTMLInputElement>(null);
 
-	const hasMinimum =
-		name.trim().length > 0 &&
-		company.trim().length > 0 &&
-		(phone.trim().length > 0 || email.trim().length > 0);
+	const uid = useId();
+	const ids = {
+		form: `${uid}form`,
+		name: `${uid}name`,
+		company: `${uid}company`,
+		phone: `${uid}phone`,
+		email: `${uid}email`,
+		position: `${uid}position`,
+		segment: `${uid}segment`,
+		notes: `${uid}notes`,
+		errorName: `${uid}error-name`,
+		errorCompany: `${uid}error-company`,
+		errorPhone: `${uid}error-phone`,
+		errorEmail: `${uid}error-email`,
+	};
+
+	useEffect(() => {
+		getStorageStatus()
+			.then((status) => setStorageFull(status === "full"))
+			.catch(() => setStorageFull(false));
+	}, []);
 
 	const missingHint = (() => {
 		if (name.trim().length === 0) {
@@ -163,6 +147,7 @@ export default function LeadForm({
 		setNotes(fresh.notes);
 		setPhoto(null);
 		setPhotoChanged(false);
+		setExtrasOpen(false);
 		setErrors({});
 	}
 
@@ -178,84 +163,12 @@ export default function LeadForm({
 		}
 	}
 
-	function handleInvalid(e: React.FormEvent<HTMLFormElement>) {
-		const target = e.target as HTMLInputElement;
-		const form = e.currentTarget;
-		const validity = target.validity;
-		const payload = {
-			source: "onInvalid" as const,
-			ts: Date.now(),
-			userAgent: navigator.userAgent.slice(0, 500),
-			viewport: { w: window.innerWidth, h: window.innerHeight },
-			reactState: {
-				name,
-				company,
-				phone: maskPhoneForLog(phone),
-				email,
-				interestTag,
-			},
-			domValues: {
-				"lead-name": readDomValue(form, "lead-name"),
-				"lead-company": readDomValue(form, "lead-company"),
-				"lead-phone": maskPhoneForLog(readDomValue(form, "lead-phone")),
-				"lead-email": readDomValue(form, "lead-email"),
-			},
-			invalidField: {
-				id: target.id || "",
-				name: target.name || null,
-				validationMessage: target.validationMessage,
-				validity: {
-					valueMissing: validity.valueMissing,
-					typeMismatch: validity.typeMismatch,
-					patternMismatch: validity.patternMismatch,
-					tooShort: validity.tooShort,
-					tooLong: validity.tooLong,
-					badInput: validity.badInput,
-					customError: validity.customError,
-				},
-			},
-		};
-		console.warn("[lead-form-debug]", payload);
-		const truncatedMsg =
-			`${target.id || "?"}: ${target.validationMessage}`.slice(0, 120);
-		toast.error(`Debug invalid → ${truncatedMsg}`, { duration: 6000 });
-		diagnosticMutation.mutate(payload);
-	}
-
 	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: form submit with optional callback paths requires branching logic
 	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-		const form = e.currentTarget;
-		const nativeEvent = e.nativeEvent as SubmitEvent;
-		const submitterId =
-			nativeEvent.submitter instanceof HTMLElement
-				? nativeEvent.submitter.id || null
-				: null;
-		const handleSubmitPayload = {
-			source: "handleSubmit" as const,
-			ts: Date.now(),
-			userAgent: navigator.userAgent.slice(0, 500),
-			viewport: { w: window.innerWidth, h: window.innerHeight },
-			reactState: {
-				name,
-				company,
-				phone: maskPhoneForLog(phone),
-				email,
-				interestTag,
-			},
-			domValues: {
-				"lead-name": readDomValue(form, "lead-name"),
-				"lead-company": readDomValue(form, "lead-company"),
-				"lead-phone": maskPhoneForLog(readDomValue(form, "lead-phone")),
-				"lead-email": readDomValue(form, "lead-email"),
-			},
-			checkValidity: form.checkValidity(),
-			invalidSelectors: collectInvalidSelectors(form),
-			submitter: submitterId,
-		};
-		console.warn("[lead-form-debug]", handleSubmitPayload);
-		diagnosticMutation.mutate(handleSubmitPayload);
-
 		e.preventDefault();
+		if (isSubmitting) {
+			return;
+		}
 		setErrors({});
 
 		if (!(onSave || userId || isEditMode)) {
@@ -289,29 +202,41 @@ export default function LeadForm({
 
 		setIsSubmitting(true);
 		try {
+			const photoBlockedByStorage =
+				photo instanceof Blob && (await getStorageStatus()) === "full";
+			const photoToSave = photoBlockedByStorage ? null : photo;
+			const photoWasDropped =
+				photoBlockedByStorage && (!isEditMode || photoChanged);
+
 			if (isEditMode && lead) {
 				if (onUpdate) {
-					await onUpdate(result.data, photoChanged ? photo : undefined);
+					await onUpdate(result.data, photoChanged ? photoToSave : undefined);
 				} else {
 					await updateLead(
 						lead.localId,
 						result.data,
-						photoChanged ? photo : undefined
+						photoChanged ? photoToSave : undefined
 					);
 				}
-				toast.success("Lead atualizado!");
+				toast.success("Lead atualizado!", {
+					description: "Será sincronizado automaticamente.",
+				});
+				if (photoWasDropped) {
+					toast.warning("Lead salvo sem foto — armazenamento cheio.");
+				}
 				router.back();
 				return;
 			}
 
 			let createdId: string | null = null;
 			if (onSave) {
-				await onSave(result.data, photo);
+				await onSave(result.data, photoToSave);
 			} else {
-				createdId = await saveLead(result.data, userId as string, photo);
+				createdId = await saveLead(result.data, userId as string, photoToSave);
 			}
 
 			toast.success("Lead salvo!", {
+				description: "Será sincronizado automaticamente.",
 				action: createdId
 					? {
 							label: "Editar",
@@ -319,6 +244,9 @@ export default function LeadForm({
 						}
 					: undefined,
 			});
+			if (photoWasDropped) {
+				toast.warning("Lead salvo sem foto — armazenamento cheio.");
+			}
 			resetForm();
 			nameRef.current?.focus();
 		} catch {
@@ -328,11 +256,10 @@ export default function LeadForm({
 		}
 	}
 
-	const submitDisabled = isSubmitting || !(isEditMode || hasMinimum);
 	const submitLabel = isEditMode ? "Salvar alterações" : "Salvar lead";
 
 	return (
-		<div className="mx-auto flex w-full max-w-2xl flex-col gap-5 pb-40 md:pb-8">
+		<div className="mx-auto flex w-full max-w-2xl flex-col gap-5 pb-20 md:pb-8">
 			<PageHeader
 				eyebrow={isEditMode ? "Editar" : "Novo"}
 				subtitle={
@@ -346,22 +273,32 @@ export default function LeadForm({
 			<form
 				aria-busy={isSubmitting}
 				className="flex flex-col gap-5 px-4"
-				id="lead-form"
-				onInvalid={handleInvalid}
+				id={ids.form}
+				noValidate
 				onSubmit={handleSubmit}
 			>
+				{storageFull ? (
+					<p
+						className="rounded-lg border border-border-subtle bg-accent px-3 py-2 text-foreground text-sm"
+						role="status"
+					>
+						Armazenamento quase cheio. As fotos estão indisponíveis — o lead
+						será salvo normalmente.
+					</p>
+				) : null}
 				<div className="flex flex-col gap-2">
-					<Label htmlFor="lead-name">
+					<Label htmlFor={ids.name}>
 						Nome <span className="text-destructive">*</span>
 					</Label>
 					<Input
-						aria-describedby={errors.name ? "error-name" : undefined}
+						aria-describedby={errors.name ? ids.errorName : undefined}
 						aria-invalid={!!errors.name}
 						autoComplete="name"
 						className="h-12"
 						disabled={isSubmitting}
 						enterKeyHint="next"
-						id="lead-name"
+						id={ids.name}
+						name="name"
 						onChange={(e) => setName(e.target.value)}
 						placeholder="Ex.: Maria Silva"
 						ref={nameRef}
@@ -372,7 +309,7 @@ export default function LeadForm({
 					{errors.name && (
 						<p
 							className="text-destructive text-xs"
-							id="error-name"
+							id={ids.errorName}
 							role="alert"
 						>
 							{errors.name}
@@ -381,17 +318,18 @@ export default function LeadForm({
 				</div>
 
 				<div className="flex flex-col gap-2">
-					<Label htmlFor="lead-company">
+					<Label htmlFor={ids.company}>
 						Empresa <span className="text-destructive">*</span>
 					</Label>
 					<Input
-						aria-describedby={errors.company ? "error-company" : undefined}
+						aria-describedby={errors.company ? ids.errorCompany : undefined}
 						aria-invalid={!!errors.company}
 						autoComplete="organization"
 						className="h-12"
 						disabled={isSubmitting}
 						enterKeyHint="next"
-						id="lead-company"
+						id={ids.company}
+						name="company"
 						onChange={(e) => setCompany(e.target.value)}
 						placeholder="Ex.: Acme Corp"
 						ref={companyRef}
@@ -402,7 +340,7 @@ export default function LeadForm({
 					{errors.company && (
 						<p
 							className="text-destructive text-xs"
-							id="error-company"
+							id={ids.errorCompany}
 							role="alert"
 						>
 							{errors.company}
@@ -412,19 +350,20 @@ export default function LeadForm({
 
 				<div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
 					<div className="flex flex-col gap-2">
-						<Label htmlFor="lead-phone">
+						<Label htmlFor={ids.phone}>
 							Telefone{" "}
 							<span className="text-muted-foreground text-xs">(ou email)</span>
 						</Label>
 						<Input
-							aria-describedby={errors.phone ? "error-phone" : undefined}
+							aria-describedby={errors.phone ? ids.errorPhone : undefined}
 							aria-invalid={!!errors.phone}
 							autoComplete="tel"
 							className="h-12"
 							disabled={isSubmitting}
 							enterKeyHint="next"
-							id="lead-phone"
+							id={ids.phone}
 							inputMode="tel"
+							name="phone"
 							onChange={(e) => setPhone(maskPhoneInput(e.target.value))}
 							placeholder="(51) 99647-4579"
 							ref={phoneRef}
@@ -434,7 +373,7 @@ export default function LeadForm({
 						{errors.phone && (
 							<p
 								className="text-destructive text-xs"
-								id="error-phone"
+								id={ids.errorPhone}
 								role="alert"
 							>
 								{errors.phone}
@@ -443,16 +382,17 @@ export default function LeadForm({
 					</div>
 
 					<div className="flex flex-col gap-2">
-						<Label htmlFor="lead-email">Email</Label>
+						<Label htmlFor={ids.email}>Email</Label>
 						<Input
-							aria-describedby={errors.email ? "error-email" : undefined}
+							aria-describedby={errors.email ? ids.errorEmail : undefined}
 							aria-invalid={!!errors.email}
 							autoComplete="email"
 							className="h-12"
 							disabled={isSubmitting}
-							enterKeyHint="next"
-							id="lead-email"
+							enterKeyHint="done"
+							id={ids.email}
 							inputMode="email"
+							name="email"
 							onChange={(e) => setEmail(e.target.value)}
 							placeholder="maria@acme.com"
 							ref={emailRef}
@@ -462,7 +402,7 @@ export default function LeadForm({
 						{errors.email && (
 							<p
 								className="text-destructive text-xs"
-								id="error-email"
+								id={ids.errorEmail}
 								role="alert"
 							>
 								{errors.email}
@@ -491,6 +431,7 @@ export default function LeadForm({
 							</span>
 						</Label>
 						<PhotoCapture
+							disabled={storageFull}
 							onCapture={(blob) => {
 								setPhoto(blob);
 								setPhotoChanged(true);
@@ -524,12 +465,13 @@ export default function LeadForm({
 					</CollapsibleTrigger>
 					<CollapsibleContent className="flex flex-col gap-5 pt-5">
 						<div className="flex flex-col gap-2">
-							<Label htmlFor="lead-position">Cargo</Label>
+							<Label htmlFor={ids.position}>Cargo</Label>
 							<Input
 								autoComplete="organization-title"
 								className="h-12"
 								disabled={isSubmitting}
-								id="lead-position"
+								id={ids.position}
+								name="position"
 								onChange={(e) => setPosition(e.target.value)}
 								placeholder="Ex.: Head de Vendas"
 								type="text"
@@ -538,11 +480,12 @@ export default function LeadForm({
 						</div>
 
 						<div className="flex flex-col gap-2">
-							<Label htmlFor="lead-segment">Segmento</Label>
+							<Label htmlFor={ids.segment}>Segmento</Label>
 							<Input
 								className="h-12"
 								disabled={isSubmitting}
-								id="lead-segment"
+								id={ids.segment}
+								name="segment"
 								onChange={(e) => setSegment(e.target.value)}
 								placeholder="Ex.: SaaS B2B"
 								type="text"
@@ -551,10 +494,11 @@ export default function LeadForm({
 						</div>
 
 						<div className="flex flex-col gap-2">
-							<Label htmlFor="lead-notes">Notas</Label>
+							<Label htmlFor={ids.notes}>Notas</Label>
 							<Textarea
 								disabled={isSubmitting}
-								id="lead-notes"
+								id={ids.notes}
+								name="notes"
 								onChange={(e) => setNotes(e.target.value)}
 								placeholder="Pontos da conversa, próximos passos…"
 								rows={3}
@@ -581,9 +525,9 @@ export default function LeadForm({
 			<div className="fixed inset-x-0 bottom-[68px] z-20 -mx-4 border-border-subtle border-t bg-background/95 px-4 pt-3 pb-3 backdrop-blur md:relative md:inset-auto md:mx-0 md:border-0 md:bg-transparent md:px-4 md:pt-0 md:pb-0 md:backdrop-blur-none">
 				<Button
 					aria-busy={isSubmitting}
-					className="w-full rounded-full"
-					disabled={submitDisabled}
-					form="lead-form"
+					className="h-14 w-full rounded-full"
+					disabled={isSubmitting}
+					form={ids.form}
 					size="lg"
 					type="submit"
 				>
