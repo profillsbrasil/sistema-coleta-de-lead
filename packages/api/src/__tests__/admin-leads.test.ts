@@ -126,7 +126,9 @@ describe("adminLeadsRouter", () => {
 
 	it("delete grava updatedAt junto com deletedAt para propagar tombstone via pull", async () => {
 		const setMock = vi.fn().mockReturnThis();
-		const returningMock = vi.fn().mockResolvedValue([{ localId: "lead-to-delete" }]);
+		const returningMock = vi
+			.fn()
+			.mockResolvedValue([{ localId: "lead-to-delete" }]);
 		const updateChain = {
 			set: setMock,
 			where: vi.fn(() => ({ returning: returningMock })),

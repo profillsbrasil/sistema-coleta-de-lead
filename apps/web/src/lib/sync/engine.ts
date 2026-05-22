@@ -315,7 +315,12 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 	// All retries exhausted (D-11)
 	const syncMetaEntry = await db.syncMeta.get("lastSyncTimestamp");
 	const lastSync = syncMetaEntry?.value ?? "";
-	callbacks?.onSyncEnd?.({ lastSync, error: lastError, isStalled: true, leaderboardFailed: true });
+	callbacks?.onSyncEnd?.({
+		lastSync,
+		error: lastError,
+		isStalled: true,
+		leaderboardFailed: true,
+	});
 }
 
 export function startSync(
