@@ -118,9 +118,10 @@ export const syncRouter = router({
 							break;
 						}
 						case "delete": {
+							// No .returning() — idempotent: silently ACKs non-existent or already-tombstoned leads.
 							await db
 								.update(leads)
-								.set({ deletedAt: new Date() })
+								.set({ deletedAt: new Date(), updatedAt: new Date() })
 								.where(
 									and(eq(leads.localId, op.localId), eq(leads.userId, userId))
 								);
@@ -163,8 +164,7 @@ export const syncRouter = router({
 				.where(
 					and(
 						eq(leads.userId, userId),
-						gt(leads.updatedAt, since),
-						isNull(leads.deletedAt)
+						gt(leads.updatedAt, since)
 					)
 				);
 

@@ -303,6 +303,36 @@ describe("syncRouter.pushChanges", () => {
 		);
 		expect(result.failedOperation).toBeUndefined();
 	});
+
+	it("delete soft-deleta gravando updatedAt — torna o tombstone visível ao pull", async () => {
+		const setMock = vi.fn().mockReturnThis();
+		const updateChain = {
+			set: setMock,
+			where: vi.fn().mockResolvedValue(undefined),
+		};
+		const mockDb: MockDb = {
+			insert: vi.fn(),
+			update: vi.fn().mockReturnValue(updateChain),
+			select: vi.fn(),
+		};
+
+		const { caller } = await loadSyncRouter(mockDb);
+
+		await caller.pushChanges({
+			operations: [
+				{
+					localId: "66666666-6666-4666-8666-666666666666",
+					operation: "delete",
+					payload: {},
+					clientTimestamp: "2026-01-01T00:00:00.000Z",
+				},
+			],
+		});
+
+		const setArg = setMock.mock.calls[0]?.[0] as Record<string, unknown>;
+		expect(setArg).toHaveProperty("deletedAt");
+		expect(setArg).toHaveProperty("updatedAt");
+	});
 });
 
 describe("syncRouter.pullChanges", () => {
@@ -311,7 +341,7 @@ describe("syncRouter.pullChanges", () => {
 		vi.clearAllMocks();
 	});
 
-	it("filtra leads soft-deletados — where inclui isNull(deletedAt)", async () => {
+	it("inclui tombstones — where não filtra mais por isNull(deletedAt)", async () => {
 		const whereMock = vi.fn().mockResolvedValue([]);
 		const selectChain = {
 			from: vi.fn().mockReturnThis(),
@@ -328,6 +358,7 @@ describe("syncRouter.pullChanges", () => {
 		await caller.pullChanges({ since: "2026-01-01T00:00:00.000Z" });
 
 		const whereArg = whereMock.mock.calls[0]?.[0] as { and: unknown[] };
-		expect(whereArg.and).toContainEqual({ isNull: "deletedAt" });
+		expect(whereArg.and).not.toContainEqual({ isNull: "deletedAt" });
+		expect(whereArg.and).toContainEqual({ gt: ["updatedAt", expect.any(Date)] });
 	});
 });
