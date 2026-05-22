@@ -86,9 +86,9 @@ Backend para captação de inscrições em sorteio via QR Code → WhatsApp. Iso
 
 - Webhook em `apps/web/src/app/api/whatsapp/webhook/route.ts` — GET (verify token) + POST (HMAC-SHA256 do raw body, dedup por `wamid`, rate limit por `wa_id`, state machine, persistência, sender).
 - Lógica em `packages/api/src/whatsapp/`: `signature.ts` (verificação timing-safe), `state-machine.ts` (puro, NEW→AWAITING_CONSENT→AWAITING_NAME→AWAITING_COMPANY→COMPLETED, fork DECLINED), `sender.ts` (POST graph.facebook.com/v25.0), `messages.ts` (textos PT-BR), `code-generator.ts` (`PROFILLS-XXXX`), `rate-limit.ts` (30 msgs/60s por wa_id), `types.ts` (Zod schemas de inbound).
-- Schema Postgres `whatsapp.*` (3 tabelas: `participants`, `messages`, `rate_limit`) em `packages/db/src/schema/whatsapp.ts`. RLS habilitada nas três; partial unique index `winner_of_unique` garante 1 ganhador por prêmio.
-- Admin UI `/admin/sorteio` reusa o guard de role admin do layout existente; stats, lista paginada, 3 cards de prêmio (TV/Churrasqueira/Cooler) com Sortear/Notificar/Re-sortear, export CSV.
-- tRPC router `whatsapp.*` (`packages/api/src/routers/whatsapp.ts`) com `adminProcedure`: `list`, `stats`, `drawRaffle`, `markWinner`, `unmarkWinner`, `notifyWinner` (valida janela 24h), `exportCsv`.
+- Schema Postgres `whatsapp.*` (3 tabelas: `participants`, `messages`, `rate_limit`) em `packages/db/src/schema/whatsapp.ts`. RLS habilitada nas três. `participants.raffle_code` identifica a inscrição; o sistema não persiste vencedor, prêmio sorteado ou notificação de vencedor.
+- Admin UI `/admin/sorteio` reusa o guard de role admin do layout existente; stats, lista paginada, busca/filtro, export CSV e ação de contato manual via WhatsApp. O sorteio é realizado fora do sistema por terceiro.
+- tRPC router `whatsapp.*` (`packages/api/src/routers/whatsapp.ts`) com `adminProcedure`: `list`, `stats`, `exportCsv`.
 - Envs em `apps/web/.env`: `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_BUSINESS_ACCOUNT_ID`, `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_API_VERSION` (default `v25.0`), `TERMS_VERSION`, e os `NEXT_PUBLIC_EVENT_NAME` / `_EVENT_WHATSAPP_NUMBER` / `_RAFFLE_DATE` / `_WHATSAPP_WELCOME_IMAGE_URL` opcionais.
 - LGPD: opt-in obrigatório por botão `Aceito`/`Nao aceito`; quem recusa fica em state `DECLINED` com apenas `wa_id + declined_at + terms_version` (sem nome/empresa); sem comando SAIR no bot — eliminação por canal humano.
 

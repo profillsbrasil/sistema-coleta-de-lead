@@ -87,7 +87,7 @@ export function regulamento(): TextMessage {
 		"📜 *Regulamento Sorteio Profills Fispal 2026*\n\n" +
 			"• Sorteio realizado ao vivo no estande Profills.\n" +
 			"• Uma inscrição por número de WhatsApp.\n" +
-			"• Os vencedores serão notificados por este WhatsApp.\n" +
+			"• A equipe Profills entrará em contato manualmente com os sorteados quando necessário.\n" +
 			`• Prêmios: TV 65", Churrasqueira Champions Grill, Cooler Profills.\n` +
 			"• Seus dados (nome, empresa, telefone) são usados exclusivamente para o sorteio e contato comercial Profills.\n\n" +
 			"Para participar, responda *Aceito* ou *Não aceito*."
@@ -186,51 +186,6 @@ export function nameInvalid(): TextMessage {
 export function companyInvalid(): TextMessage {
 	return text(
 		"Não consegui identificar o nome da empresa. Por favor, envie o nome da *empresa* onde você trabalha."
-	);
-}
-
-export function winnerTv({
-	name,
-	raffleCode,
-}: {
-	name: string;
-	raffleCode: string;
-}): TextMessage {
-	return text(
-		`🏆 *PARABÉNS, ${name}!* 🎉\n\n` +
-			`Você foi sorteado e ganhou uma *TV 65"* no Sorteio Profills Fispal 2026!\n\n` +
-			`Seu código vencedor: *${raffleCode}*\n\n` +
-			"Nossa equipe entrará em contato para combinar a entrega do prêmio. Aproveite! 🎊"
-	);
-}
-
-export function winnerChurrasqueira({
-	name,
-	raffleCode,
-}: {
-	name: string;
-	raffleCode: string;
-}): TextMessage {
-	return text(
-		`🏆 *PARABÉNS, ${name}!* 🎉\n\n` +
-			"Você foi sorteado e ganhou uma *Churrasqueira Champions Grill* no Sorteio Profills Fispal 2026!\n\n" +
-			`Seu código vencedor: *${raffleCode}*\n\n` +
-			"Nossa equipe entrará em contato para combinar a entrega do prêmio. Aproveite! 🎊"
-	);
-}
-
-export function winnerCooler({
-	name,
-	raffleCode,
-}: {
-	name: string;
-	raffleCode: string;
-}): TextMessage {
-	return text(
-		`🏆 *PARABÉNS, ${name}!* 🎉\n\n` +
-			"Você foi sorteado e ganhou um *Cooler Profills* no Sorteio Profills Fispal 2026!\n\n" +
-			`Seu código vencedor: *${raffleCode}*\n\n` +
-			"Nossa equipe entrará em contato para combinar a entrega do prêmio. Aproveite! 🎊"
 	);
 }
 
