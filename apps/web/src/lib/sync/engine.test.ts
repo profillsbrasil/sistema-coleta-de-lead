@@ -890,6 +890,51 @@ describe("sync engine", () => {
 			});
 		});
 
+		it("remove do Dexie um lead marcado como deletado no servidor", async () => {
+			const ts = "2026-05-22T10:00:00.000Z";
+			await db.leads.add({
+				localId: "tomb-1",
+				serverId: 10,
+				userId: "user-1",
+				name: "Lead Morto",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "frio",
+				photo: null,
+				photoUrl: null,
+				uploadFailed: false,
+				createdAt: ts,
+				updatedAt: ts,
+				deletedAt: null,
+				syncStatus: "synced",
+			});
+
+			mockPullChanges.query.mockResolvedValue({
+				leads: [
+					{
+						localId: "tomb-1",
+						id: 10,
+						userId: "user-1",
+						name: "Lead Morto",
+						interestTag: "frio",
+						createdAt: ts,
+						updatedAt: "2026-05-22T11:00:00.000Z",
+						deletedAt: "2026-05-22T11:00:00.000Z",
+					},
+				],
+				serverTimestamp: "2026-05-22T11:30:00.000Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			expect(await db.leads.get("tomb-1")).toBeUndefined();
+		});
+
 		it("lê lastSyncTimestamp de Dexie syncMeta na próxima chamada", async () => {
 			await db.syncMeta.put({
 				key: "lastSyncTimestamp",

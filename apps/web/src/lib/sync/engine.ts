@@ -170,6 +170,13 @@ async function pullChanges(): Promise<void> {
 	for (const serverLead of result.leads) {
 		const serverRecord = serverLead as unknown as Record<string, unknown>;
 		const localId = serverRecord.localId as string;
+
+		// Tombstone: lead deletado no servidor — aplica server-wins removendo localmente.
+		if (serverRecord.deletedAt != null) {
+			await db.leads.delete(localId);
+			continue;
+		}
+
 		const localLead = await db.leads.get(localId);
 
 		if (localLead) {
