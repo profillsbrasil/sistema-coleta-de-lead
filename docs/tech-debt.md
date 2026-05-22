@@ -292,25 +292,6 @@ em perda de dados, segurança ou bloqueio de evolução.
   (`leaderboard.ts`, `admin/leads.ts`) não são exercidas contra Postgres real.
 - **Ação sugerida:** adicionar testes de integração com banco real (ex: container).
 
-### 35. Instrumentação temporária no `LeadForm` para diagnóstico mobile
-
-- **Arquivo:** `apps/web/src/components/lead-form.tsx` + `packages/api/src/routers/debug.ts`
-- **Causa raiz:** erro `An invalid form control with name='' is not focusable` reportado
-  no mobile (desktop OK). Instrumentação tripla adicionada (`onInvalid` handler,
-  `console.warn`, toast, mutation tRPC `debug.logFormDiagnostic`) para capturar estado
-  React vs DOM, viewport, user agent, validity e selectors invalid.
-- **Origem:** spec `docs/superpowers/specs/2026-05-21-lead-form-mobile-debug-design.md`,
-  plano `docs/superpowers/plans/2026-05-21-lead-form-mobile-debug.md`.
-- **Ação após o diagnóstico:**
-  1. Implementar fix definitivo (provavelmente `noValidate` + atributo `name` nos
-     inputs, mas confirmar pelo padrão observado no log).
-  2. Remover `handleInvalid`, helpers (`maskPhoneForLog`, `readDomValue`,
-     `collectInvalidSelectors`), `diagnosticMutation` e imports relacionados em
-     `lead-form.tsx`. Reverter `handleSubmit` para a versão simples.
-  3. Remover `packages/api/src/routers/debug.ts` e desregistrar `debug: debugRouter`
-     em `routers/index.ts` (a menos que outra feature passe a usá-lo).
-  4. Fechar esta entrada.
-
 ## Recomendações de Automação Claude Code
 
 - **`.claude/settings.json` do projeto:** criar com allowlist de permissões para
