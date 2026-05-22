@@ -197,7 +197,9 @@ describe("sync engine", () => {
 			);
 
 			const { syncCycle } = await import("./engine");
-			await expect(syncCycle()).resolves.toEqual(expect.objectContaining({ authExpired: false }));
+			await expect(syncCycle()).resolves.toEqual(
+				expect.objectContaining({ authExpired: false })
+			);
 		});
 
 		it("deletes all acknowledged queue items when same localId has multiple ops", async () => {
@@ -999,9 +1001,9 @@ describe("sync engine", () => {
 			await syncCycle();
 
 			expect(await db.leads.get("tomb-2")).toBeUndefined();
-			expect(
-				await db.syncQueue.where("localId").equals("tomb-2").count()
-			).toBe(0);
+			expect(await db.syncQueue.where("localId").equals("tomb-2").count()).toBe(
+				0
+			);
 		});
 
 		it("lê lastSyncTimestamp de Dexie syncMeta na próxima chamada", async () => {

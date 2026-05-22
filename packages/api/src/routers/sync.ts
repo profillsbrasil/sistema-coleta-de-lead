@@ -161,12 +161,7 @@ export const syncRouter = router({
 			const changes = await db
 				.select()
 				.from(leads)
-				.where(
-					and(
-						eq(leads.userId, userId),
-						gt(leads.updatedAt, since)
-					)
-				);
+				.where(and(eq(leads.userId, userId), gt(leads.updatedAt, since)));
 
 			return {
 				leads: changes,

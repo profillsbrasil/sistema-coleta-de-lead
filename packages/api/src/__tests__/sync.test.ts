@@ -359,6 +359,8 @@ describe("syncRouter.pullChanges", () => {
 
 		const whereArg = whereMock.mock.calls[0]?.[0] as { and: unknown[] };
 		expect(whereArg.and).not.toContainEqual({ isNull: "deletedAt" });
-		expect(whereArg.and).toContainEqual({ gt: ["updatedAt", expect.any(Date)] });
+		expect(whereArg.and).toContainEqual({
+			gt: ["updatedAt", expect.any(Date)],
+		});
 	});
 });
