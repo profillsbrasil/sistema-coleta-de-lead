@@ -74,7 +74,7 @@ export function AdminLeadCard({
 					<DropdownMenuTrigger
 						render={
 							<Button
-								aria-label="Abrir menu de acoes"
+								aria-label="Abrir menu de ações"
 								className="shrink-0"
 								size="icon-lg"
 								type="button"

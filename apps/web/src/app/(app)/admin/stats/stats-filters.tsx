@@ -19,7 +19,7 @@ import {
 	SelectValue,
 } from "@dashboard-leads-profills/ui/components/select";
 import { CalendarDaysIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Matches react-day-picker DateRange shape
 interface DateRange {
@@ -40,9 +40,17 @@ interface StatsFiltersProps {
 	vendors: Array<{ userId: string; name: string }>;
 }
 
+const ALL = "all";
+
+const TAG_LABELS = {
+	quente: "Quente",
+	morno: "Morno",
+	frio: "Frio",
+} as const;
+
 function formatDateRange(range: DateRange | undefined): string {
 	if (!range?.from) {
-		return "Selecionar periodo";
+		return "Selecionar período";
 	}
 	const from = range.from.toLocaleDateString("pt-BR");
 	if (!range.to) {
@@ -55,13 +63,32 @@ export default function StatsFilters({
 	vendors,
 	segments,
 	onApply,
-	isLoading,
 }: StatsFiltersProps) {
-	const [selectedVendor, setSelectedVendor] = useState<string>("");
-	const [selectedTag, setSelectedTag] = useState<string>("");
-	const [selectedSegment, setSelectedSegment] = useState<string>("");
+	const [selectedVendor, setSelectedVendor] = useState<string>(ALL);
+	const [selectedTag, setSelectedTag] = useState<string>(ALL);
+	const [selectedSegment, setSelectedSegment] = useState<string>(ALL);
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 	const [calendarOpen, setCalendarOpen] = useState(false);
+
+	// Auto-apply: dispara onApply sempre que o estado consolidado muda.
+	// Evita o disparo inicial usando ref para pular o primeiro effect.
+	const isFirstRun = useRef(true);
+	useEffect(() => {
+		if (isFirstRun.current) {
+			isFirstRun.current = false;
+			return;
+		}
+		onApply({
+			userId: selectedVendor === ALL ? undefined : selectedVendor,
+			tag:
+				selectedTag === ALL
+					? undefined
+					: (selectedTag as "quente" | "morno" | "frio"),
+			segment: selectedSegment === ALL ? undefined : selectedSegment,
+			startDate: dateRange?.from?.toISOString(),
+			endDate: dateRange?.to?.toISOString(),
+		});
+	}, [selectedVendor, selectedTag, selectedSegment, dateRange, onApply]);
 
 	function applyPreset(preset: "today" | "7days" | "30days" | "all") {
 		const now = new Date();
@@ -82,29 +109,29 @@ export default function StatsFilters({
 		}
 	}
 
-	function handleApply() {
-		onApply({
-			userId: selectedVendor || undefined,
-			tag: (selectedTag as "quente" | "morno" | "frio") || undefined,
-			segment: selectedSegment || undefined,
-			startDate: dateRange?.from?.toISOString(),
-			endDate: dateRange?.to?.toISOString(),
-		});
-	}
-
 	return (
 		<Card className="mb-6">
 			<CardContent>
-				<div className="flex flex-col gap-2.5 lg:grid lg:grid-cols-5 lg:gap-3">
+				<div className="flex flex-col gap-3 lg:grid lg:grid-cols-4">
 					<Select
-						onValueChange={(v) => setSelectedVendor(v ?? "")}
+						onValueChange={(v) => setSelectedVendor(v ?? ALL)}
 						value={selectedVendor}
 					>
 						<SelectTrigger>
-							<SelectValue placeholder="Selecionar vendedor" />
+							<SelectValue placeholder="Todos os vendedores">
+								{(value) => {
+									if (!value || value === ALL) {
+										return "Todos os vendedores";
+									}
+									return (
+										vendors.find((v) => v.userId === value)?.name ??
+										String(value).slice(0, 8)
+									);
+								}}
+							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="">Todos</SelectItem>
+							<SelectItem value={ALL}>Todos os vendedores</SelectItem>
 							{vendors.map((v) => (
 								<SelectItem key={v.userId} value={v.userId}>
 									{v.name}
@@ -114,14 +141,21 @@ export default function StatsFilters({
 					</Select>
 
 					<Select
-						onValueChange={(v) => setSelectedTag(v ?? "")}
+						onValueChange={(v) => setSelectedTag(v ?? ALL)}
 						value={selectedTag}
 					>
-						<SelectTrigger className="hidden lg:flex">
-							<SelectValue placeholder="Todas as tags" />
+						<SelectTrigger>
+							<SelectValue placeholder="Todas as tags">
+								{(value) => {
+									if (!value || value === ALL) {
+										return "Todas as tags";
+									}
+									return TAG_LABELS[value as keyof typeof TAG_LABELS] ?? value;
+								}}
+							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="">Todas as tags</SelectItem>
+							<SelectItem value={ALL}>Todas as tags</SelectItem>
 							<SelectItem value="quente">Quente</SelectItem>
 							<SelectItem value="morno">Morno</SelectItem>
 							<SelectItem value="frio">Frio</SelectItem>
@@ -129,14 +163,18 @@ export default function StatsFilters({
 					</Select>
 
 					<Select
-						onValueChange={(v) => setSelectedSegment(v ?? "")}
+						onValueChange={(v) => setSelectedSegment(v ?? ALL)}
 						value={selectedSegment}
 					>
-						<SelectTrigger className="hidden lg:flex">
-							<SelectValue placeholder="Todos os segmentos" />
+						<SelectTrigger>
+							<SelectValue placeholder="Todos os segmentos">
+								{(value) =>
+									!value || value === ALL ? "Todos os segmentos" : value
+								}
+							</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="">Todos os segmentos</SelectItem>
+							<SelectItem value={ALL}>Todos os segmentos</SelectItem>
 							{segments.map((s) => (
 								<SelectItem key={s} value={s}>
 									{s}
@@ -149,7 +187,8 @@ export default function StatsFilters({
 						<PopoverTrigger
 							render={
 								<Button
-									className="hidden w-full justify-start font-normal lg:inline-flex"
+									aria-label="Selecionar período"
+									className="w-full justify-start font-normal"
 									variant="outline"
 								/>
 							}
@@ -171,22 +210,31 @@ export default function StatsFilters({
 									size="sm"
 									variant="outline"
 								>
-									Ultimos 7 dias
+									Últimos 7 dias
 								</Button>
 								<Button
 									onClick={() => applyPreset("30days")}
 									size="sm"
 									variant="outline"
 								>
-									Ultimos 30 dias
+									Últimos 30 dias
 								</Button>
 								<Button
 									onClick={() => applyPreset("all")}
 									size="sm"
 									variant="outline"
 								>
-									Todo periodo
+									Todo período
 								</Button>
+								{dateRange?.from ? (
+									<Button
+										onClick={() => setDateRange(undefined)}
+										size="sm"
+										variant="ghost"
+									>
+										Limpar
+									</Button>
+								) : null}
 							</div>
 							<Calendar
 								mode="range"
@@ -197,14 +245,6 @@ export default function StatsFilters({
 							/>
 						</PopoverContent>
 					</Popover>
-
-					<Button
-						className="w-full lg:w-auto"
-						disabled={isLoading}
-						onClick={handleApply}
-					>
-						Aplicar filtros
-					</Button>
 				</div>
 			</CardContent>
 		</Card>

@@ -142,7 +142,7 @@ export default function UsersPanel() {
 				queryClient.invalidateQueries({
 					queryKey: trpc.admin.users.list.queryKey(),
 				});
-				toast.success("Usuario desativado com sucesso");
+				toast.success("Usuário desativado com sucesso");
 				setDeactivatingUser(null);
 			},
 			onError: (error) => {
@@ -158,7 +158,7 @@ export default function UsersPanel() {
 				queryClient.invalidateQueries({
 					queryKey: trpc.admin.users.list.queryKey(),
 				});
-				toast.success("Usuario reativado com sucesso");
+				toast.success("Usuário reativado com sucesso");
 				setReactivatingUser(null);
 			},
 			onError: (error) => {
@@ -354,7 +354,7 @@ function UsersContent({
 							<TableHead>Role</TableHead>
 							<TableHead>Status</TableHead>
 							<TableHead>Leads</TableHead>
-							<TableHead className="text-right">Acoes</TableHead>
+							<TableHead className="text-right">Ações</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -442,7 +442,7 @@ function UserRow({
 					<DropdownMenuTrigger
 						render={
 							<Button
-								aria-label="Abrir menu de acoes"
+								aria-label="Abrir menu de ações"
 								size="icon-lg"
 								type="button"
 								variant="ghost"
@@ -468,7 +468,7 @@ function UserRow({
 									variant="destructive"
 								>
 									<Ban className="size-4" />
-									Desativar usuario
+									Desativar usuário
 								</DropdownMenuItem>
 							</>
 						)}
@@ -481,7 +481,7 @@ function UserRow({
 									}
 								>
 									<CheckCircle className="size-4" />
-									Reativar usuario
+									Reativar usuário
 								</DropdownMenuItem>
 							</>
 						)}
@@ -537,7 +537,7 @@ function UsersPagination({
 									: "cursor-pointer"
 							}
 							onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-							text="Proximo"
+							text="Próximo"
 						/>
 					</PaginationItem>
 				</PaginationContent>
@@ -563,9 +563,9 @@ function DeactivateDialog({
 		<AlertDialog onOpenChange={onOpenChange} open={open}>
 			<AlertDialogContent>
 				<AlertDialogHeader>
-					<AlertDialogTitle>Desativar Usuario</AlertDialogTitle>
+					<AlertDialogTitle>Desativar usuário</AlertDialogTitle>
 					<AlertDialogDescription>
-						O usuario <strong>{userName}</strong> perdera acesso ao sistema
+						O usuário <strong>{userName}</strong> perderá acesso ao sistema
 						imediatamente. Deseja continuar?
 					</AlertDialogDescription>
 				</AlertDialogHeader>
@@ -601,9 +601,9 @@ function ReactivateDialog({
 		<AlertDialog onOpenChange={onOpenChange} open={open}>
 			<AlertDialogContent>
 				<AlertDialogHeader>
-					<AlertDialogTitle>Reativar Usuario</AlertDialogTitle>
+					<AlertDialogTitle>Reativar usuário</AlertDialogTitle>
 					<AlertDialogDescription>
-						O usuario <strong>{userName}</strong> voltara a ter acesso ao
+						O usuário <strong>{userName}</strong> voltará a ter acesso ao
 						sistema. Confirmar?
 					</AlertDialogDescription>
 				</AlertDialogHeader>
@@ -659,7 +659,7 @@ function UsersTableSkeleton() {
 							<TableHead>Role</TableHead>
 							<TableHead>Status</TableHead>
 							<TableHead>Leads</TableHead>
-							<TableHead className="text-right">Acoes</TableHead>
+							<TableHead className="text-right">Ações</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>

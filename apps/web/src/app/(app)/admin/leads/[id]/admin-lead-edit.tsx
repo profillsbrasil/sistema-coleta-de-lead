@@ -67,7 +67,7 @@ export default function AdminLeadEdit({ leadId }: AdminLeadEditProps) {
 	const deleteMutation = useMutation(
 		trpc.admin.leads.delete.mutationOptions({
 			onSuccess: () => {
-				toast.success("Lead excluido!");
+				toast.success("Lead excluído!");
 				router.push("/admin/leads" as unknown as "/");
 			},
 			onError: () => {
@@ -110,9 +110,9 @@ export default function AdminLeadEdit({ leadId }: AdminLeadEditProps) {
 			<div className="flex flex-col gap-6">
 				<Empty>
 					<EmptyHeader>
-						<EmptyTitle>Lead nao encontrado</EmptyTitle>
+						<EmptyTitle>Lead não encontrado</EmptyTitle>
 						<EmptyDescription>
-							O lead solicitado nao existe ou foi excluido.
+							O lead solicitado não existe ou foi excluído.
 						</EmptyDescription>
 					</EmptyHeader>
 				</Empty>

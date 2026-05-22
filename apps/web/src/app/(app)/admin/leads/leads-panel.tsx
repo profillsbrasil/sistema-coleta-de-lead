@@ -121,7 +121,7 @@ export default function LeadsPanel() {
 	const deleteMutation = useMutation(
 		trpc.admin.leads.delete.mutationOptions({
 			onSuccess: () => {
-				toast.success("Lead excluido!");
+				toast.success("Lead excluído!");
 				queryClient.invalidateQueries();
 				setDeletingLeadId(null);
 			},
@@ -189,18 +189,30 @@ export default function LeadsPanel() {
 		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pb-6">
 			<PageHeader eyebrow="Admin" title="Leads por vendedor" />
 
-			<Select onValueChange={handleVendorChange} value={selectedVendor}>
-				<SelectTrigger className="mx-4 w-[calc(100%-2rem)] max-w-sm">
-					<SelectValue placeholder="Selecionar vendedor" />
-				</SelectTrigger>
-				<SelectContent>
-					{vendorsQuery.data?.map((vendor) => (
-						<SelectItem key={vendor.userId} value={vendor.userId}>
-							{vendor.name ?? vendor.userId.slice(0, 8)}
-						</SelectItem>
-					))}
-				</SelectContent>
-			</Select>
+			<div className="px-4">
+				<Select onValueChange={handleVendorChange} value={selectedVendor}>
+					<SelectTrigger className="w-full max-w-sm">
+						<SelectValue placeholder="Selecionar vendedor">
+							{(value) => {
+								if (!value) {
+									return "Selecionar vendedor";
+								}
+								const vendor = vendorsQuery.data?.find(
+									(v) => v.userId === value
+								);
+								return vendor?.name ?? String(value).slice(0, 8);
+							}}
+						</SelectValue>
+					</SelectTrigger>
+					<SelectContent>
+						{vendorsQuery.data?.map((vendor) => (
+							<SelectItem key={vendor.userId} value={vendor.userId}>
+								{vendor.name ?? vendor.userId.slice(0, 8)}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
+			</div>
 
 			{!selectedVendor && (
 				<Empty className="mx-4">
@@ -234,7 +246,7 @@ export default function LeadsPanel() {
 					<EmptyHeader>
 						<EmptyTitle>Erro ao carregar dados</EmptyTitle>
 						<EmptyDescription>
-							Verifique sua conexao e tente novamente.
+							Verifique sua conexão e tente novamente.
 						</EmptyDescription>
 					</EmptyHeader>
 				</Empty>
@@ -245,7 +257,7 @@ export default function LeadsPanel() {
 					<EmptyHeader>
 						<EmptyTitle>Nenhum lead encontrado</EmptyTitle>
 						<EmptyDescription>
-							Este vendedor ainda nao coletou nenhum lead.
+							Este vendedor ainda não coletou nenhum lead.
 						</EmptyDescription>
 					</EmptyHeader>
 				</Empty>
@@ -296,7 +308,7 @@ export default function LeadsPanel() {
 									<TableHead>Tag</TableHead>
 									<TableHead>Segmento</TableHead>
 									<TableHead>Criado em</TableHead>
-									<TableHead className="text-right">Acoes</TableHead>
+									<TableHead className="text-right">Ações</TableHead>
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -339,7 +351,7 @@ export default function LeadsPanel() {
 												<DropdownMenuTrigger
 													render={
 														<Button
-															aria-label="Abrir menu de acoes"
+															aria-label="Abrir menu de ações"
 															size="icon-lg"
 															type="button"
 															variant="ghost"
@@ -385,11 +397,11 @@ export default function LeadsPanel() {
 									<PaginationPrevious
 										aria-disabled={page <= 1}
 										className={
-											page <= 1 ? "pointer-events-none opacity-50" : ""
+											page <= 1
+												? "pointer-events-none opacity-50"
+												: "cursor-pointer"
 										}
-										href="#"
-										onClick={(e) => {
-											e.preventDefault();
+										onClick={() => {
 											if (page > 1) {
 												setPage(page - 1);
 											}
@@ -409,12 +421,9 @@ export default function LeadsPanel() {
 									.map((p) => (
 										<PaginationItem key={p}>
 											<PaginationLink
-												href="#"
+												className="cursor-pointer"
 												isActive={p === page}
-												onClick={(e) => {
-													e.preventDefault();
-													setPage(p);
-												}}
+												onClick={() => setPage(p)}
 											>
 												{p}
 											</PaginationLink>
@@ -424,11 +433,11 @@ export default function LeadsPanel() {
 									<PaginationNext
 										aria-disabled={page >= totalPages}
 										className={
-											page >= totalPages ? "pointer-events-none opacity-50" : ""
+											page >= totalPages
+												? "pointer-events-none opacity-50"
+												: "cursor-pointer"
 										}
-										href="#"
-										onClick={(e) => {
-											e.preventDefault();
+										onClick={() => {
 											if (page < totalPages) {
 												setPage(page + 1);
 											}
@@ -453,7 +462,7 @@ export default function LeadsPanel() {
 					<AlertDialogHeader>
 						<AlertDialogTitle>Excluir Lead</AlertDialogTitle>
 						<AlertDialogDescription>
-							Tem certeza que deseja excluir este lead? Essa acao nao pode ser
+							Tem certeza que deseja excluir este lead? Essa ação não pode ser
 							desfeita.
 						</AlertDialogDescription>
 					</AlertDialogHeader>

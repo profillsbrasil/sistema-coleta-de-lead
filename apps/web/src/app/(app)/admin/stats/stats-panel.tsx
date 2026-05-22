@@ -66,8 +66,8 @@ function RankingContent({
 		return (
 			<Empty>
 				<EmptyDescription>
-					Sem dados para o periodo. Nao ha leads registrados para os filtros
-					selecionados. Ajuste o periodo ou remova filtros.
+					Sem dados para o período. Não há leads registrados para os filtros
+					selecionados. Ajuste o período ou remova filtros.
 				</EmptyDescription>
 			</Empty>
 		);
@@ -89,7 +89,7 @@ function RankingContent({
 							<td className="py-2 pr-4 text-muted-foreground">{index + 1}</td>
 							<td className="py-2 pr-4 font-medium">{entry.name ?? "—"}</td>
 							<td className="py-2 pr-4">{entry.totalLeads}</td>
-							<td className="py-2 font-semibold">{entry.score} pts</td>
+							<td className="py-2 font-medium">{entry.score} pts</td>
 						</tr>
 					))}
 				</tbody>

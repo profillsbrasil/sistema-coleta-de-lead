@@ -86,7 +86,9 @@ export function AdminUserCard({
 								}}
 							>
 								<SelectTrigger className="h-8 w-[120px]">
-									<SelectValue />
+									<SelectValue>
+										{(value) => (value === "admin" ? "Admin" : "Vendedor")}
+									</SelectValue>
 								</SelectTrigger>
 								<SelectContent>
 									<SelectItem value="admin">Admin</SelectItem>
@@ -111,7 +113,7 @@ export function AdminUserCard({
 					<DropdownMenuTrigger
 						render={
 							<Button
-								aria-label="Abrir menu de acoes"
+								aria-label="Abrir menu de ações"
 								className="shrink-0"
 								size="icon-lg"
 								type="button"
@@ -136,7 +138,7 @@ export function AdminUserCard({
 									variant="destructive"
 								>
 									<Ban className="size-4" />
-									Desativar usuario
+									Desativar usuário
 								</DropdownMenuItem>
 							</>
 						)}
@@ -149,7 +151,7 @@ export function AdminUserCard({
 									}
 								>
 									<CheckCircle className="size-4" />
-									Reativar usuario
+									Reativar usuário
 								</DropdownMenuItem>
 							</>
 						)}
