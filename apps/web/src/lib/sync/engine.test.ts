@@ -935,6 +935,65 @@ describe("sync engine", () => {
 			expect(await db.leads.get("tomb-1")).toBeUndefined();
 		});
 
+		it("limpa entrada órfã de syncQueue ao aplicar tombstone de lead", async () => {
+			const ts = "2026-05-22T10:00:00.000Z";
+			await db.leads.add({
+				localId: "tomb-2",
+				serverId: 10,
+				userId: "user-1",
+				name: "Lead Órfão",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "frio",
+				photo: null,
+				photoUrl: null,
+				uploadFailed: false,
+				createdAt: ts,
+				updatedAt: ts,
+				deletedAt: null,
+				syncStatus: "pending",
+			});
+
+			await db.syncQueue.add({
+				localId: "tomb-2",
+				operation: "update",
+				timestamp: ts,
+				payload: JSON.stringify({ name: "X" }),
+				retryCount: 0,
+			});
+
+			// mockPushChanges.mutate já está configurado no beforeEach para resolver
+			// com { acknowledged: [], idMappings: [] } — não remove a entrada da fila.
+
+			mockPullChanges.query.mockResolvedValue({
+				leads: [
+					{
+						localId: "tomb-2",
+						id: 10,
+						userId: "user-1",
+						name: "Lead Órfão",
+						interestTag: "frio",
+						createdAt: ts,
+						updatedAt: "2026-05-22T11:00:00.000Z",
+						deletedAt: "2026-05-22T11:00:00.000Z",
+					},
+				],
+				serverTimestamp: "2026-05-22T11:30:00.000Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			expect(await db.leads.get("tomb-2")).toBeUndefined();
+			expect(
+				await db.syncQueue.where("localId").equals("tomb-2").count()
+			).toBe(0);
+		});
+
 		it("lê lastSyncTimestamp de Dexie syncMeta na próxima chamada", async () => {
 			await db.syncMeta.put({
 				key: "lastSyncTimestamp",

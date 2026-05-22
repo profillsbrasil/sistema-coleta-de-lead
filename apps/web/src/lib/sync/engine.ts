@@ -174,6 +174,7 @@ async function pullChanges(): Promise<void> {
 		// Tombstone: lead deletado no servidor — aplica server-wins removendo localmente.
 		if (serverRecord.deletedAt != null) {
 			await db.leads.delete(localId);
+			await db.syncQueue.where("localId").equals(localId).delete();
 			continue;
 		}
 
