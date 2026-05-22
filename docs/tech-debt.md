@@ -214,6 +214,20 @@ em perda de dados, segurança ou bloqueio de evolução.
   corrigir os 8 testes e incluir `test` no CI.
 - **Status:** resolvido no PR #31 — os 8 testes corrigidos, suíte verde.
 
+### 36. Shell renderiza `{children}` duas vezes (desktop + mobile)
+
+- **Arquivo:** `apps/web/src/components/authenticated-app-shell.tsx`
+- **Causa raiz:** o shell tem dois blocos de layout — `hidden md:flex` (desktop) e
+  `md:hidden` (mobile) — e renderiza `{children}` dentro de cada um, alternando por
+  CSS. Toda página autenticada é montada 2× no DOM simultaneamente: efeitos, hooks e
+  subscriptions Dexie rodam em dobro, e qualquer componente com `id` / `htmlFor` /
+  `form` fixo gera IDs duplicados. Foi a origem do bug em que criar lead não
+  funcionava no mobile (PR #43): o botão `form="lead-form"` resolvia para o primeiro
+  `#lead-form`, o bloco desktop oculto.
+- **Ação sugerida:** renderizar `{children}` uma única vez e alternar apenas o chrome
+  (sidebar vs bottom-nav) por CSS. Enquanto isso, componentes reutilizáveis devem
+  gerar IDs com `useId()` em vez de strings fixas.
+
 ## Severidade Baixa
 
 ### 23. `syncStatus: "conflict"` declarado mas nunca escrito
