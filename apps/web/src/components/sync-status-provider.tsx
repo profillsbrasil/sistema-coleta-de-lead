@@ -13,6 +13,7 @@ interface SyncStatus {
 	isSyncing: boolean;
 	lastError: string | null;
 	lastSync: string | null;
+	leaderboardFailed: boolean;
 	manualRetry: () => void;
 	pendingCount: number;
 	retryAttempt: number | null;
@@ -29,6 +30,7 @@ const SyncStatusContext = createContext<SyncStatus>({
 	retryAttempt: null,
 	totalRetries: 5,
 	isStalled: false,
+	leaderboardFailed: false,
 	manualRetry: () => undefined,
 });
 
@@ -42,6 +44,7 @@ interface SyncState {
 	isSyncing: boolean;
 	lastError: string | null;
 	lastSync: string | null;
+	leaderboardFailed: boolean;
 	retryAttempt: number | null;
 	totalRetries: number;
 }
@@ -60,6 +63,7 @@ export function SyncStatusProvider({
 		retryAttempt: null,
 		totalRetries: 5,
 		isStalled: false,
+		leaderboardFailed: false,
 	});
 
 	const retryRef = useRef<(() => void) | null>(null);
@@ -97,6 +101,7 @@ export function SyncStatusProvider({
 					retryAttempt: null,
 					totalRetries: 5,
 					isStalled: result.isStalled ?? false,
+					leaderboardFailed: result.leaderboardFailed ?? false,
 				}),
 			onRetry: (attempt, totalAttempts) =>
 				setSyncState((prev) => ({
