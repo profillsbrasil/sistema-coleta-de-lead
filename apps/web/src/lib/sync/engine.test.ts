@@ -1500,6 +1500,7 @@ describe("sync engine", () => {
 				expect.objectContaining({
 					error: "Always fail",
 					isStalled: true,
+					leaderboardFailed: true,
 				})
 			);
 		});
