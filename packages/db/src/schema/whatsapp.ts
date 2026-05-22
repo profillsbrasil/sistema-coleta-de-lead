@@ -28,15 +28,6 @@ export const participants = whatsappSchema.table(
 			mode: "date",
 		}),
 		termsVersion: text("terms_version"),
-		winnerOf: text("winner_of"),
-		winnerAt: timestamp("winner_at", {
-			withTimezone: true,
-			mode: "date",
-		}),
-		notifiedAt: timestamp("notified_at", {
-			withTimezone: true,
-			mode: "date",
-		}),
 		retryCount: integer("retry_count").notNull().default(0),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
@@ -46,10 +37,7 @@ export const participants = whatsappSchema.table(
 			.defaultNow()
 			.$onUpdate(() => new Date()),
 	},
-	(table) => [
-		index("participants_state_idx").on(table.state),
-		index("participants_winner_of_idx").on(table.winnerOf),
-	]
+	(table) => [index("participants_state_idx").on(table.state)]
 );
 
 export const messages = whatsappSchema.table(

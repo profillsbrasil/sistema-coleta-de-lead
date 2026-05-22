@@ -78,11 +78,10 @@ O token atual no `.env` provavelmente é **temporário** (24h). Para o evento:
 #    - Mensagem de boas-vindas + botões Aceito / Não aceito
 # 5. Clique Aceito → digite nome → digite empresa → recebe código PROFILLS-XXXX
 # 6. Painel: https://lead.profills.com/admin/sorteio (logado como admin)
-#    - Veja o registro na tabela
-#    - Teste exportar CSV
-#    - Teste o botão Sortear em um dos prêmios
-#    - Teste o botão Notificar (dentro de 24h da última msg)
-#    - Teste Re-sortear (zera o vencedor)
+#    - Confira inscritos completos
+#    - Teste filtros e busca
+#    - Exporte o CSV para o sorteio externo
+#    - Abra um contato de teste pelo botão WhatsApp
 ```
 
 ## 7. Dia do evento
@@ -90,7 +89,6 @@ O token atual no `.env` provavelmente é **temporário** (24h). Para o evento:
 - Mantenha o webhook do Vercel monitorado (Logs → filter `whatsapp:webhook`)
 - Painel admin `/admin/sorteio` aberto em outra aba
 - Rate limit: 30 msgs/60s por wa_id (proteção contra abuso). Se um usuário spammar, o bot ignora silenciosamente. Tabela `whatsapp.rate_limit` rastreia o estado.
-- Janela 24h para notificar vencedor — se ela expirou, contate o ganhador manualmente (admin mostra warning).
 
 ## 8. Pós-evento
 

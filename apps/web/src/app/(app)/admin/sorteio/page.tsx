@@ -6,8 +6,8 @@ export default function AdminSorteioPage() {
 		<div className="mx-auto flex w-full max-w-4xl flex-col gap-6 pb-6">
 			<PageHeader
 				eyebrow="Admin"
-				subtitle="Gerencie os sorteios dos prêmios e notifique os vencedores via WhatsApp."
-				title="Sorteio Profills Fispal 2026"
+				subtitle="Acompanhe inscritos, exporte a base e abra contatos para operação manual. O sorteio será realizado fora do sistema."
+				title="Inscritos do sorteio"
 			/>
 			<SorteioClient />
 		</div>
