@@ -16,6 +16,7 @@ export interface SyncEngineCallbacks {
 		error: string | null;
 		authExpired?: boolean;
 		isStalled?: boolean;
+		leaderboardFailed?: boolean;
 	}) => void;
 	onSyncStart?: () => void;
 }
@@ -217,7 +218,7 @@ async function pullChanges(): Promise<void> {
 	}
 }
 
-async function fetchLeaderboard(): Promise<void> {
+async function fetchLeaderboard(): Promise<boolean> {
 	try {
 		const result = await syncClient.leaderboard.getRanking.query();
 		await db.leaderboardCache.clear();
@@ -232,14 +233,19 @@ async function fetchLeaderboard(): Promise<void> {
 		if (entries.length > 0) {
 			await db.leaderboardCache.bulkPut(entries);
 		}
+		return true;
 	} catch {
 		// Leaderboard fetch failure must NOT affect lead sync (per Pitfall 3)
+		return false;
 	}
 }
 
-export async function syncCycle(): Promise<{ authExpired: boolean }> {
+export async function syncCycle(): Promise<{
+	authExpired: boolean;
+	leaderboardFailed: boolean;
+}> {
 	if (isSyncing) {
-		return { authExpired: false };
+		return { authExpired: false, leaderboardFailed: false };
 	}
 
 	isSyncing = true;
@@ -256,12 +262,12 @@ export async function syncCycle(): Promise<{ authExpired: boolean }> {
 			await pushChanges();
 		}
 		await pullChanges();
-		await fetchLeaderboard();
-		return { authExpired: false };
+		const leaderboardOk = await fetchLeaderboard();
+		return { authExpired: false, leaderboardFailed: !leaderboardOk };
 	} catch (error: unknown) {
 		if (isUnauthorizedError(error)) {
 			// 401: stop sync, preserve local data (OFFL-06)
-			return { authExpired: true };
+			return { authExpired: true, leaderboardFailed: false };
 		}
 		throw error;
 	} finally {
@@ -282,7 +288,11 @@ async function syncWithRetry(callbacks?: SyncEngineCallbacks): Promise<void> {
 				callbacks?.onSyncEnd?.({ lastSync, error: null, authExpired: true });
 				return;
 			}
-			callbacks?.onSyncEnd?.({ lastSync, error: null });
+			callbacks?.onSyncEnd?.({
+				lastSync,
+				error: null,
+				leaderboardFailed: result.leaderboardFailed,
+			});
 			return;
 		} catch (error: unknown) {
 			if (isUnauthorizedError(error)) {

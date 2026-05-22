@@ -34,11 +34,15 @@ vi.mock("./photo-upload", () => ({
 // Mock tRPC client
 const mockPushChanges = { mutate: vi.fn() };
 const mockPullChanges = { query: vi.fn() };
+const mockGetRanking = { query: vi.fn() };
 vi.mock("@trpc/client", () => ({
 	createTRPCClient: () => ({
 		sync: {
 			pushChanges: mockPushChanges,
 			pullChanges: mockPullChanges,
+		},
+		leaderboard: {
+			getRanking: mockGetRanking,
 		},
 	}),
 	httpBatchLink: vi.fn(() => ({})),
@@ -73,6 +77,7 @@ describe("sync engine", () => {
 		await db.syncQueue.clear();
 		await db.photoUploadMeta?.clear();
 		await db.syncMeta?.clear();
+		await db.leaderboardCache?.clear();
 
 		mockUploadPendingPhotos.mockResolvedValue(0);
 
@@ -85,6 +90,10 @@ describe("sync engine", () => {
 			leads: [],
 			serverTimestamp: new Date().toISOString(),
 		});
+		mockGetRanking.query.mockResolvedValue({
+			ranking: [],
+			serverTimestamp: new Date().toISOString(),
+		});
 	});
 
 	afterEach(async () => {
@@ -92,6 +101,7 @@ describe("sync engine", () => {
 		await db.syncQueue.clear();
 		await db.photoUploadMeta?.clear();
 		await db.syncMeta?.clear();
+		await db.leaderboardCache?.clear();
 	});
 
 	describe("startSync", () => {
@@ -187,7 +197,7 @@ describe("sync engine", () => {
 			);
 
 			const { syncCycle } = await import("./engine");
-			await expect(syncCycle()).resolves.toEqual({ authExpired: false });
+			await expect(syncCycle()).resolves.toEqual(expect.objectContaining({ authExpired: false }));
 		});
 
 		it("deletes all acknowledged queue items when same localId has multiple ops", async () => {
@@ -1762,6 +1772,46 @@ describe("sync engine", () => {
 			expect(lead?.interestTag).toBe("quente");
 
 			control.stop();
+		});
+	});
+
+	describe("leaderboard fetch", () => {
+		it("syncCycle retorna leaderboardFailed=false quando o ranking carrega", async () => {
+			mockGetRanking.query.mockResolvedValue({
+				ranking: [],
+				serverTimestamp: new Date().toISOString(),
+			});
+
+			const { syncCycle } = await import("./engine");
+			const result = await syncCycle();
+
+			expect(result.leaderboardFailed).toBe(false);
+		});
+
+		it("syncCycle retorna leaderboardFailed=true sem lançar quando o ranking falha", async () => {
+			mockGetRanking.query.mockRejectedValue(new Error("ranking down"));
+
+			const { syncCycle } = await import("./engine");
+			const result = await syncCycle();
+
+			expect(result.leaderboardFailed).toBe(true);
+			expect(result.authExpired).toBe(false);
+		});
+
+		it("popula leaderboardCache com lastSyncAt quando o ranking carrega", async () => {
+			const serverTimestamp = "2026-05-22T12:00:00.000Z";
+			mockGetRanking.query.mockResolvedValue({
+				ranking: [
+					{ userId: "u1", name: "Ana", totalLeads: 3, score: 7, rank: 1 },
+				],
+				serverTimestamp,
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const cached = await db.leaderboardCache.get("u1");
+			expect(cached?.lastSyncAt).toBe(serverTimestamp);
 		});
 	});
 
