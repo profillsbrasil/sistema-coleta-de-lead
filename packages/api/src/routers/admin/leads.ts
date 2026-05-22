@@ -113,7 +113,7 @@ export const adminLeadsRouter = router({
 		.mutation(async ({ input }) => {
 			const deleted = await db
 				.update(leads)
-				.set({ deletedAt: new Date() })
+				.set({ deletedAt: new Date(), updatedAt: new Date() })
 				.where(eq(leads.localId, input.localId))
 				.returning({ localId: leads.localId });
 
