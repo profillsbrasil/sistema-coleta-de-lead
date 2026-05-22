@@ -23,7 +23,7 @@ export default function TagSelector({
 	return (
 		<ToggleGroup
 			aria-label="Tag de interesse"
-			className="gap-5"
+			className="w-full justify-center gap-5"
 			disabled={disabled}
 			onValueChange={(values) => {
 				const next = values[0] as InterestTag | undefined;

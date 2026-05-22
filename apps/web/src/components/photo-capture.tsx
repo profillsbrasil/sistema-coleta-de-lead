@@ -3,9 +3,11 @@
 import { Button } from "@dashboard-leads-profills/ui/components/button";
 import { Camera, Loader2, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { compressImage } from "@/lib/lead/compression";
 
 interface PhotoCaptureProps {
+	disabled?: boolean;
 	onCapture: (blob: Blob) => void;
 	onRemove: () => void;
 	photo: Blob | null;
@@ -15,6 +17,7 @@ export default function PhotoCapture({
 	photo,
 	onCapture,
 	onRemove,
+	disabled = false,
 }: PhotoCaptureProps) {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [isCompressing, setIsCompressing] = useState(false);
@@ -44,6 +47,8 @@ export default function PhotoCapture({
 		try {
 			const compressed = await compressImage(file);
 			onCapture(compressed);
+		} catch {
+			toast.error("Não foi possível processar a foto. Tente novamente.");
 		} finally {
 			setIsCompressing(false);
 			if (inputRef.current) {
@@ -73,7 +78,7 @@ export default function PhotoCapture({
 			<Button
 				aria-label="Tirar foto do cartao de visita"
 				className="h-8 w-full"
-				disabled={isCompressing}
+				disabled={isCompressing || disabled}
 				onClick={() => inputRef.current?.click()}
 				size="sm"
 				type="button"
