@@ -65,7 +65,7 @@ export default function PhotoCapture({
 	}
 
 	return (
-		<div className="flex items-center gap-3">
+		<div className="flex flex-col items-start gap-3">
 			<input
 				accept="image/*"
 				capture="environment"
@@ -95,10 +95,10 @@ export default function PhotoCapture({
 			{previewUrl && (
 				<div className="relative">
 					{/* biome-ignore lint/performance/noImgElement: blob URL preview incompatible with next/image */}
-					{/* biome-ignore lint/correctness/useImageSize: dimensions set via CSS h-20 w-20 (80x80px) */}
+					{/* biome-ignore lint/correctness/useImageSize: dimensions set via CSS h-32 w-32 (128x128px) */}
 					<img
 						alt="Preview da foto capturada"
-						className="h-20 w-20 rounded object-cover"
+						className="h-32 w-32 rounded object-cover"
 						src={previewUrl}
 					/>
 					<Button
