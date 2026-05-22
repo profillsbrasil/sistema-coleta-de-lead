@@ -16,6 +16,9 @@ import { Skeleton } from "@dashboard-leads-profills/ui/components/skeleton";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Bar, BarChart, XAxis, YAxis } from "recharts";
 import { StatCard } from "@/components/stat-card";
+import { useSyncStatus } from "@/components/sync-status-provider";
+import { hasPersonalDivergence } from "@/lib/dashboard/consistency";
+import { db } from "@/lib/db/index";
 import { getPersonalStats, type PersonalStats } from "@/lib/lead/stats";
 
 const chartConfig: ChartConfig = {
@@ -43,6 +46,11 @@ export default function PersonalDashboard({
 	overrideStats = null,
 }: PersonalDashboardProps) {
 	const localStats = useLiveQuery(() => getPersonalStats(userId), [userId]);
+	const cacheEntry = useLiveQuery(
+		() => db.leaderboardCache.get(userId),
+		[userId]
+	);
+	const { isSyncing, pendingCount } = useSyncStatus();
 
 	const stats = overrideStats ?? localStats;
 
@@ -66,6 +74,15 @@ export default function PersonalDashboard({
 		);
 	}
 
+	const showDivergence =
+		overrideStats == null &&
+		hasPersonalDivergence({
+			isSyncing,
+			localTotal: stats.total,
+			pendingCount,
+			serverTotal: cacheEntry?.totalLeads ?? null,
+		});
+
 	const chartData = [
 		{ tag: "Quente", count: stats.quente, fill: "var(--color-quente)" },
 		{ tag: "Morno", count: stats.morno, fill: "var(--color-morno)" },
@@ -84,6 +101,12 @@ export default function PersonalDashboard({
 					value={stats.quente}
 				/>
 			</div>
+
+			{showDivergence && (
+				<p className="text-muted-foreground text-xs">
+					Seus números podem estar incompletos — sincronize para atualizar.
+				</p>
+			)}
 
 			{stats.total > 0 && (
 				<Card>

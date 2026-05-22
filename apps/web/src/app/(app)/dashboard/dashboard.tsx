@@ -7,9 +7,11 @@ import { EmptyState } from "@/components/page/empty-state";
 import { SectionHeading } from "@/components/page/section-heading";
 import { Podium } from "@/components/podium";
 import { RankingList } from "@/components/ranking-list";
+import { useSyncStatus } from "@/components/sync-status-provider";
 import { db } from "@/lib/db/index";
 import { DashboardHeader } from "./dashboard-header";
 import PersonalDashboard from "./personal-dashboard";
+import { RankingFreshness } from "./ranking-freshness";
 import { YourPosition } from "./your-position";
 
 interface DashboardProps {
@@ -22,6 +24,9 @@ export default function Dashboard({ greeting, userId }: DashboardProps) {
 		() => db.leaderboardCache.orderBy("rank").toArray(),
 		[]
 	);
+
+	const { leaderboardFailed, manualRetry } = useSyncStatus();
+	const lastSyncAt = entries?.[0]?.lastSyncAt ?? null;
 
 	const isLoading = entries === undefined;
 	const isEmpty = entries !== undefined && entries.length === 0;
@@ -46,6 +51,12 @@ export default function Dashboard({ greeting, userId }: DashboardProps) {
 				className="flex flex-col gap-3"
 			>
 				<SectionHeading id="ranking-heading" meta="Equipe" title="Ranking" />
+
+				<RankingFreshness
+					lastSyncAt={lastSyncAt}
+					leaderboardFailed={leaderboardFailed}
+					onRetry={manualRetry}
+				/>
 
 				{isLoading && (
 					<div

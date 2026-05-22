@@ -34,11 +34,15 @@ vi.mock("./photo-upload", () => ({
 // Mock tRPC client
 const mockPushChanges = { mutate: vi.fn() };
 const mockPullChanges = { query: vi.fn() };
+const mockGetRanking = { query: vi.fn() };
 vi.mock("@trpc/client", () => ({
 	createTRPCClient: () => ({
 		sync: {
 			pushChanges: mockPushChanges,
 			pullChanges: mockPullChanges,
+		},
+		leaderboard: {
+			getRanking: mockGetRanking,
 		},
 	}),
 	httpBatchLink: vi.fn(() => ({})),
@@ -73,6 +77,7 @@ describe("sync engine", () => {
 		await db.syncQueue.clear();
 		await db.photoUploadMeta?.clear();
 		await db.syncMeta?.clear();
+		await db.leaderboardCache?.clear();
 
 		mockUploadPendingPhotos.mockResolvedValue(0);
 
@@ -85,6 +90,10 @@ describe("sync engine", () => {
 			leads: [],
 			serverTimestamp: new Date().toISOString(),
 		});
+		mockGetRanking.query.mockResolvedValue({
+			ranking: [],
+			serverTimestamp: new Date().toISOString(),
+		});
 	});
 
 	afterEach(async () => {
@@ -92,6 +101,7 @@ describe("sync engine", () => {
 		await db.syncQueue.clear();
 		await db.photoUploadMeta?.clear();
 		await db.syncMeta?.clear();
+		await db.leaderboardCache?.clear();
 	});
 
 	describe("startSync", () => {
@@ -187,7 +197,9 @@ describe("sync engine", () => {
 			);
 
 			const { syncCycle } = await import("./engine");
-			await expect(syncCycle()).resolves.toEqual({ authExpired: false });
+			await expect(syncCycle()).resolves.toEqual(
+				expect.objectContaining({ authExpired: false })
+			);
 		});
 
 		it("deletes all acknowledged queue items when same localId has multiple ops", async () => {
@@ -890,6 +902,110 @@ describe("sync engine", () => {
 			});
 		});
 
+		it("remove do Dexie um lead marcado como deletado no servidor", async () => {
+			const ts = "2026-05-22T10:00:00.000Z";
+			await db.leads.add({
+				localId: "tomb-1",
+				serverId: 10,
+				userId: "user-1",
+				name: "Lead Morto",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "frio",
+				photo: null,
+				photoUrl: null,
+				uploadFailed: false,
+				createdAt: ts,
+				updatedAt: ts,
+				deletedAt: null,
+				syncStatus: "synced",
+			});
+
+			mockPullChanges.query.mockResolvedValue({
+				leads: [
+					{
+						localId: "tomb-1",
+						id: 10,
+						userId: "user-1",
+						name: "Lead Morto",
+						interestTag: "frio",
+						createdAt: ts,
+						updatedAt: "2026-05-22T11:00:00.000Z",
+						deletedAt: "2026-05-22T11:00:00.000Z",
+					},
+				],
+				serverTimestamp: "2026-05-22T11:30:00.000Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			expect(await db.leads.get("tomb-1")).toBeUndefined();
+		});
+
+		it("limpa entrada órfã de syncQueue ao aplicar tombstone de lead", async () => {
+			const ts = "2026-05-22T10:00:00.000Z";
+			await db.leads.add({
+				localId: "tomb-2",
+				serverId: 10,
+				userId: "user-1",
+				name: "Lead Órfão",
+				phone: null,
+				email: null,
+				company: null,
+				position: null,
+				segment: null,
+				notes: null,
+				interestTag: "frio",
+				photo: null,
+				photoUrl: null,
+				uploadFailed: false,
+				createdAt: ts,
+				updatedAt: ts,
+				deletedAt: null,
+				syncStatus: "pending",
+			});
+
+			await db.syncQueue.add({
+				localId: "tomb-2",
+				operation: "update",
+				timestamp: ts,
+				payload: JSON.stringify({ name: "X" }),
+				retryCount: 0,
+			});
+
+			// mockPushChanges.mutate já está configurado no beforeEach para resolver
+			// com { acknowledged: [], idMappings: [] } — não remove a entrada da fila.
+
+			mockPullChanges.query.mockResolvedValue({
+				leads: [
+					{
+						localId: "tomb-2",
+						id: 10,
+						userId: "user-1",
+						name: "Lead Órfão",
+						interestTag: "frio",
+						createdAt: ts,
+						updatedAt: "2026-05-22T11:00:00.000Z",
+						deletedAt: "2026-05-22T11:00:00.000Z",
+					},
+				],
+				serverTimestamp: "2026-05-22T11:30:00.000Z",
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			expect(await db.leads.get("tomb-2")).toBeUndefined();
+			expect(await db.syncQueue.where("localId").equals("tomb-2").count()).toBe(
+				0
+			);
+		});
+
 		it("lê lastSyncTimestamp de Dexie syncMeta na próxima chamada", async () => {
 			await db.syncMeta.put({
 				key: "lastSyncTimestamp",
@@ -1384,6 +1500,7 @@ describe("sync engine", () => {
 				expect.objectContaining({
 					error: "Always fail",
 					isStalled: true,
+					leaderboardFailed: true,
 				})
 			);
 		});
@@ -1658,6 +1775,46 @@ describe("sync engine", () => {
 			expect(lead?.interestTag).toBe("quente");
 
 			control.stop();
+		});
+	});
+
+	describe("leaderboard fetch", () => {
+		it("syncCycle retorna leaderboardFailed=false quando o ranking carrega", async () => {
+			mockGetRanking.query.mockResolvedValue({
+				ranking: [],
+				serverTimestamp: new Date().toISOString(),
+			});
+
+			const { syncCycle } = await import("./engine");
+			const result = await syncCycle();
+
+			expect(result.leaderboardFailed).toBe(false);
+		});
+
+		it("syncCycle retorna leaderboardFailed=true sem lançar quando o ranking falha", async () => {
+			mockGetRanking.query.mockRejectedValue(new Error("ranking down"));
+
+			const { syncCycle } = await import("./engine");
+			const result = await syncCycle();
+
+			expect(result.leaderboardFailed).toBe(true);
+			expect(result.authExpired).toBe(false);
+		});
+
+		it("popula leaderboardCache com lastSyncAt quando o ranking carrega", async () => {
+			const serverTimestamp = "2026-05-22T12:00:00.000Z";
+			mockGetRanking.query.mockResolvedValue({
+				ranking: [
+					{ userId: "u1", name: "Ana", totalLeads: 3, score: 7, rank: 1 },
+				],
+				serverTimestamp,
+			});
+
+			const { syncCycle } = await import("./engine");
+			await syncCycle();
+
+			const cached = await db.leaderboardCache.get("u1");
+			expect(cached?.lastSyncAt).toBe(serverTimestamp);
 		});
 	});
 

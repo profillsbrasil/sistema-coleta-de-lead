@@ -124,6 +124,34 @@ describe("adminLeadsRouter", () => {
 		expect(dbSpies.offset).not.toHaveBeenCalled();
 	});
 
+	it("delete grava updatedAt junto com deletedAt para propagar tombstone via pull", async () => {
+		const setMock = vi.fn().mockReturnThis();
+		const returningMock = vi
+			.fn()
+			.mockResolvedValue([{ localId: "lead-to-delete" }]);
+		const updateChain = {
+			set: setMock,
+			where: vi.fn(() => ({ returning: returningMock })),
+		};
+
+		const { adminLeadsRouter } = await loadAdminLeadsRouter([]);
+		const { db } = await import("@dashboard-leads-profills/db");
+		(db.update as ReturnType<typeof vi.fn>).mockReturnValue(updateChain);
+
+		const caller = adminLeadsRouter.createCaller({
+			user: { id: "admin-user" } as never,
+			headers: new Headers(),
+			session: null,
+			userRole: "admin",
+		});
+
+		await caller.delete({ localId: "lead-to-delete" });
+
+		const setArg = setMock.mock.calls[0]?.[0] as Record<string, unknown>;
+		expect(setArg).toHaveProperty("deletedAt");
+		expect(setArg).toHaveProperty("updatedAt");
+	});
+
 	it("listVendors retorna name nao-nulo usando SPLIT_PART como fallback", async () => {
 		const executeResult = {
 			rows: [
