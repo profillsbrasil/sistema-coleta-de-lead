@@ -9,7 +9,6 @@
  *   - NEXT_PUBLIC_EVENT_WHATSAPP_NUMBER (E.164 sem +)
  *   - NEXT_PUBLIC_EVENT_NAME
  */
-import { writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { config } from "dotenv";
 import * as qrcode from "qrcode";
