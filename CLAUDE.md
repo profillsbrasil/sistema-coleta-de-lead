@@ -21,6 +21,7 @@
 
 - Prefira `unknown` > `any`. Sem `console.log` em produção.
 - Imports path-based, sem barrel files novos (ver `packages/ui/CLAUDE.md`).
+- **Toda env nova em `packages/env/src/{server,web}.ts` precisa também ir em `turbo.json -> tasks.build.env`**, senão o Turborepo bloqueia ela do `process.env` no build da Vercel e o Zod quebra com `expected string, received undefined`. A Vercel mostra warning explícito mas o build falha ao coletar page data (incidente: PR #47).
 
 ## Onde estão os outros mistakes-logs
 
