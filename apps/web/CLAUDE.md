@@ -15,6 +15,7 @@ específico do app web.
 ## Fronteiras SSR/client
 
 - Componentes que tocam Dexie, `window` ou o service worker precisam de `"use client"`.
+- Handler Better Auth está em `src/app/api/auth/[...all]/route.ts` via `toNextJsHandler`. Middleware em `src/middleware.ts` usa `getSessionCookie` (Edge-safe, sem hit DB).
 
 ## Rotas tipadas (Next 16)
 
