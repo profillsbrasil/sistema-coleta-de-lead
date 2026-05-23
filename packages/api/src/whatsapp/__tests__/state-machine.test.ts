@@ -9,8 +9,12 @@ import type { InboundMessage } from "../types";
 
 const BASE_CONFIG: StateMachineConfig = {
 	eventName: "Sorteio Profills Fispal 2026",
-	raffleDate: "25/06/2026",
+	raffleDate: "05/06/2026",
 	termsVersion: "v1",
+	vendorName: "Fulano Vendedor",
+	vendorPhone: "5511999990000",
+	eventStartBR: "26/05",
+	eventEndBR: "29/05",
 };
 
 const CONFIG_WITH_IMAGE: StateMachineConfig = {
