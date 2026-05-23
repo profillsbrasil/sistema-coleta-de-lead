@@ -16,6 +16,7 @@ const PARTICIPANT_STATES = [
 	"AWAITING_NAME",
 	"AWAITING_COMPANY",
 	"NEW",
+	"NON_PARTICIPANT",
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -106,6 +107,7 @@ export const whatsappRouter = router({
 				completed: sql<number>`count(*) FILTER (WHERE state = 'COMPLETED')::int`,
 				declined: sql<number>`count(*) FILTER (WHERE state = 'DECLINED')::int`,
 				inProgress: sql<number>`count(*) FILTER (WHERE state IN ('AWAITING_CONSENT','AWAITING_NAME','AWAITING_COMPANY'))::int`,
+				nonParticipant: sql<number>`count(*) FILTER (WHERE state = 'NON_PARTICIPANT')::int`,
 				total: sql<number>`count(*)::int`,
 			})
 			.from(participants);
@@ -115,6 +117,7 @@ export const whatsappRouter = router({
 				completed: 0,
 				declined: 0,
 				inProgress: 0,
+				nonParticipant: 0,
 				total: 0,
 			}
 		);

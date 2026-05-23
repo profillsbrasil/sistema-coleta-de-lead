@@ -1,0 +1,1 @@
+ALTER TABLE "whatsapp"."participants" ADD COLUMN "redirect_sent_at" timestamp with time zone;

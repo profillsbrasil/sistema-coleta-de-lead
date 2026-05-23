@@ -11,8 +11,15 @@ Backend de captação via QR Code → WhatsApp. Isolado da coleta de leads dos v
 - Webhook em `apps/web/src/app/api/whatsapp/webhook/route.ts` faz: verify token (GET) + HMAC + dedup por `wamid` + rate limit + state machine + persist + send. Manter ordem.
 - Schema Postgres em `whatsapp.*` (não `public.*`), 3 tabelas. RLS habilitada nas três.
 
+## States e comportamento
+
+- **NON_PARTICIPANT:** cliente enviou mensagem não-keyword na primeira vez. Recebe redirect com botões de sorteio. Anti-loop via `redirect_sent_at` (cooldown 4h default). Keyword ou botão `want_to_participate` faz transição para `AWAITING_CONSENT`.
+- **DECLINED + mensagem não-keyword:** envia redirect (não reoffer). Reoffer só com keyword ou botão `want_to_participate`.
+- **`redirect_sent_at`:** setado pelo webhook (`route.ts`) após enviar outbound redirect — a state machine retorna `participantPatch: null` nesse caso; o webhook detecta pelo botão `want_to_participate` na resposta.
+
 ## Envs
 
 `WHATSAPP_*` em `apps/web/.env` (lista canônica em `packages/env/src/server.ts`).
+Novas em Fase A: `WHATSAPP_REDIRECT_VENDOR_NAME`, `WHATSAPP_REDIRECT_VENDOR_PHONE`, `WHATSAPP_REDIRECT_EVENT_START`, `WHATSAPP_REDIRECT_EVENT_END`.
 
 Stack / scripts gerais → `../../../../CLAUDE.md`.

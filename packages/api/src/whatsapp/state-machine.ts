@@ -6,6 +6,7 @@
  */
 
 import type { participants as ParticipantTable } from "@dashboard-leads-profills/db/schema/whatsapp";
+import { isSorteioKeyword } from "./keyword";
 import type { InteractiveMessage } from "./messages";
 import {
 	alreadyParticipated,
@@ -16,6 +17,7 @@ import {
 	help,
 	invalidConsentRetry,
 	nameInvalid,
+	redirect,
 	reoffer,
 	status,
 	welcome,
@@ -28,6 +30,7 @@ import type { InboundMessage } from "./types";
 
 export type ParticipantState =
 	| "NEW"
+	| "NON_PARTICIPANT"
 	| "AWAITING_CONSENT"
 	| "AWAITING_NAME"
 	| "AWAITING_COMPANY"
@@ -45,6 +48,7 @@ export type ParticipantPatch = Partial<{
 	termsVersion: string;
 	retryCount: number;
 	raffleCode: string;
+	redirectSentAt: Date | null;
 }>;
 
 export type OutboundAction =
@@ -54,9 +58,14 @@ export type OutboundAction =
 	| { kind: "generateAndSendCode" };
 
 export interface StateMachineConfig {
+	eventEndBR: string; // "29/05"
 	eventName: string;
+	eventStartBR: string; // "26/05"
 	raffleDate?: string;
+	redirectCooldownMs?: number; // default 4h
 	termsVersion: string;
+	vendorName: string;
+	vendorPhone: string;
 	welcomeImageUrl?: string;
 }
 
@@ -137,19 +146,57 @@ function handleNew(args: {
 }): HandleResult {
 	const { message, config } = args;
 	const waId = message.from;
+	const body = getTextBody(message);
 
-	const outbounds: OutboundAction[] = [];
-
-	if (config.welcomeImageUrl) {
-		outbounds.push({ kind: "image", link: config.welcomeImageUrl });
+	// Botão de redirect: cliente clicou "Participar sorteio" ou "Ja me cadastrei" sem ter participant
+	if (
+		isButtonReply(message, "want_to_participate") ||
+		isButtonReply(message, "already_registered")
+	) {
+		return {
+			participantPatch: null,
+			createParticipant: { waId, state: "AWAITING_CONSENT" },
+			outbounds: [
+				toInteractiveAction(
+					welcome({
+						eventName: config.eventName,
+						imageUrl: config.welcomeImageUrl,
+					})
+				),
+			],
+		};
 	}
 
-	outbounds.push(toInteractiveAction(welcome({ eventName: config.eventName })));
+	// Keyword detectada → fluxo do sorteio
+	if (body !== null && isSorteioKeyword(body)) {
+		return {
+			participantPatch: null,
+			createParticipant: { waId, state: "AWAITING_CONSENT" },
+			outbounds: [
+				toInteractiveAction(
+					welcome({
+						eventName: config.eventName,
+						imageUrl: config.welcomeImageUrl,
+					})
+				),
+			],
+		};
+	}
 
+	// Não-keyword: cria participant NON_PARTICIPANT e envia redirect
 	return {
 		participantPatch: null,
-		createParticipant: { waId, state: "AWAITING_CONSENT" },
-		outbounds,
+		createParticipant: { waId, state: "NON_PARTICIPANT" },
+		outbounds: [
+			toInteractiveAction(
+				redirect({
+					vendorName: config.vendorName,
+					vendorPhone: config.vendorPhone,
+					eventStart: config.eventStartBR,
+					eventEnd: config.eventEndBR,
+				})
+			),
+		],
 	};
 }
 
@@ -267,6 +314,109 @@ function handleAwaitingCompany(args: {
 	};
 }
 
+function handleNonParticipant(args: {
+	participant: Participant;
+	message: InboundMessage;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, message, config } = args;
+	const body = getTextBody(message);
+
+	// Botão "Participar sorteio" → entra no fluxo
+	if (isButtonReply(message, "want_to_participate")) {
+		return {
+			participantPatch: {
+				state: "AWAITING_CONSENT",
+				retryCount: 0,
+				redirectSentAt: null,
+			},
+			outbounds: [
+				toInteractiveAction(
+					welcome({
+						eventName: config.eventName,
+						imageUrl: config.welcomeImageUrl,
+					})
+				),
+			],
+		};
+	}
+
+	// Botão "Ja me cadastrei" → checa se tem código; se não tem, entra no fluxo
+	if (isButtonReply(message, "already_registered")) {
+		if (participant.raffleCode && participant.name) {
+			return {
+				participantPatch: null,
+				outbounds: [
+					toTextAction(
+						alreadyParticipated({
+							name: participant.name,
+							raffleCode: participant.raffleCode,
+						})
+					),
+				],
+			};
+		}
+		return {
+			participantPatch: {
+				state: "AWAITING_CONSENT",
+				retryCount: 0,
+				redirectSentAt: null,
+			},
+			outbounds: [
+				toInteractiveAction(
+					welcome({
+						eventName: config.eventName,
+						imageUrl: config.welcomeImageUrl,
+					})
+				),
+			],
+		};
+	}
+
+	// Keyword detectada → entra no fluxo
+	if (body !== null && isSorteioKeyword(body)) {
+		return {
+			participantPatch: {
+				state: "AWAITING_CONSENT",
+				retryCount: 0,
+				redirectSentAt: null,
+			},
+			outbounds: [
+				toInteractiveAction(
+					welcome({
+						eventName: config.eventName,
+						imageUrl: config.welcomeImageUrl,
+					})
+				),
+			],
+		};
+	}
+
+	// Outra mensagem: aplica anti-loop (4h cooldown padrão)
+	const cooldownMs = config.redirectCooldownMs ?? 4 * 60 * 60 * 1000;
+	const lastSent = participant.redirectSentAt;
+	if (lastSent && Date.now() - lastSent.getTime() < cooldownMs) {
+		return {
+			participantPatch: null,
+			outbounds: [],
+		};
+	}
+
+	return {
+		participantPatch: null, // redirectSentAt setado pelo webhook após enviar
+		outbounds: [
+			toInteractiveAction(
+				redirect({
+					vendorName: config.vendorName,
+					vendorPhone: config.vendorPhone,
+					eventStart: config.eventStartBR,
+					eventEnd: config.eventEndBR,
+				})
+			),
+		],
+	};
+}
+
 function handleCompleted(args: {
 	participant: Participant;
 	message: InboundMessage;
@@ -308,14 +458,49 @@ function handleCompleted(args: {
 	};
 }
 
-function handleDeclined(): HandleResult {
+function handleDeclined(args: {
+	participant: Participant;
+	message: InboundMessage;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, message, config } = args;
+	const body = getTextBody(message);
+
+	// Keyword OR botão "Participar sorteio" → reoferta
+	if (
+		(body !== null && isSorteioKeyword(body)) ||
+		isButtonReply(message, "want_to_participate")
+	) {
+		return {
+			participantPatch: {
+				state: "AWAITING_CONSENT",
+				declinedAt: null,
+				retryCount: 0,
+			},
+			outbounds: [toInteractiveAction(reoffer())],
+		};
+	}
+
+	// Outra mensagem: silêncio (cliente já optou por não participar)
+	// Aplicar anti-loop opcional via redirectSentAt
+	const cooldownMs = config.redirectCooldownMs ?? 4 * 60 * 60 * 1000;
+	const lastSent = participant.redirectSentAt;
+	if (lastSent && Date.now() - lastSent.getTime() < cooldownMs) {
+		return { participantPatch: null, outbounds: [] };
+	}
+
 	return {
-		participantPatch: {
-			state: "AWAITING_CONSENT",
-			declinedAt: null,
-			retryCount: 0,
-		},
-		outbounds: [toInteractiveAction(reoffer())],
+		participantPatch: null,
+		outbounds: [
+			toInteractiveAction(
+				redirect({
+					vendorName: config.vendorName,
+					vendorPhone: config.vendorPhone,
+					eventStart: config.eventStartBR,
+					eventEnd: config.eventEndBR,
+				})
+			),
+		],
 	};
 }
 
@@ -330,7 +515,6 @@ export function handleInbound(args: {
 }): HandleResult {
 	const { participant, message, config } = args;
 
-	// No participant yet → treat as NEW
 	if (participant === null) {
 		return handleNew({ message, config });
 	}
@@ -339,6 +523,11 @@ export function handleInbound(args: {
 
 	switch (state) {
 		case "NEW":
+			return handleNew({ message, config });
+
+		case "NON_PARTICIPANT":
+			return handleNonParticipant({ participant, message, config });
+
 		case "AWAITING_CONSENT":
 			return handleAwaitingConsent({ participant, message, config });
 
@@ -352,10 +541,9 @@ export function handleInbound(args: {
 			return handleCompleted({ participant, message });
 
 		case "DECLINED":
-			return handleDeclined();
+			return handleDeclined({ participant, message, config });
 
 		default: {
-			// Exhaustiveness guard — unreachable at runtime if DB state is always valid
 			const _exhaustive: never = state as never;
 			return _exhaustive;
 		}

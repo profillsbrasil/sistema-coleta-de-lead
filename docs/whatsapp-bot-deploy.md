@@ -15,11 +15,16 @@ WHATSAPP_BUSINESS_ACCOUNT_ID=1702967640743484
 WHATSAPP_APP_SECRET=<app secret da app Meta>
 WHATSAPP_VERIFY_TOKEN=<string aleatória, ex: openssl rand -hex 32>
 WHATSAPP_API_VERSION=v25.0
+WHATSAPP_REDIRECT_VENDOR_NAME=<nome do vendedor que assume atendimento>
+WHATSAPP_REDIRECT_VENDOR_PHONE=<E.164 sem +, ex: 5511999990000>
+WHATSAPP_REDIRECT_EVENT_START=2026-05-26
+WHATSAPP_REDIRECT_EVENT_END=2026-05-29
 TERMS_VERSION=v1
 NEXT_PUBLIC_EVENT_NAME=Sorteio Profills Fispal 2026
 NEXT_PUBLIC_EVENT_WHATSAPP_NUMBER=<número Profills E.164 sem +>
-NEXT_PUBLIC_RAFFLE_DATE=<ISO 8601 ou vazio>
+NEXT_PUBLIC_RAFFLE_DATE=05/06/2026
 NEXT_PUBLIC_WHATSAPP_WELCOME_IMAGE_URL=https://lead.profills.com/whatsapp/banner-sorteio.png
+NEXT_PUBLIC_BETTER_AUTH_URL=https://lead.profills.com
 ```
 
 Se `SUPABASE_SERVICE_ROLE_KEY` não estiver definido, o bot funciona normalmente — só não dá pra subir mídia via API (e nesse projeto não precisa, o banner vem do `public/`).
@@ -106,3 +111,46 @@ O token atual no `.env` provavelmente é **temporário** (24h). Para o evento:
 | Imagem não aparece | URL precisa ser HTTPS público; teste abrindo no navegador |
 | 401 dos tokens | Token temporário expirou; troque pelo System User permanent |
 | Código colidiu 5 vezes | Quase impossível (10k slots); olhe `whatsapp.participants` no Supabase Studio |
+
+## 10. Offboarding seguro pós-evento
+
+Após o sorteio (05/06/2026), se o cliente quiser voltar o número ao app WhatsApp Business:
+
+### Antes do go-live (preventivo)
+
+1. No celular do atendente: WhatsApp Business → Configurações → Conversas → Backup → "Fazer backup agora" no Google Drive.
+2. **Anotar a chave de criptografia de 64 dígitos** (Configurações → Conta → Backups com criptografia ponta a ponta). Guardar em local seguro fora do celular.
+
+### Pós-evento
+
+1. NÃO clicar em "Excluir" no WhatsApp Manager — bloqueia 30 dias e perde dados.
+2. Usar `Deregister` via API:
+
+```bash
+curl -X POST "https://graph.facebook.com/v25.0/${WHATSAPP_PHONE_NUMBER_ID}/deregister" \
+  -H "Authorization: Bearer ${WHATSAPP_ACCESS_TOKEN}"
+```
+
+3. Aguardar confirmação. Re-instalar WhatsApp Business no celular.
+4. Re-cadastrar o número. Tentar restaurar backup do Google Drive (chave de criptografia da etapa preventiva).
+
+⚠️ Restaurar backup pós-migração Cloud API não é caminho documentado pela Meta. Risco real de perda de histórico. Backup duplicado + chave anotada é a única mitigação possível.
+
+## 11. Valores operacionais — Sorteio Profills Fispal 2026
+
+Variáveis a configurar no Vercel (Settings → Environment Variables, Production + Preview):
+
+```env
+WHATSAPP_REDIRECT_VENDOR_NAME=Othavio Quiliao
+WHATSAPP_REDIRECT_VENDOR_PHONE=5555996913627
+WHATSAPP_REDIRECT_EVENT_START=2026-05-26
+WHATSAPP_REDIRECT_EVENT_END=2026-05-29
+NEXT_PUBLIC_RAFFLE_DATE=05/06/2026
+```
+
+Telefone do vendedor `5555996913627` = country code `55` + DDD `55` (Santa Maria/RS) + número `99691-3627`. Formato E.164 sem `+`, validado pelo Zod no `packages/env/src/server.ts`.
+
+**Pendências de produto antes do go-live:**
+- Identidade visual Profills no card Satori (`apps/web/src/app/api/whatsapp/code-card/route.tsx`) — cores atuais são placeholder `#0E1A2B` (background) + `#FF7A1A` (accent). Atualizar pra paleta real.
+- Links reais de regulamento + política de privacidade no banner do bot (atualmente sem links explícitos na mensagem — adicionar se desejado).
+

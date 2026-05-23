@@ -22,6 +22,18 @@ export const env = createEnv({
 		WHATSAPP_APP_SECRET: z.string().min(1),
 		WHATSAPP_VERIFY_TOKEN: z.string().min(1),
 		WHATSAPP_API_VERSION: z.string().min(1).default("v25.0"),
+		WHATSAPP_REDIRECT_VENDOR_NAME: z.string().min(1),
+		WHATSAPP_REDIRECT_VENDOR_PHONE: z
+			.string()
+			.regex(/^\d{12,14}$/, "Telefone E.164 sem '+', ex: 5511999990000"),
+		WHATSAPP_REDIRECT_EVENT_START: z
+			.string()
+			.regex(/^\d{4}-\d{2}-\d{2}$/, "Formato YYYY-MM-DD")
+			.default("2026-05-26"),
+		WHATSAPP_REDIRECT_EVENT_END: z
+			.string()
+			.regex(/^\d{4}-\d{2}-\d{2}$/, "Formato YYYY-MM-DD")
+			.default("2026-05-29"),
 		SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
 		TERMS_VERSION: z.string().min(1).default("v1"),
 	},

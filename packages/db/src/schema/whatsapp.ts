@@ -29,6 +29,10 @@ export const participants = whatsappSchema.table(
 		}),
 		termsVersion: text("terms_version"),
 		retryCount: integer("retry_count").notNull().default(0),
+		redirectSentAt: timestamp("redirect_sent_at", {
+			withTimezone: true,
+			mode: "date",
+		}),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),

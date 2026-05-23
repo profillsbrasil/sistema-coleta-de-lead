@@ -39,7 +39,8 @@ type ParticipantState =
 	| "AWAITING_CONSENT"
 	| "AWAITING_NAME"
 	| "AWAITING_COMPANY"
-	| "NEW";
+	| "NEW"
+	| "NON_PARTICIPANT";
 
 interface Participant {
 	company: string | null;
@@ -64,6 +65,7 @@ const STATE_OPTIONS: { value: ParticipantState | "ALL"; label: string }[] = [
 	{ value: "ALL", label: "Todos os estados" },
 	{ value: "COMPLETED", label: "Completos" },
 	{ value: "DECLINED", label: "Recusas" },
+	{ value: "NON_PARTICIPANT", label: "Não-participantes (redirect)" },
 	{ value: "AWAITING_CONSENT", label: "Aguardando consentimento" },
 	{ value: "AWAITING_NAME", label: "Aguardando nome" },
 	{ value: "AWAITING_COMPANY", label: "Aguardando empresa" },
@@ -127,6 +129,8 @@ function stateLabel(state: string): string {
 			return "Completo";
 		case "DECLINED":
 			return "Recusado";
+		case "NON_PARTICIPANT":
+			return "Não-participante";
 		case "AWAITING_CONSENT":
 			return "Aguard. consentimento";
 		case "AWAITING_NAME":
@@ -208,6 +212,7 @@ function StatsRow({
 		completed: number;
 		declined: number;
 		inProgress: number;
+		nonParticipant: number;
 		total: number;
 	};
 	isLoading: boolean;
@@ -215,7 +220,7 @@ function StatsRow({
 	if (isLoading) {
 		return (
 			<>
-				{Array.from({ length: 4 }, (_, i) => (
+				{Array.from({ length: 5 }, (_, i) => (
 					<Skeleton
 						className="h-20 w-full"
 						key={`stat-skeleton-${String(i)}`}
@@ -230,6 +235,10 @@ function StatsRow({
 			<StatCard label="Completos" value={data?.completed ?? 0} />
 			<StatCard label="Recusas" value={data?.declined ?? 0} />
 			<StatCard label="Em andamento" value={data?.inProgress ?? 0} />
+			<StatCard
+				label="Não-participantes (redirect)"
+				value={data?.nonParticipant ?? 0}
+			/>
 		</>
 	);
 }
@@ -329,7 +338,7 @@ export function SorteioClient() {
 	return (
 		<div className="flex flex-col gap-8 px-4">
 			{/* Stats row */}
-			<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+			<div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
 				<StatsRow data={statsQuery.data} isLoading={statsQuery.isLoading} />
 			</div>
 
