@@ -41,4 +41,8 @@ describe("isSorteioKeyword", () => {
 	it("retorna true para 'PaRtIcIpAr' isolado (case+substring)", () => {
 		expect(isSorteioKeyword("PaRtIcIpAr")).toBe(true);
 	});
+
+	it("retorna true para 'não quero participar' (falso positivo conhecido — filtrado por LGPD downstream)", () => {
+		expect(isSorteioKeyword("não quero participar")).toBe(true);
+	});
 });

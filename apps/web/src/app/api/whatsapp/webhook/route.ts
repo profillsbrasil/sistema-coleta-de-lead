@@ -1,25 +1,4 @@
 import { generateRaffleCode } from "@dashboard-leads-profills/api/whatsapp/code-generator";
-
-// ---------------------------------------------------------------------------
-// isRedirectInteractive — detecta se o outbound interativo é um redirect
-// ---------------------------------------------------------------------------
-
-function isRedirectInteractive(
-	interactive: { action: { buttons: Array<{ reply: { id: string } }> } }
-): boolean {
-	return interactive.action.buttons.some(
-		(b) => b.reply.id === "want_to_participate"
-	);
-}
-
-// ---------------------------------------------------------------------------
-// formatBR — converte ISO date "YYYY-MM-DD" para "DD/MM"
-// ---------------------------------------------------------------------------
-
-function formatBR(isoDate: string): string {
-	const [, m, d] = isoDate.split("-");
-	return `${d}/${m}`;
-}
 import { codeGenerated } from "@dashboard-leads-profills/api/whatsapp/messages";
 import { checkWhatsappRateLimit } from "@dashboard-leads-profills/api/whatsapp/rate-limit";
 import {
@@ -47,6 +26,27 @@ import {
 import { env } from "@dashboard-leads-profills/env/server";
 import { env as webEnv } from "@dashboard-leads-profills/env/web";
 import { and, eq, isNull } from "drizzle-orm";
+
+// ---------------------------------------------------------------------------
+// isRedirectInteractive — detecta se o outbound interativo é um redirect
+// ---------------------------------------------------------------------------
+
+function isRedirectInteractive(interactive: {
+	action: { buttons: Array<{ reply: { id: string } }> };
+}): boolean {
+	return interactive.action.buttons.some(
+		(b) => b.reply.id === "want_to_participate"
+	);
+}
+
+// ---------------------------------------------------------------------------
+// formatBR — converte ISO date "YYYY-MM-DD" para "DD/MM"
+// ---------------------------------------------------------------------------
+
+function formatBR(isoDate: string): string {
+	const [, m, d] = isoDate.split("-");
+	return `${d}/${m}`;
+}
 
 // ---------------------------------------------------------------------------
 // GET — webhook verification

@@ -58,15 +58,15 @@ export type OutboundAction =
 	| { kind: "generateAndSendCode" };
 
 export interface StateMachineConfig {
+	eventEndBR: string; // "29/05"
 	eventName: string;
+	eventStartBR: string; // "26/05"
 	raffleDate?: string;
+	redirectCooldownMs?: number; // default 4h
 	termsVersion: string;
-	welcomeImageUrl?: string;
 	vendorName: string;
 	vendorPhone: string;
-	eventStartBR: string; // "26/05"
-	eventEndBR: string; // "29/05"
-	redirectCooldownMs?: number; // default 4h
+	welcomeImageUrl?: string;
 }
 
 export interface HandleResult {

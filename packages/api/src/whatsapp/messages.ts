@@ -224,17 +224,17 @@ export function redirect({
 	eventEnd: string; // formato "DD/MM"
 }): InteractiveMessage {
 	return interactive(
-		`👋 Olá!\n\n` +
-			`A *Profills* está participando da *Fispal 2026* ` +
+		"👋 Olá!\n\n" +
+			"A *Profills* está participando da *Fispal 2026* " +
 			`nesta semana (*${eventStart} a ${eventEnd}*).\n\n` +
-			`Durante o evento, o atendimento comercial está ` +
-			`temporariamente neste contato:\n\n` +
+			"Durante o evento, o atendimento comercial está " +
+			"temporariamente neste contato:\n\n" +
 			`📱 *${vendorName}*\n` +
 			`▸ wa.me/${vendorPhone}\n\n` +
-			`Voltamos ao atendimento normal neste número ` +
-			`logo após o evento.\n\n` +
-			`━━━━━━━━━━━━━━━━━━━\n\n` +
-			`*Veio pelo sorteio da Profills no Fispal?*`,
+			"Voltamos ao atendimento normal neste número " +
+			"logo após o evento.\n\n" +
+			"━━━━━━━━━━━━━━━━━━━\n\n" +
+			"*Veio pelo sorteio da Profills no Fispal?*",
 		REDIRECT_BUTTONS
 	);
 }

@@ -775,4 +775,19 @@ describe("handleInbound — state=DECLINED", () => {
 
 		expect(result.outbounds).toHaveLength(0);
 	});
+
+	it("mensagem não-keyword FORA do cooldown → reenvia redirect", () => {
+		const oldSent = new Date(Date.now() - 5 * 60 * 60 * 1000); // 5h ago
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "DECLINED",
+				redirectSentAt: oldSent,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
 });
