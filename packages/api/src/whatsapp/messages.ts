@@ -21,7 +21,9 @@ interface InteractiveButton {
 interface InteractiveMessage {
 	interactive: {
 		type: "button";
+		header?: { type: "image"; image: { link: string } };
 		body: { text: string };
+		footer?: { text: string };
 		action: { buttons: InteractiveButton[] };
 	};
 	type: "interactive";
@@ -39,26 +41,39 @@ function text(body: string): TextMessage {
 
 function interactive(
 	bodyText: string,
-	buttons: Array<{ id: string; title: string }>
+	buttons: Array<{ id: string; title: string }>,
+	options?: {
+		header?: { type: "image"; image: { link: string } };
+		footer?: { text: string };
+	}
 ): InteractiveMessage {
-	return {
-		type: "interactive",
-		interactive: {
-			type: "button",
-			body: { text: bodyText },
-			action: {
-				buttons: buttons.map((b) => ({
-					type: "reply",
-					reply: { id: b.id, title: b.title },
-				})),
-			},
+	const interactivePayload: InteractiveMessage["interactive"] = {
+		type: "button",
+		body: { text: bodyText },
+		action: {
+			buttons: buttons.map((b) => ({
+				type: "reply",
+				reply: { id: b.id, title: b.title },
+			})),
 		},
 	};
+	if (options?.header) {
+		interactivePayload.header = options.header;
+	}
+	if (options?.footer) {
+		interactivePayload.footer = options.footer;
+	}
+	return { type: "interactive", interactive: interactivePayload };
 }
 
 const CONSENT_BUTTONS = [
 	{ id: "accept", title: "Aceito" },
 	{ id: "decline", title: "Nao aceito" },
+];
+
+const REDIRECT_BUTTONS = [
+	{ id: "want_to_participate", title: "Participar sorteio" },
+	{ id: "already_registered", title: "Ja me cadastrei" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -67,18 +82,26 @@ const CONSENT_BUTTONS = [
 
 export function welcome({
 	eventName,
+	imageUrl,
 }: {
 	eventName: string;
+	imageUrl?: string;
 }): InteractiveMessage {
-	return interactive(
+	const bodyText =
 		"Olá! Bem-vindo ao *Sorteio Profills Fispal 2026* 🎉\n\n" +
-			"Participe e concorra a 3 prêmios incríveis:\n" +
-			`• TV 65"\n` +
-			"• Churrasqueira Champions Grill\n" +
-			"• Cooler Profills\n\n" +
-			`Evento: *${eventName}*\n\n` +
-			"📋 *LGPD:* Ao aceitar, você autoriza a Profills a usar seu telefone, nome e empresa apenas para o sorteio e contato comercial relacionado.",
-		CONSENT_BUTTONS
+		"Participe e concorra a 3 prêmios incríveis:\n" +
+		`• TV 65"\n` +
+		"• Churrasqueira Champions Grill\n" +
+		"• Cooler Profills\n\n" +
+		`Evento: *${eventName}*\n\n` +
+		"📋 *LGPD:* Ao aceitar, você autoriza a Profills a usar seu telefone, nome e empresa apenas para o sorteio e contato comercial relacionado.";
+
+	return interactive(
+		bodyText,
+		CONSENT_BUTTONS,
+		imageUrl
+			? { header: { type: "image", image: { link: imageUrl } } }
+			: undefined
 	);
 }
 
@@ -186,6 +209,33 @@ export function nameInvalid(): TextMessage {
 export function companyInvalid(): TextMessage {
 	return text(
 		"Não consegui identificar o nome da empresa. Por favor, envie o nome da *empresa* onde você trabalha."
+	);
+}
+
+export function redirect({
+	vendorName,
+	vendorPhone,
+	eventStart,
+	eventEnd,
+}: {
+	vendorName: string;
+	vendorPhone: string;
+	eventStart: string; // formato "DD/MM"
+	eventEnd: string; // formato "DD/MM"
+}): InteractiveMessage {
+	return interactive(
+		`👋 Olá!\n\n` +
+			`A *Profills* está participando da *Fispal 2026* ` +
+			`nesta semana (*${eventStart} a ${eventEnd}*).\n\n` +
+			`Durante o evento, o atendimento comercial está ` +
+			`temporariamente neste contato:\n\n` +
+			`📱 *${vendorName}*\n` +
+			`▸ wa.me/${vendorPhone}\n\n` +
+			`Voltamos ao atendimento normal neste número ` +
+			`logo após o evento.\n\n` +
+			`━━━━━━━━━━━━━━━━━━━\n\n` +
+			`*Veio pelo sorteio da Profills no Fispal?*`,
+		REDIRECT_BUTTONS
 	);
 }
 
