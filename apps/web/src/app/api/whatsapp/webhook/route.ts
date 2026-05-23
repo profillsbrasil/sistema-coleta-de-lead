@@ -1,4 +1,25 @@
 import { generateRaffleCode } from "@dashboard-leads-profills/api/whatsapp/code-generator";
+
+// ---------------------------------------------------------------------------
+// isRedirectInteractive — detecta se o outbound interativo é um redirect
+// ---------------------------------------------------------------------------
+
+function isRedirectInteractive(
+	interactive: { action: { buttons: Array<{ reply: { id: string } }> } }
+): boolean {
+	return interactive.action.buttons.some(
+		(b) => b.reply.id === "want_to_participate"
+	);
+}
+
+// ---------------------------------------------------------------------------
+// formatBR — converte ISO date "YYYY-MM-DD" para "DD/MM"
+// ---------------------------------------------------------------------------
+
+function formatBR(isoDate: string): string {
+	const [, m, d] = isoDate.split("-");
+	return `${d}/${m}`;
+}
 import { codeGenerated } from "@dashboard-leads-profills/api/whatsapp/messages";
 import { checkWhatsappRateLimit } from "@dashboard-leads-profills/api/whatsapp/rate-limit";
 import {
@@ -152,12 +173,16 @@ async function processMessage(
 		let participant: Participant | null = participantRows[0] ?? null;
 
 		// 4. Build config
-		const config = {
+		const config: StateMachineConfig = {
 			eventName:
 				webEnv.NEXT_PUBLIC_EVENT_NAME ?? "Sorteio Profills Fispal 2026",
 			raffleDate: webEnv.NEXT_PUBLIC_RAFFLE_DATE,
 			termsVersion: env.TERMS_VERSION,
 			welcomeImageUrl: webEnv.NEXT_PUBLIC_WHATSAPP_WELCOME_IMAGE_URL,
+			vendorName: env.WHATSAPP_REDIRECT_VENDOR_NAME,
+			vendorPhone: env.WHATSAPP_REDIRECT_VENDOR_PHONE,
+			eventStartBR: formatBR(env.WHATSAPP_REDIRECT_EVENT_START),
+			eventEndBR: formatBR(env.WHATSAPP_REDIRECT_EVENT_END),
 		};
 
 		// 5. Run state machine
@@ -204,6 +229,17 @@ async function processMessage(
 		// 8. Process outbound actions
 		for (const action of result.outbounds) {
 			await handleOutboundAction(action, waId, participant, config);
+		}
+
+		// 9. Se enviamos redirect (NON_PARTICIPANT ou DECLINED), registra timestamp
+		const sentRedirect = result.outbounds.some(
+			(a) => a.kind === "interactive" && isRedirectInteractive(a.interactive)
+		);
+		if (sentRedirect && participant !== null) {
+			await db
+				.update(participants)
+				.set({ redirectSentAt: new Date() })
+				.where(eq(participants.id, participant.id));
 		}
 
 		console.log(
