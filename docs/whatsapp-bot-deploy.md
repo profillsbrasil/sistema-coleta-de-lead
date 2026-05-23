@@ -135,3 +135,22 @@ curl -X POST "https://graph.facebook.com/v25.0/${WHATSAPP_PHONE_NUMBER_ID}/dereg
 4. Re-cadastrar o número. Tentar restaurar backup do Google Drive (chave de criptografia da etapa preventiva).
 
 ⚠️ Restaurar backup pós-migração Cloud API não é caminho documentado pela Meta. Risco real de perda de histórico. Backup duplicado + chave anotada é a única mitigação possível.
+
+## 11. Valores operacionais — Sorteio Profills Fispal 2026
+
+Variáveis a configurar no Vercel (Settings → Environment Variables, Production + Preview):
+
+```env
+WHATSAPP_REDIRECT_VENDOR_NAME=Othavio Quiliao
+WHATSAPP_REDIRECT_VENDOR_PHONE=5555996913627
+WHATSAPP_REDIRECT_EVENT_START=2026-05-26
+WHATSAPP_REDIRECT_EVENT_END=2026-05-29
+NEXT_PUBLIC_RAFFLE_DATE=05/06/2026
+```
+
+Telefone do vendedor `5555996913627` = country code `55` + DDD `55` (Santa Maria/RS) + número `99691-3627`. Formato E.164 sem `+`, validado pelo Zod no `packages/env/src/server.ts`.
+
+**Pendências de produto antes do go-live:**
+- Identidade visual Profills no card Satori (`apps/web/src/app/api/whatsapp/code-card/route.tsx`) — cores atuais são placeholder `#0E1A2B` (background) + `#FF7A1A` (accent). Atualizar pra paleta real.
+- Links reais de regulamento + política de privacidade no banner do bot (atualmente sem links explícitos na mensagem — adicionar se desejado).
+
