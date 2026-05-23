@@ -75,34 +75,63 @@ function unknownMsg(): InboundMessage {
 // ---------------------------------------------------------------------------
 
 describe("handleInbound — participant=null (first inbound)", () => {
-	it("cria participante com state=AWAITING_CONSENT e envia welcome interativo", () => {
+	it("texto 'Sorteio Profills Fispal 2026' (keyword) → cria AWAITING_CONSENT + welcome", () => {
+		const result = handleInbound({
+			participant: null,
+			message: textMsg("Sorteio Profills Fispal 2026"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.createParticipant?.state).toBe("AWAITING_CONSENT");
+		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	it("texto 'oi' (não-keyword) → cria NON_PARTICIPANT + redirect", () => {
 		const result = handleInbound({
 			participant: null,
 			message: textMsg("oi"),
 			config: BASE_CONFIG,
 		});
 
-		expect(result.createParticipant).toBeDefined();
-		expect(result.createParticipant?.waId).toBe("5511999990001");
-		expect(result.createParticipant?.state).toBe("AWAITING_CONSENT");
-		expect(result.participantPatch).toBeNull();
+		expect(result.createParticipant?.state).toBe("NON_PARTICIPANT");
 		expect(result.outbounds).toHaveLength(1);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
+		// Confirmar que é o redirect (button id want_to_participate)
+		const action = result.outbounds[0] as {
+			kind: "interactive";
+			interactive: { action: { buttons: Array<{ reply: { id: string } }> } };
+		};
+		expect(action.interactive.action.buttons[0]?.reply.id).toBe(
+			"want_to_participate"
+		);
 	});
 
-	it("prepend image action quando welcomeImageUrl está presente", () => {
+	it("welcome com imageUrl tem header.image.link (single message)", () => {
 		const result = handleInbound({
 			participant: null,
-			message: textMsg("oi"),
+			message: textMsg("sorteio"),
 			config: CONFIG_WITH_IMAGE,
 		});
 
-		expect(result.outbounds).toHaveLength(2);
-		expect(result.outbounds[0]?.kind).toBe("image");
-		expect((result.outbounds[0] as { kind: "image"; link: string }).link).toBe(
+		expect(result.outbounds).toHaveLength(1);
+		const action = result.outbounds[0] as {
+			kind: "interactive";
+			interactive: { header?: { image: { link: string } } };
+		};
+		expect(action.interactive.header?.image.link).toBe(
 			"https://example.com/banner.jpg"
 		);
-		expect(result.outbounds[1]?.kind).toBe("interactive");
+	});
+
+	it("botão want_to_participate (vindo de redirect) → AWAITING_CONSENT", () => {
+		const result = handleInbound({
+			participant: null,
+			message: buttonReplyMsg("want_to_participate", "Participar sorteio"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.createParticipant?.state).toBe("AWAITING_CONSENT");
 	});
 });
 
@@ -595,36 +624,155 @@ describe("handleInbound — state=COMPLETED", () => {
 });
 
 // ---------------------------------------------------------------------------
+// describe: NON_PARTICIPANT
+// ---------------------------------------------------------------------------
+
+describe("handleInbound — state=NON_PARTICIPANT", () => {
+	it("botão want_to_participate → AWAITING_CONSENT + welcome", () => {
+		const result = handleInbound({
+			participant: makeParticipant({ state: "NON_PARTICIPANT" }),
+			message: buttonReplyMsg("want_to_participate", "Participar sorteio"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	it("botão already_registered sem código → AWAITING_CONSENT + welcome", () => {
+		const result = handleInbound({
+			participant: makeParticipant({ state: "NON_PARTICIPANT" }),
+			message: buttonReplyMsg("already_registered", "Ja me cadastrei"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
+	});
+
+	it("botão already_registered COM código → alreadyParticipated", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "NON_PARTICIPANT",
+				name: "João",
+				raffleCode: "PROFILLS-1234",
+			}),
+			message: buttonReplyMsg("already_registered", "Ja me cadastrei"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch).toBeNull();
+		expect(result.outbounds[0]?.kind).toBe("text");
+	});
+
+	it("keyword 'sorteio' → AWAITING_CONSENT", () => {
+		const result = handleInbound({
+			participant: makeParticipant({ state: "NON_PARTICIPANT" }),
+			message: textMsg("vim pelo sorteio"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
+	});
+
+	it("outra mensagem SEM cooldown → reenvia redirect", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "NON_PARTICIPANT",
+				redirectSentAt: null,
+			}),
+			message: textMsg("ainda estou aqui"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	it("outra mensagem DENTRO do cooldown → silêncio", () => {
+		const recentSent = new Date(Date.now() - 60_000); // 1 min ago
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "NON_PARTICIPANT",
+				redirectSentAt: recentSent,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds).toHaveLength(0);
+	});
+
+	it("outra mensagem FORA do cooldown → reenvia redirect", () => {
+		const oldSent = new Date(Date.now() - 5 * 60 * 60 * 1000); // 5h ago
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "NON_PARTICIPANT",
+				redirectSentAt: oldSent,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds).toHaveLength(1);
+	});
+});
+
+// ---------------------------------------------------------------------------
 // describe: DECLINED
 // ---------------------------------------------------------------------------
 
 describe("handleInbound — state=DECLINED", () => {
-	it("qualquer mensagem → reset para AWAITING_CONSENT + reoffer interactive", () => {
+	it("keyword 'sorteio' → reset para AWAITING_CONSENT + reoffer", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "DECLINED",
 				declinedAt: new Date("2026-01-01T12:00:00Z"),
 				retryCount: 1,
 			}),
-			message: textMsg("oi"),
+			message: textMsg("quero participar do sorteio"),
 			config: BASE_CONFIG,
 		});
 
 		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
 		expect(result.participantPatch?.declinedAt).toBeNull();
-		expect(result.participantPatch?.retryCount).toBe(0);
-		expect(result.outbounds).toHaveLength(1);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
-	it("mensagem não-texto também aciona reoffer", () => {
+	it("botão want_to_participate → reset para AWAITING_CONSENT + reoffer", () => {
 		const result = handleInbound({
 			participant: makeParticipant({ state: "DECLINED" }),
-			message: unknownMsg(),
+			message: buttonReplyMsg("want_to_participate", "Participar sorteio"),
 			config: BASE_CONFIG,
 		});
 
 		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
-		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	it("mensagem não-keyword SEM cooldown → envia redirect (não reoffer)", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "DECLINED",
+				redirectSentAt: null,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch).toBeNull();
+		expect(result.outbounds).toHaveLength(1);
+	});
+
+	it("mensagem não-keyword DENTRO do cooldown → silêncio", () => {
+		const recentSent = new Date(Date.now() - 60_000);
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "DECLINED",
+				redirectSentAt: recentSent,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds).toHaveLength(0);
 	});
 });
