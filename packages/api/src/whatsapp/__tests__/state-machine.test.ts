@@ -35,8 +35,9 @@ function makeParticipant(overrides: Partial<Participant> = {}): Participant {
 		termsVersion: null,
 		retryCount: 0,
 		redirectSentAt: null,
-		createdAt: new Date("2026-01-01T00:00:00Z"),
-		updatedAt: new Date("2026-01-01T00:00:00Z"),
+		redirectCount: 0,
+		createdAt: new Date(),
+		updatedAt: new Date(), // recente por padrão — testes de TTL sobrescrevem explicitamente
 		...overrides,
 	};
 }
@@ -306,7 +307,8 @@ describe("handleInbound — state=AWAITING_CONSENT", () => {
 		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
-	it("3ª resposta inválida (retryCount=2 → 3) → outbounds vazio (silent timeout)", () => {
+	// Fix #9: após 3 tentativas inválidas → NON_PARTICIPANT + redirect (não mais silêncio)
+	it("3ª resposta inválida (retryCount=2 → 3) → NON_PARTICIPANT + redirect", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "AWAITING_CONSENT",
@@ -317,6 +319,24 @@ describe("handleInbound — state=AWAITING_CONSENT", () => {
 		});
 
 		expect(result.participantPatch?.retryCount).toBe(3);
+		expect(result.participantPatch?.state).toBe("NON_PARTICIPANT");
+		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	// Fix #9 + #12: 3 retries mas redirectCount já exaurido → silêncio
+	it("3ª resposta inválida mas redirectCount >= 3 → NON_PARTICIPANT + silêncio", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_CONSENT",
+				retryCount: 2,
+				redirectCount: 3,
+			}),
+			message: textMsg("hmm"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("NON_PARTICIPANT");
 		expect(result.outbounds).toHaveLength(0);
 	});
 
@@ -352,6 +372,98 @@ describe("handleInbound — state=AWAITING_CONSENT", () => {
 });
 
 // ---------------------------------------------------------------------------
+// describe: TTL 24h — Fix #10 + #13
+// ---------------------------------------------------------------------------
+
+describe("handleInbound — TTL 24h em estados intermediários", () => {
+	const STALE_DATE = new Date(Date.now() - 25 * 60 * 60 * 1000); // 25h atrás
+
+	it("AWAITING_CONSENT com updatedAt > 24h → trata como NEW (keyword → AWAITING_CONSENT)", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_CONSENT",
+				updatedAt: STALE_DATE,
+			}),
+			message: textMsg("sorteio"),
+			config: BASE_CONFIG,
+		});
+
+		// handleNew: keyword detectada → createParticipant com AWAITING_CONSENT
+		expect(result.createParticipant?.state).toBe("AWAITING_CONSENT");
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	it("AWAITING_CONSENT com updatedAt > 24h → trata como NEW (não-keyword → NON_PARTICIPANT)", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_CONSENT",
+				updatedAt: STALE_DATE,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.createParticipant?.state).toBe("NON_PARTICIPANT");
+	});
+
+	it("AWAITING_NAME com updatedAt > 24h → trata como NEW", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_NAME",
+				updatedAt: STALE_DATE,
+			}),
+			message: textMsg("sorteio"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.createParticipant?.state).toBe("AWAITING_CONSENT");
+	});
+
+	it("AWAITING_COMPANY com updatedAt > 24h → trata como NEW", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_COMPANY",
+				updatedAt: STALE_DATE,
+			}),
+			message: textMsg("sorteio"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.createParticipant?.state).toBe("AWAITING_CONSENT");
+	});
+
+	it("AWAITING_CONSENT com updatedAt recente → NÃO reseta, processa normalmente", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_CONSENT",
+				updatedAt: new Date(), // agora
+			}),
+			message: buttonReplyMsg("accept", "Aceito"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("AWAITING_NAME");
+	});
+
+	it("COMPLETED com updatedAt > 24h → NÃO reseta (TTL só afeta intermediários)", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "COMPLETED",
+				name: "João",
+				raffleCode: "PROF-0001",
+				updatedAt: STALE_DATE,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		// Deve responder com alreadyParticipated, não tratar como NEW
+		expect(result.participantPatch).toBeNull();
+		expect(result.outbounds[0]?.kind).toBe("text");
+	});
+});
+
+// ---------------------------------------------------------------------------
 // describe: AWAITING_NAME
 // ---------------------------------------------------------------------------
 
@@ -379,26 +491,28 @@ describe("handleInbound — state=AWAITING_NAME", () => {
 		expect(result.participantPatch?.state).toBe("AWAITING_COMPANY");
 	});
 
-	it("nome com apenas 1 char → nameInvalid, sem patch de state", () => {
+	it("nome com apenas 1 char → nameInvalid, retryCount incrementa", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_NAME" }),
+			participant: makeParticipant({ state: "AWAITING_NAME", retryCount: 0 }),
 			message: textMsg("X"),
 			config: BASE_CONFIG,
 		});
 
 		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.participantPatch?.retryCount).toBe(1);
 		expect(result.outbounds[0]?.kind).toBe("text");
 	});
 
-	it("nome com 81 chars → nameInvalid", () => {
+	it("nome com 81 chars → nameInvalid, retryCount incrementa", () => {
 		const longName = "A".repeat(81);
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_NAME" }),
+			participant: makeParticipant({ state: "AWAITING_NAME", retryCount: 0 }),
 			message: textMsg(longName),
 			config: BASE_CONFIG,
 		});
 
 		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.participantPatch?.retryCount).toBe(1);
 		expect(result.outbounds[0]?.kind).toBe("text");
 	});
 
@@ -414,26 +528,60 @@ describe("handleInbound — state=AWAITING_NAME", () => {
 		expect(result.participantPatch?.name).toBe(name80);
 	});
 
-	it("mensagem não-texto (button_reply) → nameInvalid", () => {
+	// Fix #14: mídia conta retry
+	it("mensagem não-texto (button_reply) → nameInvalid + retryCount incrementa", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_NAME" }),
+			participant: makeParticipant({ state: "AWAITING_NAME", retryCount: 0 }),
 			message: buttonReplyMsg("accept", "Aceito"),
 			config: BASE_CONFIG,
 		});
 
 		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.participantPatch?.retryCount).toBe(1);
 		expect(result.outbounds[0]?.kind).toBe("text");
 	});
 
-	it("mensagem tipo image (não-texto) → nameInvalid", () => {
+	// Fix #14: mídia conta retry
+	it("mensagem tipo image (não-texto) → nameInvalid + retryCount incrementa", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_NAME" }),
+			participant: makeParticipant({ state: "AWAITING_NAME", retryCount: 0 }),
 			message: unknownMsg(),
 			config: BASE_CONFIG,
 		});
 
 		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.participantPatch?.retryCount).toBe(1);
 		expect(result.outbounds[0]?.kind).toBe("text");
+	});
+
+	// Fix #14: 3 inválidas → NON_PARTICIPANT + redirect
+	it("3ª inválida em AWAITING_NAME (retryCount=2) → NON_PARTICIPANT + redirect", () => {
+		const result = handleInbound({
+			participant: makeParticipant({ state: "AWAITING_NAME", retryCount: 2 }),
+			message: unknownMsg(),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("NON_PARTICIPANT");
+		expect(result.participantPatch?.retryCount).toBe(3);
+		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	// Fix #14 + #12: 3 inválidas mas redirectCount exaurido → silêncio
+	it("3ª inválida em AWAITING_NAME mas redirectCount >= 3 → silêncio", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_NAME",
+				retryCount: 2,
+				redirectCount: 3,
+			}),
+			message: unknownMsg(),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("NON_PARTICIPANT");
+		expect(result.outbounds).toHaveLength(0);
 	});
 });
 
@@ -468,44 +616,72 @@ describe("handleInbound — state=AWAITING_COMPANY", () => {
 		expect(result.participantPatch?.company).toBe("Emach Digital");
 	});
 
-	it("empresa vazia (só espaços) → companyInvalid", () => {
+	it("empresa vazia (só espaços) → companyInvalid, retryCount incrementa", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "AWAITING_COMPANY",
 				name: "Pedro",
+				retryCount: 0,
 			}),
 			message: textMsg("   "),
 			config: BASE_CONFIG,
 		});
 
 		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.participantPatch?.retryCount).toBe(1);
 		expect(result.outbounds[0]?.kind).toBe("text");
 	});
 
-	it("empresa com 81 chars → companyInvalid", () => {
+	it("empresa com 81 chars → companyInvalid, retryCount incrementa", () => {
 		const longCompany = "C".repeat(81);
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "AWAITING_COMPANY",
 				name: "Pedro",
+				retryCount: 0,
 			}),
 			message: textMsg(longCompany),
 			config: BASE_CONFIG,
 		});
 
 		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.participantPatch?.retryCount).toBe(1);
 		expect(result.outbounds[0]?.kind).toBe("text");
 	});
 
-	it("mensagem não-texto (button_reply) → companyInvalid", () => {
+	// Fix #14: mídia conta retry
+	it("mensagem não-texto (button_reply) → companyInvalid + retryCount incrementa", () => {
 		const result = handleInbound({
-			participant: makeParticipant({ state: "AWAITING_COMPANY", name: "Ana" }),
+			participant: makeParticipant({
+				state: "AWAITING_COMPANY",
+				name: "Ana",
+				retryCount: 0,
+			}),
 			message: buttonReplyMsg("accept", "Aceito"),
 			config: BASE_CONFIG,
 		});
 
 		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.participantPatch?.retryCount).toBe(1);
 		expect(result.outbounds[0]?.kind).toBe("text");
+	});
+
+	// Fix #14: 3 inválidas → NON_PARTICIPANT + redirect
+	it("3ª inválida em AWAITING_COMPANY (retryCount=2) → NON_PARTICIPANT + redirect", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_COMPANY",
+				name: "Ana",
+				retryCount: 2,
+			}),
+			message: unknownMsg(),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("NON_PARTICIPANT");
+		expect(result.participantPatch?.retryCount).toBe(3);
+		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 });
 
@@ -520,88 +696,7 @@ describe("handleInbound — state=COMPLETED", () => {
 		raffleCode: "PROF-0001",
 	});
 
-	it("texto 'status' → status action", () => {
-		const result = handleInbound({
-			participant: completedParticipant,
-			message: textMsg("status"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.participantPatch).toBeNull();
-		expect(result.outbounds[0]?.kind).toBe("text");
-	});
-
-	it("texto 'STATUS' (maiúsculo) → status action", () => {
-		const result = handleInbound({
-			participant: completedParticipant,
-			message: textMsg("STATUS"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds[0]?.kind).toBe("text");
-	});
-
-	it("texto 'Status' (capitalizado) → status action", () => {
-		const result = handleInbound({
-			participant: completedParticipant,
-			message: textMsg("Status"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds[0]?.kind).toBe("text");
-	});
-
-	it("texto '!status' → status action", () => {
-		const result = handleInbound({
-			participant: completedParticipant,
-			message: textMsg("!status"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds[0]?.kind).toBe("text");
-	});
-
-	it("texto '/status' → status action", () => {
-		const result = handleInbound({
-			participant: completedParticipant,
-			message: textMsg("/status"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds[0]?.kind).toBe("text");
-	});
-
-	it("texto 'ajuda' → help action", () => {
-		const result = handleInbound({
-			participant: completedParticipant,
-			message: textMsg("ajuda"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds[0]?.kind).toBe("text");
-	});
-
-	it("texto 'help' → help action", () => {
-		const result = handleInbound({
-			participant: completedParticipant,
-			message: textMsg("help"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds[0]?.kind).toBe("text");
-	});
-
-	it("texto '?' → help action", () => {
-		const result = handleInbound({
-			participant: completedParticipant,
-			message: textMsg("?"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds[0]?.kind).toBe("text");
-	});
-
-	it("qualquer outro texto → alreadyParticipated", () => {
+	it("qualquer texto → alreadyParticipated (status e help removidos)", () => {
 		const result = handleInbound({
 			participant: completedParticipant,
 			message: textMsg("oi tudo bem?"),
@@ -609,6 +704,26 @@ describe("handleInbound — state=COMPLETED", () => {
 		});
 
 		expect(result.participantPatch).toBeNull();
+		expect(result.outbounds[0]?.kind).toBe("text");
+	});
+
+	it("texto 'status' → alreadyParticipated (comando removido)", () => {
+		const result = handleInbound({
+			participant: completedParticipant,
+			message: textMsg("status"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds[0]?.kind).toBe("text");
+	});
+
+	it("texto 'ajuda' → alreadyParticipated (comando removido)", () => {
+		const result = handleInbound({
+			participant: completedParticipant,
+			message: textMsg("ajuda"),
+			config: BASE_CONFIG,
+		});
+
 		expect(result.outbounds[0]?.kind).toBe("text");
 	});
 
@@ -715,30 +830,47 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 
 		expect(result.outbounds).toHaveLength(1);
 	});
-});
 
-// ---------------------------------------------------------------------------
-// describe: DECLINED
-// ---------------------------------------------------------------------------
-
-describe("handleInbound — state=DECLINED", () => {
-	it("keyword 'sorteio' → reset para AWAITING_CONSENT + reoffer", () => {
+	// Fix #12: redirectCount >= 3 → silêncio permanente
+	it("redirectCount >= 3 → silêncio permanente (sem cooldown)", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
-				state: "DECLINED",
-				declinedAt: new Date("2026-01-01T12:00:00Z"),
-				retryCount: 1,
+				state: "NON_PARTICIPANT",
+				redirectCount: 3,
+				redirectSentAt: null,
 			}),
-			message: textMsg("quero participar do sorteio"),
+			message: textMsg("oi"),
 			config: BASE_CONFIG,
 		});
 
-		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
-		expect(result.participantPatch?.declinedAt).toBeNull();
-		expect(result.outbounds[0]?.kind).toBe("interactive");
+		expect(result.outbounds).toHaveLength(0);
+		expect(result.participantPatch).toBeNull();
 	});
 
-	it("botão want_to_participate → reset para AWAITING_CONSENT + reoffer", () => {
+	// Fix #12: redirectCount >= 3 mesmo com cooldown expirado → silêncio
+	it("redirectCount=5 e cooldown expirado → ainda silêncio permanente", () => {
+		const oldSent = new Date(Date.now() - 10 * 60 * 60 * 1000); // 10h ago
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "NON_PARTICIPANT",
+				redirectCount: 5,
+				redirectSentAt: oldSent,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// describe: DECLINED — Fix #11 + #12
+// ---------------------------------------------------------------------------
+
+describe("handleInbound — state=DECLINED", () => {
+	// Fix #11: botão want_to_participate → welcome (não reoffer)
+	it("botão want_to_participate → AWAITING_CONSENT + welcome (não reoffer)", () => {
 		const result = handleInbound({
 			participant: makeParticipant({ state: "DECLINED" }),
 			message: buttonReplyMsg("want_to_participate", "Participar sorteio"),
@@ -746,9 +878,32 @@ describe("handleInbound — state=DECLINED", () => {
 		});
 
 		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
+		expect(result.participantPatch?.declinedAt).toBeNull();
+		expect(result.participantPatch?.retryCount).toBe(0);
+		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
-	it("mensagem não-keyword SEM cooldown → envia redirect (não reoffer)", () => {
+	// Fix #11: keyword → redirect (não mais reoffer)
+	it("keyword 'sorteio' → redirect (não reoffer)", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "DECLINED",
+				declinedAt: new Date("2026-01-01T12:00:00Z"),
+				retryCount: 1,
+				redirectSentAt: null,
+			}),
+			message: textMsg("quero participar do sorteio"),
+			config: BASE_CONFIG,
+		});
+
+		// Não deve mais ir para AWAITING_CONSENT via keyword
+		expect(result.participantPatch?.state).toBeUndefined();
+		// Deve enviar redirect (não reoffer, não silêncio)
+		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	it("mensagem não-keyword SEM cooldown → envia redirect", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "DECLINED",
@@ -760,6 +915,7 @@ describe("handleInbound — state=DECLINED", () => {
 
 		expect(result.participantPatch).toBeNull();
 		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
 	it("mensagem não-keyword DENTRO do cooldown → silêncio", () => {
@@ -789,5 +945,35 @@ describe("handleInbound — state=DECLINED", () => {
 
 		expect(result.outbounds).toHaveLength(1);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	// Fix #12: DECLINED + redirectCount >= 3 → silêncio permanente
+	it("redirectCount >= 3 em DECLINED → silêncio permanente", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "DECLINED",
+				redirectCount: 3,
+				redirectSentAt: null,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds).toHaveLength(0);
+	});
+
+	// Fix #12: redirectCount >= 3 mas want_to_participate ainda funciona
+	it("redirectCount >= 3 mas botão want_to_participate → ainda transiciona para AWAITING_CONSENT", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "DECLINED",
+				redirectCount: 3,
+			}),
+			message: buttonReplyMsg("want_to_participate", "Participar sorteio"),
+			config: BASE_CONFIG,
+		});
+
+		// O botão explícito ainda funciona mesmo com redirectCount exaurido
+		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
 	});
 });
