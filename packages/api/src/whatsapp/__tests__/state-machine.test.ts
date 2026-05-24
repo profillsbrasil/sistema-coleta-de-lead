@@ -87,7 +87,7 @@ describe("handleInbound — participant=null (first inbound)", () => {
 		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
-	it("texto 'oi' (não-keyword) → cria NON_PARTICIPANT + redirect", () => {
+	it("texto 'oi' (não-keyword) → cria NON_PARTICIPANT + eventNotice cta_url", () => {
 		const result = handleInbound({
 			participant: null,
 			message: textMsg("oi"),
@@ -97,13 +97,20 @@ describe("handleInbound — participant=null (first inbound)", () => {
 		expect(result.createParticipant?.state).toBe("NON_PARTICIPANT");
 		expect(result.outbounds).toHaveLength(1);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
-		// Confirmar que é o redirect (button id want_to_participate)
+		expect(result.wasEventNotice).toBe(true);
 		const action = result.outbounds[0] as {
 			kind: "interactive";
-			interactive: { action: { buttons: Array<{ reply: { id: string } }> } };
+			interactive: {
+				type: string;
+				action: { parameters: { display_text: string; url: string } };
+			};
 		};
-		expect(action.interactive.action.buttons[0]?.reply.id).toBe(
-			"want_to_participate"
+		expect(action.interactive.type).toBe("cta_url");
+		expect(action.interactive.action.parameters.display_text).toBe(
+			"Falar com a equipe"
+		);
+		expect(action.interactive.action.parameters.url).toBe(
+			`https://wa.me/${BASE_CONFIG.vendorPhone}`
 		);
 	});
 
@@ -124,14 +131,17 @@ describe("handleInbound — participant=null (first inbound)", () => {
 		);
 	});
 
-	it("botão want_to_participate (vindo de redirect) → AWAITING_CONSENT", () => {
+	it("button_reply legacy (sem keyword) → cliente comum, eventNotice", () => {
+		// Após remoção dos botões REDIRECT_BUTTONS, um button_reply lingering
+		// de mensagem antiga não dispara fluxo de sorteio — cai em eventNotice.
 		const result = handleInbound({
 			participant: null,
 			message: buttonReplyMsg("want_to_participate", "Participar sorteio"),
 			config: BASE_CONFIG,
 		});
 
-		expect(result.createParticipant?.state).toBe("AWAITING_CONSENT");
+		expect(result.createParticipant?.state).toBe("NON_PARTICIPANT");
+		expect(result.wasEventNotice).toBe(true);
 	});
 });
 
@@ -756,40 +766,19 @@ describe("handleInbound — state=COMPLETED", () => {
 // ---------------------------------------------------------------------------
 
 describe("handleInbound — state=NON_PARTICIPANT", () => {
-	it("botão want_to_participate → AWAITING_CONSENT + welcome", () => {
+	it("button_reply legacy (sem keyword) → eventNotice + cooldown", () => {
+		// Botões antigos foram removidos; button_reply lingering cai no caminho não-keyword.
 		const result = handleInbound({
-			participant: makeParticipant({ state: "NON_PARTICIPANT" }),
+			participant: makeParticipant({
+				state: "NON_PARTICIPANT",
+				redirectSentAt: null,
+			}),
 			message: buttonReplyMsg("want_to_participate", "Participar sorteio"),
 			config: BASE_CONFIG,
 		});
 
-		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
-		expect(result.outbounds[0]?.kind).toBe("interactive");
-	});
-
-	it("botão already_registered sem código → AWAITING_CONSENT + welcome", () => {
-		const result = handleInbound({
-			participant: makeParticipant({ state: "NON_PARTICIPANT" }),
-			message: buttonReplyMsg("already_registered", "Ja me cadastrei"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
-	});
-
-	it("botão already_registered COM código → alreadyParticipated (CTA url)", () => {
-		const result = handleInbound({
-			participant: makeParticipant({
-				state: "NON_PARTICIPANT",
-				name: "João",
-				raffleCode: "PROFILLS-1234",
-			}),
-			message: buttonReplyMsg("already_registered", "Ja me cadastrei"),
-			config: BASE_CONFIG,
-		});
-
 		expect(result.participantPatch).toBeNull();
-		expect(result.outbounds[0]?.kind).toBe("interactive");
+		expect(result.wasEventNotice).toBe(true);
 	});
 
 	it("keyword 'sorteio' → AWAITING_CONSENT", () => {
@@ -802,7 +791,7 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
 	});
 
-	it("outra mensagem SEM cooldown → reenvia redirect", () => {
+	it("outra mensagem SEM cooldown → reenvia eventNotice", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "NON_PARTICIPANT",
@@ -814,6 +803,7 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 
 		expect(result.outbounds).toHaveLength(1);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
+		expect(result.wasEventNotice).toBe(true);
 	});
 
 	it("outra mensagem DENTRO do cooldown → silêncio", () => {
@@ -830,7 +820,7 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 		expect(result.outbounds).toHaveLength(0);
 	});
 
-	it("outra mensagem FORA do cooldown → reenvia redirect", () => {
+	it("outra mensagem FORA do cooldown → reenvia eventNotice", () => {
 		const oldSent = new Date(Date.now() - 5 * 60 * 60 * 1000); // 5h ago
 		const result = handleInbound({
 			participant: makeParticipant({
@@ -842,6 +832,7 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 		});
 
 		expect(result.outbounds).toHaveLength(1);
+		expect(result.wasEventNotice).toBe(true);
 	});
 
 	// Fix #12: redirectCount >= 3 → silêncio permanente
@@ -882,22 +873,7 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 // ---------------------------------------------------------------------------
 
 describe("handleInbound — state=DECLINED", () => {
-	// Fix #11: botão want_to_participate → welcome (não reoffer)
-	it("botão want_to_participate → AWAITING_CONSENT + welcome (não reoffer)", () => {
-		const result = handleInbound({
-			participant: makeParticipant({ state: "DECLINED" }),
-			message: buttonReplyMsg("want_to_participate", "Participar sorteio"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
-		expect(result.participantPatch?.declinedAt).toBeNull();
-		expect(result.participantPatch?.retryCount).toBe(0);
-		expect(result.outbounds[0]?.kind).toBe("interactive");
-	});
-
-	// Fix #11: keyword → redirect (não mais reoffer)
-	it("keyword 'sorteio' → redirect (não reoffer)", () => {
+	it("keyword 'sorteio' → reabre fluxo (AWAITING_CONSENT + welcome)", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "DECLINED",
@@ -909,14 +885,13 @@ describe("handleInbound — state=DECLINED", () => {
 			config: BASE_CONFIG,
 		});
 
-		// Não deve mais ir para AWAITING_CONSENT via keyword
-		expect(result.participantPatch?.state).toBeUndefined();
-		// Deve enviar redirect (não reoffer, não silêncio)
-		expect(result.outbounds).toHaveLength(1);
+		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
+		expect(result.participantPatch?.declinedAt).toBeNull();
+		expect(result.participantPatch?.retryCount).toBe(0);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
-	it("mensagem não-keyword SEM cooldown → envia redirect", () => {
+	it("mensagem não-keyword SEM cooldown → envia eventNotice", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "DECLINED",
@@ -929,6 +904,7 @@ describe("handleInbound — state=DECLINED", () => {
 		expect(result.participantPatch).toBeNull();
 		expect(result.outbounds).toHaveLength(1);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
+		expect(result.wasEventNotice).toBe(true);
 	});
 
 	it("mensagem não-keyword DENTRO do cooldown → silêncio", () => {
@@ -945,7 +921,7 @@ describe("handleInbound — state=DECLINED", () => {
 		expect(result.outbounds).toHaveLength(0);
 	});
 
-	it("mensagem não-keyword FORA do cooldown → reenvia redirect", () => {
+	it("mensagem não-keyword FORA do cooldown → reenvia eventNotice", () => {
 		const oldSent = new Date(Date.now() - 5 * 60 * 60 * 1000); // 5h ago
 		const result = handleInbound({
 			participant: makeParticipant({
@@ -958,9 +934,9 @@ describe("handleInbound — state=DECLINED", () => {
 
 		expect(result.outbounds).toHaveLength(1);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
+		expect(result.wasEventNotice).toBe(true);
 	});
 
-	// Fix #12: DECLINED + redirectCount >= 3 → silêncio permanente
 	it("redirectCount >= 3 em DECLINED → silêncio permanente", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
@@ -973,20 +949,19 @@ describe("handleInbound — state=DECLINED", () => {
 		});
 
 		expect(result.outbounds).toHaveLength(0);
+		expect(result.wasEventNotice).toBeUndefined();
 	});
 
-	// Fix #12: redirectCount >= 3 mas want_to_participate ainda funciona
-	it("redirectCount >= 3 mas botão want_to_participate → ainda transiciona para AWAITING_CONSENT", () => {
+	it("redirectCount >= 3 mas keyword → ainda reabre fluxo (override do limite)", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "DECLINED",
 				redirectCount: 3,
 			}),
-			message: buttonReplyMsg("want_to_participate", "Participar sorteio"),
+			message: textMsg("vim pelo sorteio"),
 			config: BASE_CONFIG,
 		});
 
-		// O botão explícito ainda funciona mesmo com redirectCount exaurido
 		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
 	});
 });
