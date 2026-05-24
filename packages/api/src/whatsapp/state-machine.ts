@@ -62,7 +62,6 @@ export interface StateMachineConfig {
 	raffleDate?: string;
 	redirectCooldownMs?: number; // default 4h
 	termsVersion: string;
-	vendorName: string;
 	vendorPhone: string;
 	welcomeImageUrl?: string;
 }
@@ -136,7 +135,6 @@ function isButtonReply(message: InboundMessage, id: string): boolean {
 function redirectAction(config: StateMachineConfig): OutboundAction {
 	return toInteractiveAction(
 		redirect({
-			vendorName: config.vendorName,
 			vendorPhone: config.vendorPhone,
 			eventStart: config.eventStartBR,
 			eventEnd: config.eventEndBR,
@@ -458,10 +456,11 @@ function handleNonParticipant(args: {
 			return {
 				participantPatch: null,
 				outbounds: [
-					toTextAction(
+					toInteractiveAction(
 						alreadyParticipated({
 							name: participant.name,
 							raffleCode: participant.raffleCode,
+							vendorPhone: config.vendorPhone,
 						})
 					),
 				],
@@ -523,17 +522,19 @@ function handleNonParticipant(args: {
 function handleCompleted(args: {
 	participant: Participant;
 	message: InboundMessage;
+	config: StateMachineConfig;
 }): HandleResult {
-	const { participant } = args;
+	const { participant, config } = args;
 
 	// Qualquer mensagem → alreadyParticipated (status e help removidos)
 	return {
 		participantPatch: null,
 		outbounds: [
-			toTextAction(
+			toInteractiveAction(
 				alreadyParticipated({
 					name: participant.name ?? "",
 					raffleCode: participant.raffleCode ?? "",
+					vendorPhone: config.vendorPhone,
 				})
 			),
 		],
@@ -625,7 +626,7 @@ export function handleInbound(args: {
 			return handleAwaitingCompany({ participant, message, config });
 
 		case "COMPLETED":
-			return handleCompleted({ participant, message });
+			return handleCompleted({ participant, message, config });
 
 		case "DECLINED":
 			return handleDeclined({ participant, message, config });

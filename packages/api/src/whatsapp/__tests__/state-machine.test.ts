@@ -11,7 +11,6 @@ const BASE_CONFIG: StateMachineConfig = {
 	eventName: "Sorteio Profills Fispal 2026",
 	raffleDate: "05/06/2026",
 	termsVersion: "v1",
-	vendorName: "Fulano Vendedor",
 	vendorPhone: "5511999990000",
 	eventStartBR: "26/05",
 	eventEndBR: "29/05",
@@ -459,7 +458,7 @@ describe("handleInbound — TTL 24h em estados intermediários", () => {
 
 		// Deve responder com alreadyParticipated, não tratar como NEW
 		expect(result.participantPatch).toBeNull();
-		expect(result.outbounds[0]?.kind).toBe("text");
+		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 });
 
@@ -696,7 +695,7 @@ describe("handleInbound — state=COMPLETED", () => {
 		raffleCode: "PROF-0001",
 	});
 
-	it("qualquer texto → alreadyParticipated (status e help removidos)", () => {
+	it("qualquer texto → alreadyParticipated com botão CTA contato vendedor", () => {
 		const result = handleInbound({
 			participant: completedParticipant,
 			message: textMsg("oi tudo bem?"),
@@ -704,7 +703,21 @@ describe("handleInbound — state=COMPLETED", () => {
 		});
 
 		expect(result.participantPatch).toBeNull();
-		expect(result.outbounds[0]?.kind).toBe("text");
+		const action = result.outbounds[0];
+		expect(action?.kind).toBe("interactive");
+		if (action?.kind !== "interactive") {
+			throw new Error("expected interactive");
+		}
+		expect(action.interactive.type).toBe("cta_url");
+		if (action.interactive.type !== "cta_url") {
+			throw new Error("expected cta_url");
+		}
+		expect(action.interactive.action.parameters.url).toBe(
+			`https://wa.me/${BASE_CONFIG.vendorPhone}`
+		);
+		expect(action.interactive.action.parameters.display_text).toBe(
+			"Entrar em contato"
+		);
 	});
 
 	it("texto 'status' → alreadyParticipated (comando removido)", () => {
@@ -714,7 +727,7 @@ describe("handleInbound — state=COMPLETED", () => {
 			config: BASE_CONFIG,
 		});
 
-		expect(result.outbounds[0]?.kind).toBe("text");
+		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
 	it("texto 'ajuda' → alreadyParticipated (comando removido)", () => {
@@ -724,7 +737,7 @@ describe("handleInbound — state=COMPLETED", () => {
 			config: BASE_CONFIG,
 		});
 
-		expect(result.outbounds[0]?.kind).toBe("text");
+		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
 	it("mensagem não-texto → alreadyParticipated", () => {
@@ -734,7 +747,7 @@ describe("handleInbound — state=COMPLETED", () => {
 			config: BASE_CONFIG,
 		});
 
-		expect(result.outbounds[0]?.kind).toBe("text");
+		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 });
 
@@ -764,7 +777,7 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
 	});
 
-	it("botão already_registered COM código → alreadyParticipated", () => {
+	it("botão already_registered COM código → alreadyParticipated (CTA url)", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "NON_PARTICIPANT",
@@ -776,7 +789,7 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 		});
 
 		expect(result.participantPatch).toBeNull();
-		expect(result.outbounds[0]?.kind).toBe("text");
+		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
 	it("keyword 'sorteio' → AWAITING_CONSENT", () => {

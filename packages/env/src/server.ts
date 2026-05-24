@@ -22,7 +22,6 @@ export const env = createEnv({
 		WHATSAPP_APP_SECRET: z.string().min(1),
 		WHATSAPP_VERIFY_TOKEN: z.string().min(1),
 		WHATSAPP_API_VERSION: z.string().min(1).default("v25.0"),
-		WHATSAPP_REDIRECT_VENDOR_NAME: z.string().min(1),
 		WHATSAPP_REDIRECT_VENDOR_PHONE: z
 			.string()
 			.regex(/^\d{12,14}$/, "Telefone E.164 sem '+', ex: 5511999990000"),

@@ -15,7 +15,6 @@ WHATSAPP_BUSINESS_ACCOUNT_ID=1702967640743484
 WHATSAPP_APP_SECRET=<app secret da app Meta>
 WHATSAPP_VERIFY_TOKEN=<string aleatória, ex: openssl rand -hex 32>
 WHATSAPP_API_VERSION=v25.0
-WHATSAPP_REDIRECT_VENDOR_NAME=<nome do vendedor que assume atendimento>
 WHATSAPP_REDIRECT_VENDOR_PHONE=<E.164 sem +, ex: 5511999990000>
 WHATSAPP_REDIRECT_EVENT_START=2026-05-26
 WHATSAPP_REDIRECT_EVENT_END=2026-05-29
@@ -141,12 +140,13 @@ curl -X POST "https://graph.facebook.com/v25.0/${WHATSAPP_PHONE_NUMBER_ID}/dereg
 Variáveis a configurar no Vercel (Settings → Environment Variables, Production + Preview):
 
 ```env
-WHATSAPP_REDIRECT_VENDOR_NAME=Othavio Quiliao
 WHATSAPP_REDIRECT_VENDOR_PHONE=5555996913627
 WHATSAPP_REDIRECT_EVENT_START=2026-05-26
 WHATSAPP_REDIRECT_EVENT_END=2026-05-29
 NEXT_PUBLIC_RAFFLE_DATE=05/06/2026
 ```
+
+> Não há env para nome do vendedor — o número é o canal profissional da Profills e a comunicação não cita pessoa específica.
 
 Telefone do vendedor `5555996913627` = country code `55` + DDD `55` (Santa Maria/RS) + número `99691-3627`. Formato E.164 sem `+`, validado pelo Zod no `packages/env/src/server.ts`.
 
