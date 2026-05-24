@@ -1,0 +1,1 @@
+ALTER TABLE "whatsapp"."participants" ADD COLUMN "redirect_count" integer DEFAULT 0 NOT NULL;

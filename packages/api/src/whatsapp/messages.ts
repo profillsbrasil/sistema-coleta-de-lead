@@ -81,7 +81,7 @@ const REDIRECT_BUTTONS = [
 // ---------------------------------------------------------------------------
 
 export function welcome({
-	eventName,
+	eventName: _eventName,
 	imageUrl,
 }: {
 	eventName: string;
@@ -89,12 +89,12 @@ export function welcome({
 }): InteractiveMessage {
 	const bodyText =
 		"Olá! Bem-vindo ao *Sorteio Profills Fispal 2026* 🎉\n\n" +
-		"Participe e concorra a 3 prêmios incríveis:\n" +
+		"Participe e concorra a 3 prêmios:\n" +
 		`• TV 65"\n` +
 		"• Churrasqueira Champions Grill\n" +
 		"• Cooler Profills\n\n" +
-		`Evento: *${eventName}*\n\n` +
-		"📋 *LGPD:* Ao aceitar, você autoriza a Profills a usar seu telefone, nome e empresa apenas para o sorteio e contato comercial relacionado.";
+		"📅 Sorteio: *05/06/2026*\n\n" +
+		"📋 Ao aceitar, você autoriza a Profills a usar seu telefone, nome e empresa para o sorteio e contato comercial relacionado.";
 
 	return interactive(
 		bodyText,
@@ -105,17 +105,6 @@ export function welcome({
 	);
 }
 
-export function regulamento(): TextMessage {
-	return text(
-		"📜 *Regulamento Sorteio Profills Fispal 2026*\n\n" +
-			"• Sorteio realizado ao vivo no estande Profills.\n" +
-			"• Uma inscrição por número de WhatsApp.\n" +
-			"• A equipe Profills entrará em contato manualmente com os sorteados quando necessário.\n" +
-			`• Prêmios: TV 65", Churrasqueira Champions Grill, Cooler Profills.\n` +
-			"• Seus dados (nome, empresa, telefone) são usados exclusivamente para o sorteio e contato comercial Profills.\n\n" +
-			"Para participar, responda *Aceito* ou *Não aceito*."
-	);
-}
 
 export function askName(): TextMessage {
 	return text("Show, você está participando! 😊 Qual é o seu *nome completo*?");
@@ -134,12 +123,11 @@ export function codeGenerated({
 	raffleCode: string;
 	raffleDate?: string;
 }): TextMessage {
-	const dateInfo = raffleDate ? ` no dia *${raffleDate}*` : "";
 	return text(
-		`🎊 *${name}*, você está inscrito no sorteio!\n\n` +
-			`Seu código: *${raffleCode}*\n\n` +
-			`O sorteio acontece${dateInfo} ao vivo no estande Profills. Boa sorte! 🍀\n\n` +
-			"Digite *ajuda* a qualquer momento para ver as opções."
+		`Olá, *${name}*, sua inscrição está confirmada!\n\n` +
+			`🎟️ Seu código: *${raffleCode}*\n\n` +
+			`📅 *Sorteio:* ${raffleDate ?? "05/06/2026"}\n\n` +
+			"A equipe entrará em contato neste WhatsApp caso você seja sorteado. Boa sorte! 🍀"
 	);
 }
 
@@ -151,46 +139,21 @@ export function alreadyParticipated({
 	raffleCode: string;
 }): TextMessage {
 	return text(
-		`Oi, *${name}*! Você já está inscrito no sorteio 🎉\n\n` +
-			`Seu código é: *${raffleCode}*\n\n` +
-			"Aguarde o sorteio ao vivo no estande Profills. Boa sorte! 🍀\n\n" +
-			"Digite *ajuda* para ver as opções."
+		`Olá, *${name}*! Você já está inscrito.\n\n` +
+			`🎟️ Seu código: *${raffleCode}*\n\n` +
+			"📅 *Sorteio:* 05/06/2026\n\n" +
+			"A equipe Profills entrará em contato neste WhatsApp caso você seja sorteado."
 	);
 }
 
-export function status({ raffleCode }: { raffleCode: string }): TextMessage {
-	return text(
-		`✅ Você está inscrito no sorteio!\n\nSeu código: *${raffleCode}*\n\nAcompanhe o sorteio ao vivo no estande Profills.`
-	);
-}
-
-export function help(): TextMessage {
-	return text(
-		"ℹ️ *Comandos disponíveis:*\n\n" +
-			"• *status* — consulta seu código de inscrição\n" +
-			"• *ajuda* — mostra esta lista\n\n" +
-			"Em caso de dúvidas, fale com alguém do estande Profills."
-	);
-}
 
 export function declined(): TextMessage {
 	return text(
-		"Tudo bem! Você optou por não participar do sorteio. " +
-			"Se mudar de ideia, é só enviar uma mensagem aqui novamente. 👋"
+		"Sem problemas. Você optou por não participar do sorteio.\n\n" +
+			"A Profills agradece pelo seu tempo! 👋"
 	);
 }
 
-export function reoffer(): InteractiveMessage {
-	return interactive(
-		"Que bom ter você de volta! 😊\n\n" +
-			"Deseja participar do *Sorteio Profills Fispal 2026* e concorrer a:\n" +
-			`• TV 65"\n` +
-			"• Churrasqueira Champions Grill\n" +
-			"• Cooler Profills\n\n" +
-			"📋 Ao aceitar, você autoriza a Profills a usar seu telefone, nome e empresa apenas para o sorteio e contato comercial relacionado.",
-		CONSENT_BUTTONS
-	);
-}
 
 export function invalidConsentRetry(): InteractiveMessage {
 	return interactive(
@@ -202,13 +165,13 @@ export function invalidConsentRetry(): InteractiveMessage {
 
 export function nameInvalid(): TextMessage {
 	return text(
-		"Hmm, não consegui identificar um nome válido. Por favor, envie seu *nome completo* (mínimo 2 caracteres)."
+		"Não consegui identificar um nome válido. Por favor, envie seu *nome completo* (ex: João Silva)."
 	);
 }
 
 export function companyInvalid(): TextMessage {
 	return text(
-		"Não consegui identificar o nome da empresa. Por favor, envie o nome da *empresa* onde você trabalha."
+		"Não consegui identificar o nome da empresa. Por favor, envie o nome (ex: Indústria XYZ)."
 	);
 }
 
