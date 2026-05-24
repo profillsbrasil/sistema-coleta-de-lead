@@ -4,6 +4,9 @@
  * Módulo puro: apenas constantes e helpers de interpolação. Sem I/O.
  */
 
+import { COMPANY_MAX, COMPANY_MIN, NAME_MAX, NAME_MIN } from "./validation";
+import type { ValidationError } from "./validation";
+
 // ---------------------------------------------------------------------------
 // Tipos
 // ---------------------------------------------------------------------------
@@ -124,13 +127,14 @@ export function welcome({
 	imageUrl?: string;
 }): InteractiveMessage {
 	const bodyText =
-		"Olá! Bem-vindo ao *Sorteio Profills Fispal 2026* 🎉\n\n" +
-		"Participe e concorra a 3 prêmios:\n" +
+		"*Sorteio Profills Fispal 2026* 🎉\n\n" +
+		"Participe e concorra a vários prêmios:\n" +
 		`• TV 65"\n` +
 		"• Churrasqueira Champions Grill\n" +
 		"• Cooler Profills\n\n" +
 		"📅 Sorteio: *05/06/2026*\n\n" +
-		"📋 Ao aceitar, você autoriza a Profills a usar seu telefone, nome e empresa para o sorteio e contato comercial relacionado.";
+		"Ao aceitar, você autoriza a Profills a utilizar seus dados para o sorteio e contato comercial relacionado.\n\n" +
+		"Deseja participar?";
 
 	return interactive(
 		bodyText,
@@ -141,13 +145,12 @@ export function welcome({
 	);
 }
 
-
 export function askName(): TextMessage {
-	return text("Show, você está participando! 😊 Qual é o seu *nome completo*?");
+	return text("Para começar, qual é o seu *nome completo*?");
 }
 
 export function askCompany({ name }: { name: string }): TextMessage {
-	return text(`Prazer, *${name}*! Em qual *empresa* você trabalha?`);
+	return text(`Em qual *empresa* você trabalha, *${name}*?`);
 }
 
 export function codeGenerated({
@@ -160,10 +163,10 @@ export function codeGenerated({
 	raffleDate?: string;
 }): TextMessage {
 	return text(
-		`Olá, *${name}*, sua inscrição está confirmada!\n\n` +
-			`🎟️ Seu código: *${raffleCode}*\n\n` +
-			`📅 *Sorteio:* ${raffleDate ?? "05/06/2026"}\n\n` +
-			"A equipe entrará em contato neste WhatsApp caso você seja sorteado. Boa sorte! 🍀"
+		`Inscrição confirmada, *${name}*! 🎉\n\n` +
+			`🎟️ Código: *${raffleCode}*\n` +
+			`📅 Sorteio: ${raffleDate ?? "05/06/2026"}\n\n` +
+			"A equipe Profills entrará em contato por este WhatsApp caso você seja sorteado. Boa sorte! 🍀"
 	);
 }
 
@@ -207,16 +210,26 @@ export function invalidConsentRetry(): InteractiveMessage {
 	);
 }
 
-export function nameInvalid(): TextMessage {
-	return text(
-		"Não consegui identificar um nome válido. Por favor, envie seu *nome completo* (ex: João Silva)."
-	);
+export function nameInvalid(reason: ValidationError): TextMessage {
+	const body = {
+		empty:
+			"Não consegui identificar seu nome. Por favor, envie seu nome completo.",
+		too_short: `Seu nome está muito curto. Envie pelo menos ${NAME_MIN} letras.`,
+		too_long: `Seu nome está muito longo (máximo ${NAME_MAX} caracteres).`,
+		invalid_chars: "Use apenas letras e espaços, por favor.",
+	}[reason];
+	return text(body);
 }
 
-export function companyInvalid(): TextMessage {
-	return text(
-		"Não consegui identificar o nome da empresa. Por favor, envie o nome (ex: Indústria XYZ)."
-	);
+export function companyInvalid(reason: ValidationError): TextMessage {
+	const body = {
+		empty: "Por favor, informe o nome da empresa.",
+		too_short: `Nome da empresa muito curto (mínimo ${COMPANY_MIN} caracteres).`,
+		too_long: `Nome da empresa muito longo (máximo ${COMPANY_MAX} caracteres).`,
+		invalid_chars:
+			"Nome de empresa inválido. Use apenas letras, números e símbolos básicos.",
+	}[reason];
+	return text(body);
 }
 
 export function eventNotice({

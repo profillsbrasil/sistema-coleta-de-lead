@@ -20,6 +20,8 @@ import {
 	welcome,
 } from "./messages";
 import type { InboundMessage } from "./types";
+import type { ValidationError } from "./validation";
+import { validateCompany, validateName } from "./validation";
 
 // ---------------------------------------------------------------------------
 // Domain types
@@ -52,7 +54,6 @@ export type ParticipantPatch = Partial<{
 export type OutboundAction =
 	| { kind: "text"; body: string }
 	| { kind: "interactive"; interactive: InteractiveMessage["interactive"] }
-	| { kind: "image"; link: string; caption?: string }
 	| { kind: "generateAndSendCode" };
 
 export interface StateMachineConfig {
@@ -298,33 +299,30 @@ function handleAwaitingName(args: {
 	const { participant, message, config } = args;
 	const body = getTextBody(message);
 
-	// Fix #14: mídia (não-texto) conta retry
-	if (body === null) {
-		return handleNameInvalid({ participant, config });
-	}
+	// Mídia / não-texto: conta como vazio (retry com feedback de empty).
+	const result = body === null ? validateName("") : validateName(body);
 
-	const trimmed = body.trim();
-
-	if (trimmed.length < 2 || trimmed.length > 80) {
-		return handleNameInvalid({ participant, config });
+	if (!result.ok) {
+		return handleNameInvalid({ participant, config, reason: result.reason });
 	}
 
 	return {
 		participantPatch: {
 			state: "AWAITING_COMPANY",
-			name: trimmed,
+			name: result.value,
 			retryCount: 0,
 		},
-		outbounds: [toTextAction(askCompany({ name: trimmed }))],
+		outbounds: [toTextAction(askCompany({ name: result.value }))],
 	};
 }
 
-/** Helper para inválido em AWAITING_NAME com retry e fallback (fix #14). */
+/** Retry counter + fallback (NON_PARTICIPANT + eventNotice) após 3 inválidos. */
 function handleNameInvalid(args: {
 	participant: Participant;
 	config: StateMachineConfig;
+	reason: ValidationError;
 }): HandleResult {
-	const { participant, config } = args;
+	const { participant, config, reason } = args;
 	const newRetryCount = participant.retryCount + 1;
 
 	if (newRetryCount >= 3) {
@@ -349,7 +347,7 @@ function handleNameInvalid(args: {
 
 	return {
 		participantPatch: { retryCount: newRetryCount },
-		outbounds: [toTextAction(nameInvalid())],
+		outbounds: [toTextAction(nameInvalid(reason))],
 	};
 }
 
@@ -361,33 +359,33 @@ function handleAwaitingCompany(args: {
 	const { participant, message, config } = args;
 	const body = getTextBody(message);
 
-	// Fix #14: mídia (não-texto) conta retry
-	if (body === null) {
-		return handleCompanyInvalid({ participant, config });
-	}
+	const result = body === null ? validateCompany("") : validateCompany(body);
 
-	const trimmed = body.trim();
-
-	if (trimmed.length < 1 || trimmed.length > 80) {
-		return handleCompanyInvalid({ participant, config });
+	if (!result.ok) {
+		return handleCompanyInvalid({
+			participant,
+			config,
+			reason: result.reason,
+		});
 	}
 
 	return {
 		participantPatch: {
 			state: "COMPLETED",
-			company: trimmed,
+			company: result.value,
 			retryCount: 0,
 		},
 		outbounds: [{ kind: "generateAndSendCode" }],
 	};
 }
 
-/** Helper para inválido em AWAITING_COMPANY com retry e fallback (fix #14). */
+/** Retry counter + fallback (NON_PARTICIPANT + eventNotice) após 3 inválidos. */
 function handleCompanyInvalid(args: {
 	participant: Participant;
 	config: StateMachineConfig;
+	reason: ValidationError;
 }): HandleResult {
-	const { participant, config } = args;
+	const { participant, config, reason } = args;
 	const newRetryCount = participant.retryCount + 1;
 
 	if (newRetryCount >= 3) {
@@ -412,7 +410,7 @@ function handleCompanyInvalid(args: {
 
 	return {
 		participantPatch: { retryCount: newRetryCount },
-		outbounds: [toTextAction(companyInvalid())],
+		outbounds: [toTextAction(companyInvalid(reason))],
 	};
 }
 

@@ -2,7 +2,6 @@ import { generateRaffleCode } from "@dashboard-leads-profills/api/whatsapp/code-
 import { codeGenerated } from "@dashboard-leads-profills/api/whatsapp/messages";
 import { checkWhatsappRateLimit } from "@dashboard-leads-profills/api/whatsapp/rate-limit";
 import {
-	sendImage,
 	sendInteractive,
 	sendText,
 } from "@dashboard-leads-profills/api/whatsapp/sender";
@@ -279,14 +278,6 @@ async function handleOutboundAction(
 			"interactive",
 			{ interactive: action.interactive }
 		);
-	} else if (action.kind === "image") {
-		await loggedSend(
-			waId,
-			() => sendImage(waId, action.link, action.caption),
-			participant,
-			"image",
-			{ link: action.link, caption: action.caption }
-		);
 	} else if (action.kind === "generateAndSendCode") {
 		if (participant === null) {
 			console.error(
@@ -323,28 +314,6 @@ async function handleOutboundAction(
 			);
 		} else {
 			const name = participant.name ?? "";
-			const company = participant.company ?? "";
-			const dateBR = new Date().toLocaleDateString("pt-BR");
-			const cardUrl = new URL(
-				"/api/whatsapp/code-card",
-				webEnv.NEXT_PUBLIC_BETTER_AUTH_URL
-			);
-			cardUrl.searchParams.set("code", raffleCode);
-			cardUrl.searchParams.set("name", name);
-			cardUrl.searchParams.set("company", company);
-			cardUrl.searchParams.set("date", dateBR);
-
-			// 1. Envia card como imagem (UX: cliente vê código imediatamente)
-			await loggedSend(
-				waId,
-				() =>
-					sendImage(waId, cardUrl.toString(), "🎫 Seu código de participação"),
-				participant,
-				"image",
-				{ link: cardUrl.toString(), raffleCode }
-			);
-
-			// 2. Envia texto com regras do sorteio
 			const codeMsgBody = codeGenerated({
 				name,
 				raffleCode,
