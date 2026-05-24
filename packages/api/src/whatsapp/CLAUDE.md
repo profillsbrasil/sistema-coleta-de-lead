@@ -20,6 +20,6 @@ Backend de captação via QR Code → WhatsApp. Isolado da coleta de leads dos v
 ## Envs
 
 `WHATSAPP_*` em `apps/web/.env` (lista canônica em `packages/env/src/server.ts`).
-Novas em Fase A: `WHATSAPP_REDIRECT_VENDOR_NAME`, `WHATSAPP_REDIRECT_VENDOR_PHONE`, `WHATSAPP_REDIRECT_EVENT_START`, `WHATSAPP_REDIRECT_EVENT_END`.
+Redirect/CTA: `WHATSAPP_REDIRECT_VENDOR_PHONE`, `WHATSAPP_REDIRECT_EVENT_START`, `WHATSAPP_REDIRECT_EVENT_END`. **Não existe env de nome de vendedor** — o número é o canal Profills; comunicação não cita pessoa.
 
 Stack / scripts gerais → `../../../../CLAUDE.md`.

@@ -18,7 +18,7 @@ interface InteractiveButton {
 	type: "reply";
 }
 
-interface InteractiveMessage {
+interface InteractiveButtonMessage {
 	interactive: {
 		type: "button";
 		header?: { type: "image"; image: { link: string } };
@@ -28,6 +28,22 @@ interface InteractiveMessage {
 	};
 	type: "interactive";
 }
+
+interface InteractiveCtaMessage {
+	interactive: {
+		type: "cta_url";
+		header?: { type: "image"; image: { link: string } };
+		body: { text: string };
+		footer?: { text: string };
+		action: {
+			name: "cta_url";
+			parameters: { display_text: string; url: string };
+		};
+	};
+	type: "interactive";
+}
+
+type InteractiveMessage = InteractiveButtonMessage | InteractiveCtaMessage;
 
 type BotMessage = TextMessage | InteractiveMessage;
 
@@ -46,8 +62,8 @@ function interactive(
 		header?: { type: "image"; image: { link: string } };
 		footer?: { text: string };
 	}
-): InteractiveMessage {
-	const interactivePayload: InteractiveMessage["interactive"] = {
+): InteractiveButtonMessage {
+	const interactivePayload: InteractiveButtonMessage["interactive"] = {
 		type: "button",
 		body: { text: bodyText },
 		action: {
@@ -55,6 +71,31 @@ function interactive(
 				type: "reply",
 				reply: { id: b.id, title: b.title },
 			})),
+		},
+	};
+	if (options?.header) {
+		interactivePayload.header = options.header;
+	}
+	if (options?.footer) {
+		interactivePayload.footer = options.footer;
+	}
+	return { type: "interactive", interactive: interactivePayload };
+}
+
+function interactiveCta(
+	bodyText: string,
+	cta: { displayText: string; url: string },
+	options?: {
+		header?: { type: "image"; image: { link: string } };
+		footer?: { text: string };
+	}
+): InteractiveCtaMessage {
+	const interactivePayload: InteractiveCtaMessage["interactive"] = {
+		type: "cta_url",
+		body: { text: bodyText },
+		action: {
+			name: "cta_url",
+			parameters: { display_text: cta.displayText, url: cta.url },
 		},
 	};
 	if (options?.header) {
@@ -134,16 +175,24 @@ export function codeGenerated({
 export function alreadyParticipated({
 	name,
 	raffleCode,
+	vendorPhone,
 }: {
 	name: string;
 	raffleCode: string;
-}): TextMessage {
-	return text(
+	vendorPhone: string;
+}): InteractiveCtaMessage {
+	const bodyText =
 		`Olá, *${name}*! Você já está inscrito.\n\n` +
-			`🎟️ Seu código: *${raffleCode}*\n\n` +
-			"📅 *Sorteio:* 05/06/2026\n\n" +
-			"A equipe Profills entrará em contato neste WhatsApp caso você seja sorteado."
-	);
+		`🎟️ Seu código: *${raffleCode}*\n\n` +
+		"📅 *Sorteio:* 05/06/2026\n\n" +
+		"A equipe Profills entrará em contato neste WhatsApp caso você seja sorteado.\n\n" +
+		"━━━━━━━━━━━━━━━━━━━\n\n" +
+		"Precisa de mais informações? Toque no botão abaixo para falar com a equipe Profills.";
+
+	return interactiveCta(bodyText, {
+		displayText: "Entrar em contato",
+		url: `https://wa.me/${vendorPhone}`,
+	});
 }
 
 
@@ -176,12 +225,10 @@ export function companyInvalid(): TextMessage {
 }
 
 export function redirect({
-	vendorName,
 	vendorPhone,
 	eventStart,
 	eventEnd,
 }: {
-	vendorName: string;
 	vendorPhone: string;
 	eventStart: string; // formato "DD/MM"
 	eventEnd: string; // formato "DD/MM"
@@ -192,7 +239,6 @@ export function redirect({
 			`nesta semana (*${eventStart} a ${eventEnd}*).\n\n` +
 			"Durante o evento, o atendimento comercial está " +
 			"temporariamente neste contato:\n\n" +
-			`📱 *${vendorName}*\n` +
 			`▸ wa.me/${vendorPhone}\n\n` +
 			"Voltamos ao atendimento normal neste número " +
 			"logo após o evento.\n\n" +
@@ -203,4 +249,10 @@ export function redirect({
 }
 
 // Exporta o tipo unificado para uso pelos módulos de envio
-export type { BotMessage, InteractiveMessage, TextMessage };
+export type {
+	BotMessage,
+	InteractiveButtonMessage,
+	InteractiveCtaMessage,
+	InteractiveMessage,
+	TextMessage,
+};

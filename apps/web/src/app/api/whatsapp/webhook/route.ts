@@ -32,9 +32,16 @@ import { and, eq, isNull } from "drizzle-orm";
 // ---------------------------------------------------------------------------
 
 function isRedirectInteractive(interactive: {
-	action: { buttons: Array<{ reply: { id: string } }> };
+	type: string;
+	action: unknown;
 }): boolean {
-	return interactive.action.buttons.some(
+	if (interactive.type !== "button") {
+		return false;
+	}
+	const action = interactive.action as {
+		buttons?: Array<{ reply: { id: string } }>;
+	};
+	return (action.buttons ?? []).some(
 		(b) => b.reply.id === "want_to_participate"
 	);
 }
@@ -179,7 +186,6 @@ async function processMessage(
 			raffleDate: webEnv.NEXT_PUBLIC_RAFFLE_DATE,
 			termsVersion: env.TERMS_VERSION,
 			welcomeImageUrl: webEnv.NEXT_PUBLIC_WHATSAPP_WELCOME_IMAGE_URL,
-			vendorName: env.WHATSAPP_REDIRECT_VENDOR_NAME,
 			vendorPhone: env.WHATSAPP_REDIRECT_VENDOR_PHONE,
 			eventStartBR: formatBR(env.WHATSAPP_REDIRECT_EVENT_START),
 			eventEndBR: formatBR(env.WHATSAPP_REDIRECT_EVENT_END),
