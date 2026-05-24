@@ -76,15 +76,6 @@ const STATE_OPTIONS: { value: ParticipantState | "ALL"; label: string }[] = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-function maskWaId(waId: string): string {
-	if (waId.length <= 8) {
-		return waId;
-	}
-	const first = waId.slice(0, 4);
-	const last = waId.slice(-4);
-	return `${first}***${last}`;
-}
-
 function normalizeWaId(waId: string): string {
 	return waId.replace(/\D/g, "");
 }
@@ -174,7 +165,7 @@ function ParticipantRow({ participant }: { participant: Participant }) {
 			<TableCell className="font-medium">{participant.name ?? "-"}</TableCell>
 			<TableCell>{participant.company ?? "-"}</TableCell>
 			<TableCell className="font-mono text-xs">
-				{participant.waId ? maskWaId(participant.waId) : "-"}
+				{participant.waId ?? "-"}
 			</TableCell>
 			<TableCell className="text-sm">
 				{formatDateTime(participant.createdAt)}
