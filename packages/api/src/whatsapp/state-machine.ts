@@ -14,12 +14,9 @@ import {
 	askName,
 	companyInvalid,
 	declined,
-	help,
 	invalidConsentRetry,
 	nameInvalid,
 	redirect,
-	reoffer,
-	status,
 	welcome,
 } from "./messages";
 import type { InboundMessage } from "./types";
@@ -49,6 +46,7 @@ export type ParticipantPatch = Partial<{
 	retryCount: number;
 	raffleCode: string;
 	redirectSentAt: Date | null;
+	redirectCount: number;
 }>;
 
 export type OutboundAction =
@@ -103,8 +101,6 @@ function normalize(s: string): string {
 
 const YES_RE = /^(aceito|sim|quero|ok)$/;
 const NO_RE = /^(nao|recusar|recuso|nao aceito)$/;
-const STATUS_RE = /^status$|^!status|^\/status/i;
-const HELP_RE = /^ajuda|^help|^\?/i;
 
 function isYes(normalized: string): boolean {
 	return YES_RE.test(normalized);
@@ -134,6 +130,55 @@ function isButtonReply(message: InboundMessage, id: string): boolean {
 		m.interactive.type === "button_reply" &&
 		m.interactive.button_reply.id === id
 	);
+}
+
+/** Retorna a action de redirect para reuso nos handlers. */
+function redirectAction(config: StateMachineConfig): OutboundAction {
+	return toInteractiveAction(
+		redirect({
+			vendorName: config.vendorName,
+			vendorPhone: config.vendorPhone,
+			eventStart: config.eventStartBR,
+			eventEnd: config.eventEndBR,
+		})
+	);
+}
+
+/**
+ * Verifica se o participante atingiu o limite de redirects (fix #12).
+ * Quando redirectCount >= 3, o bot fica em silêncio permanente.
+ */
+function hasExhaustedRedirects(participant: Participant): boolean {
+	return (participant.redirectCount ?? 0) >= 3;
+}
+
+/**
+ * Verifica se o anti-loop de cooldown está ativo.
+ */
+function isWithinCooldown(
+	participant: Participant,
+	cooldownMs: number
+): boolean {
+	const lastSent = participant.redirectSentAt;
+	return !!lastSent && Date.now() - lastSent.getTime() < cooldownMs;
+}
+
+// ---------------------------------------------------------------------------
+// TTL check (fix #10 + #13)
+// ---------------------------------------------------------------------------
+
+const INTERMEDIATE_STATES: ParticipantState[] = [
+	"AWAITING_CONSENT",
+	"AWAITING_NAME",
+	"AWAITING_COMPANY",
+];
+
+const TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+function isStaleIntermediate(participant: Participant): boolean {
+	const state = participant.state as ParticipantState;
+	if (!INTERMEDIATE_STATES.includes(state)) return false;
+	return Date.now() - participant.updatedAt.getTime() > TTL_MS;
 }
 
 // ---------------------------------------------------------------------------
@@ -187,16 +232,7 @@ function handleNew(args: {
 	return {
 		participantPatch: null,
 		createParticipant: { waId, state: "NON_PARTICIPANT" },
-		outbounds: [
-			toInteractiveAction(
-				redirect({
-					vendorName: config.vendorName,
-					vendorPhone: config.vendorPhone,
-					eventStart: config.eventStartBR,
-					eventEnd: config.eventEndBR,
-				})
-			),
-		],
+		outbounds: [redirectAction(config)],
 	};
 }
 
@@ -241,10 +277,21 @@ function handleAwaitingConsent(args: {
 	// Invalid — increment retry counter
 	const newRetryCount = participant.retryCount + 1;
 
+	// Fix #9: após 3 tentativas inválidas → NON_PARTICIPANT + redirect (não silêncio)
 	if (newRetryCount >= 3) {
+		// Checar limite de redirect antes de enviar (fix #12)
+		if (hasExhaustedRedirects(participant)) {
+			return {
+				participantPatch: { retryCount: newRetryCount, state: "NON_PARTICIPANT" },
+				outbounds: [],
+			};
+		}
 		return {
-			participantPatch: { retryCount: newRetryCount },
-			outbounds: [], // silent timeout
+			participantPatch: {
+				retryCount: newRetryCount,
+				state: "NON_PARTICIPANT",
+			},
+			outbounds: [redirectAction(config)],
 		};
 	}
 
@@ -254,63 +301,127 @@ function handleAwaitingConsent(args: {
 	};
 }
 
-function handleAwaitingName(args: { message: InboundMessage }): HandleResult {
-	const { message } = args;
+function handleAwaitingName(args: {
+	participant: Participant;
+	message: InboundMessage;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, message, config } = args;
 	const body = getTextBody(message);
 
+	// Fix #14: mídia (não-texto) conta retry
 	if (body === null) {
-		return {
-			participantPatch: null,
-			outbounds: [toTextAction(nameInvalid())],
-		};
+		return handleNameInvalid({ participant, config });
 	}
 
 	const trimmed = body.trim();
 
 	if (trimmed.length < 2 || trimmed.length > 80) {
-		return {
-			participantPatch: null,
-			outbounds: [toTextAction(nameInvalid())],
-		};
+		return handleNameInvalid({ participant, config });
 	}
 
 	return {
 		participantPatch: {
 			state: "AWAITING_COMPANY",
 			name: trimmed,
+			retryCount: 0,
 		},
 		outbounds: [toTextAction(askCompany({ name: trimmed }))],
 	};
 }
 
-function handleAwaitingCompany(args: {
-	message: InboundMessage;
+/** Helper para inválido em AWAITING_NAME com retry e fallback (fix #14). */
+function handleNameInvalid(args: {
+	participant: Participant;
+	config: StateMachineConfig;
 }): HandleResult {
-	const { message } = args;
+	const { participant, config } = args;
+	const newRetryCount = participant.retryCount + 1;
+
+	if (newRetryCount >= 3) {
+		if (hasExhaustedRedirects(participant)) {
+			return {
+				participantPatch: {
+					retryCount: newRetryCount,
+					state: "NON_PARTICIPANT",
+				},
+				outbounds: [],
+			};
+		}
+		return {
+			participantPatch: {
+				retryCount: newRetryCount,
+				state: "NON_PARTICIPANT",
+			},
+			outbounds: [redirectAction(config)],
+		};
+	}
+
+	return {
+		participantPatch: { retryCount: newRetryCount },
+		outbounds: [toTextAction(nameInvalid())],
+	};
+}
+
+function handleAwaitingCompany(args: {
+	participant: Participant;
+	message: InboundMessage;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, message, config } = args;
 	const body = getTextBody(message);
 
+	// Fix #14: mídia (não-texto) conta retry
 	if (body === null) {
-		return {
-			participantPatch: null,
-			outbounds: [toTextAction(companyInvalid())],
-		};
+		return handleCompanyInvalid({ participant, config });
 	}
 
 	const trimmed = body.trim();
 
 	if (trimmed.length < 1 || trimmed.length > 80) {
-		return {
-			participantPatch: null,
-			outbounds: [toTextAction(companyInvalid())],
-		};
+		return handleCompanyInvalid({ participant, config });
 	}
 
 	return {
 		participantPatch: {
 			state: "COMPLETED",
 			company: trimmed,
+			retryCount: 0,
 		},
 		outbounds: [{ kind: "generateAndSendCode" }],
+	};
+}
+
+/** Helper para inválido em AWAITING_COMPANY com retry e fallback (fix #14). */
+function handleCompanyInvalid(args: {
+	participant: Participant;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, config } = args;
+	const newRetryCount = participant.retryCount + 1;
+
+	if (newRetryCount >= 3) {
+		if (hasExhaustedRedirects(participant)) {
+			return {
+				participantPatch: {
+					retryCount: newRetryCount,
+					state: "NON_PARTICIPANT",
+				},
+				outbounds: [],
+			};
+		}
+		return {
+			participantPatch: {
+				retryCount: newRetryCount,
+				state: "NON_PARTICIPANT",
+			},
+			outbounds: [redirectAction(config)],
+		};
+	}
+
+	return {
+		participantPatch: { retryCount: newRetryCount },
+		outbounds: [toTextAction(companyInvalid())],
 	};
 }
 
@@ -392,28 +503,20 @@ function handleNonParticipant(args: {
 		};
 	}
 
+	// Fix #12: limite de 3 redirects — silêncio permanente
+	if (hasExhaustedRedirects(participant)) {
+		return { participantPatch: null, outbounds: [] };
+	}
+
 	// Outra mensagem: aplica anti-loop (4h cooldown padrão)
 	const cooldownMs = config.redirectCooldownMs ?? 4 * 60 * 60 * 1000;
-	const lastSent = participant.redirectSentAt;
-	if (lastSent && Date.now() - lastSent.getTime() < cooldownMs) {
-		return {
-			participantPatch: null,
-			outbounds: [],
-		};
+	if (isWithinCooldown(participant, cooldownMs)) {
+		return { participantPatch: null, outbounds: [] };
 	}
 
 	return {
-		participantPatch: null, // redirectSentAt setado pelo webhook após enviar
-		outbounds: [
-			toInteractiveAction(
-				redirect({
-					vendorName: config.vendorName,
-					vendorPhone: config.vendorPhone,
-					eventStart: config.eventStartBR,
-					eventEnd: config.eventEndBR,
-				})
-			),
-		],
+		participantPatch: null, // redirectSentAt e redirectCount setados pelo webhook após enviar
+		outbounds: [redirectAction(config)],
 	};
 }
 
@@ -421,30 +524,9 @@ function handleCompleted(args: {
 	participant: Participant;
 	message: InboundMessage;
 }): HandleResult {
-	const { participant, message } = args;
-	const body = getTextBody(message);
+	const { participant } = args;
 
-	if (body !== null) {
-		const trimmed = body.trim();
-
-		if (STATUS_RE.test(trimmed)) {
-			return {
-				participantPatch: null,
-				outbounds: [
-					toTextAction(status({ raffleCode: participant.raffleCode ?? "" })),
-				],
-			};
-		}
-
-		if (HELP_RE.test(trimmed)) {
-			return {
-				participantPatch: null,
-				outbounds: [toTextAction(help())],
-			};
-		}
-	}
-
-	// Anything else
+	// Qualquer mensagem → alreadyParticipated (status e help removidos)
 	return {
 		participantPatch: null,
 		outbounds: [
@@ -464,43 +546,43 @@ function handleDeclined(args: {
 	config: StateMachineConfig;
 }): HandleResult {
 	const { participant, message, config } = args;
-	const body = getTextBody(message);
 
-	// Keyword OR botão "Participar sorteio" → reoferta
-	if (
-		(body !== null && isSorteioKeyword(body)) ||
-		isButtonReply(message, "want_to_participate")
-	) {
+	// Fix #11: botão "Participar sorteio" → AWAITING_CONSENT + welcome (não reoffer)
+	if (isButtonReply(message, "want_to_participate")) {
 		return {
 			participantPatch: {
 				state: "AWAITING_CONSENT",
 				declinedAt: null,
 				retryCount: 0,
 			},
-			outbounds: [toInteractiveAction(reoffer())],
+			outbounds: [
+				toInteractiveAction(
+					welcome({
+						eventName: config.eventName,
+						imageUrl: config.welcomeImageUrl,
+					})
+				),
+			],
 		};
 	}
 
-	// Outra mensagem: silêncio (cliente já optou por não participar)
-	// Aplicar anti-loop opcional via redirectSentAt
+	// Fix #11: keyword ou qualquer outra mensagem → redirect com cooldown + limite
+	// (keyword não mais faz reoffer)
+
+	// Fix #12: limite de 3 redirects — silêncio permanente
+	if (hasExhaustedRedirects(participant)) {
+		return { participantPatch: null, outbounds: [] };
+	}
+
+	// Anti-loop cooldown
 	const cooldownMs = config.redirectCooldownMs ?? 4 * 60 * 60 * 1000;
-	const lastSent = participant.redirectSentAt;
-	if (lastSent && Date.now() - lastSent.getTime() < cooldownMs) {
+	if (isWithinCooldown(participant, cooldownMs)) {
 		return { participantPatch: null, outbounds: [] };
 	}
 
 	return {
 		participantPatch: null,
-		outbounds: [
-			toInteractiveAction(
-				redirect({
-					vendorName: config.vendorName,
-					vendorPhone: config.vendorPhone,
-					eventStart: config.eventStartBR,
-					eventEnd: config.eventEndBR,
-				})
-			),
-		],
+		outbounds: [redirectAction(config)],
 	};
 }
 
@@ -519,6 +601,11 @@ export function handleInbound(args: {
 		return handleNew({ message, config });
 	}
 
+	// Fix #10 + #13: TTL 24h em estados intermediários → tratar como NEW
+	if (isStaleIntermediate(participant)) {
+		return handleNew({ message, config });
+	}
+
 	const state = participant.state as ParticipantState;
 
 	switch (state) {
@@ -532,10 +619,10 @@ export function handleInbound(args: {
 			return handleAwaitingConsent({ participant, message, config });
 
 		case "AWAITING_NAME":
-			return handleAwaitingName({ message });
+			return handleAwaitingName({ participant, message, config });
 
 		case "AWAITING_COMPANY":
-			return handleAwaitingCompany({ message });
+			return handleAwaitingCompany({ participant, message, config });
 
 		case "COMPLETED":
 			return handleCompleted({ participant, message });

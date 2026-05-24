@@ -231,14 +231,17 @@ async function processMessage(
 			await handleOutboundAction(action, waId, participant, config);
 		}
 
-		// 9. Se enviamos redirect (NON_PARTICIPANT ou DECLINED), registra timestamp
+		// 9. Se enviamos redirect (NON_PARTICIPANT ou DECLINED), registra timestamp e incrementa contador
 		const sentRedirect = result.outbounds.some(
 			(a) => a.kind === "interactive" && isRedirectInteractive(a.interactive)
 		);
 		if (sentRedirect && participant !== null) {
 			await db
 				.update(participants)
-				.set({ redirectSentAt: new Date() })
+				.set({
+					redirectSentAt: new Date(),
+					redirectCount: (participant.redirectCount ?? 0) + 1,
+				})
 				.where(eq(participants.id, participant.id));
 		}
 
