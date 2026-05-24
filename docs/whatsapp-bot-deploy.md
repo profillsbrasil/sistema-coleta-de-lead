@@ -23,6 +23,7 @@ NEXT_PUBLIC_EVENT_NAME=Sorteio Profills Fispal 2026
 NEXT_PUBLIC_EVENT_WHATSAPP_NUMBER=<número Profills E.164 sem +>
 NEXT_PUBLIC_RAFFLE_DATE=05/06/2026
 NEXT_PUBLIC_WHATSAPP_WELCOME_IMAGE_URL=https://lead.profills.com/whatsapp/banner-sorteio.png
+NEXT_PUBLIC_WHATSAPP_LOGO_URL=https://lead.profills.com/whatsapp/logo.png
 NEXT_PUBLIC_BETTER_AUTH_URL=https://lead.profills.com
 ```
 
@@ -144,6 +145,7 @@ WHATSAPP_REDIRECT_VENDOR_PHONE=5555996913627
 WHATSAPP_REDIRECT_EVENT_START=2026-05-26
 WHATSAPP_REDIRECT_EVENT_END=2026-05-29
 NEXT_PUBLIC_RAFFLE_DATE=05/06/2026
+NEXT_PUBLIC_WHATSAPP_LOGO_URL=https://lead.profills.com/whatsapp/logo.png
 ```
 
 > Não há env para nome do vendedor — o número é o canal profissional da Profills e a comunicação não cita pessoa específica.

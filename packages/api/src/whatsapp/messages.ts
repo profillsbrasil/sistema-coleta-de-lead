@@ -112,11 +112,6 @@ const CONSENT_BUTTONS = [
 	{ id: "decline", title: "Nao aceito" },
 ];
 
-const REDIRECT_BUTTONS = [
-	{ id: "want_to_participate", title: "Participar sorteio" },
-	{ id: "already_registered", title: "Ja me cadastrei" },
-];
-
 // ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
@@ -224,27 +219,33 @@ export function companyInvalid(): TextMessage {
 	);
 }
 
-export function redirect({
+export function eventNotice({
 	vendorPhone,
 	eventStart,
 	eventEnd,
+	logoUrl,
 }: {
 	vendorPhone: string;
 	eventStart: string; // formato "DD/MM"
 	eventEnd: string; // formato "DD/MM"
-}): InteractiveMessage {
-	return interactive(
-		"👋 Olá!\n\n" +
-			"A *Profills* está participando da *Fispal 2026* " +
-			`nesta semana (*${eventStart} a ${eventEnd}*).\n\n` +
-			"Durante o evento, o atendimento comercial está " +
-			"temporariamente neste contato:\n\n" +
-			`▸ wa.me/${vendorPhone}\n\n` +
-			"Voltamos ao atendimento normal neste número " +
-			"logo após o evento.\n\n" +
-			"━━━━━━━━━━━━━━━━━━━\n\n" +
-			"*Veio pelo sorteio da Profills no Fispal?*",
-		REDIRECT_BUTTONS
+	logoUrl?: string;
+}): InteractiveCtaMessage {
+	const bodyText =
+		"Olá! 👋\n\n" +
+		"Obrigado por entrar em contato com a *Profills*.\n\n" +
+		`Esta semana (*${eventStart} a ${eventEnd}*) nossa equipe comercial está participando da *Fispal 2026* em São Paulo. ` +
+		"Para um atendimento ágil, toque no botão abaixo e fale com nosso time agora mesmo.\n\n" +
+		"Após o evento voltamos ao atendimento normal por este número.";
+
+	return interactiveCta(
+		bodyText,
+		{
+			displayText: "Falar com a equipe",
+			url: `https://wa.me/${vendorPhone}`,
+		},
+		logoUrl
+			? { header: { type: "image", image: { link: logoUrl } } }
+			: undefined
 	);
 }
 

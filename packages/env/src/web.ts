@@ -10,6 +10,7 @@ export const env = createEnv({
 		NEXT_PUBLIC_EVENT_NAME: z.string().min(1).optional(),
 		NEXT_PUBLIC_EVENT_WHATSAPP_NUMBER: z.string().min(1).optional(),
 		NEXT_PUBLIC_RAFFLE_DATE: z.string().min(1).optional(),
+		NEXT_PUBLIC_WHATSAPP_LOGO_URL: z.string().url().optional(),
 		NEXT_PUBLIC_WHATSAPP_WELCOME_IMAGE_URL: z.string().url().optional(),
 	},
 	runtimeEnv: {
@@ -21,6 +22,7 @@ export const env = createEnv({
 		NEXT_PUBLIC_EVENT_WHATSAPP_NUMBER:
 			process.env.NEXT_PUBLIC_EVENT_WHATSAPP_NUMBER,
 		NEXT_PUBLIC_RAFFLE_DATE: process.env.NEXT_PUBLIC_RAFFLE_DATE,
+		NEXT_PUBLIC_WHATSAPP_LOGO_URL: process.env.NEXT_PUBLIC_WHATSAPP_LOGO_URL,
 		NEXT_PUBLIC_WHATSAPP_WELCOME_IMAGE_URL:
 			process.env.NEXT_PUBLIC_WHATSAPP_WELCOME_IMAGE_URL,
 	},

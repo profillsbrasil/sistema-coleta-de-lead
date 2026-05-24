@@ -28,25 +28,6 @@ import { env as webEnv } from "@dashboard-leads-profills/env/web";
 import { and, eq, isNull } from "drizzle-orm";
 
 // ---------------------------------------------------------------------------
-// isRedirectInteractive — detecta se o outbound interativo é um redirect
-// ---------------------------------------------------------------------------
-
-function isRedirectInteractive(interactive: {
-	type: string;
-	action: unknown;
-}): boolean {
-	if (interactive.type !== "button") {
-		return false;
-	}
-	const action = interactive.action as {
-		buttons?: Array<{ reply: { id: string } }>;
-	};
-	return (action.buttons ?? []).some(
-		(b) => b.reply.id === "want_to_participate"
-	);
-}
-
-// ---------------------------------------------------------------------------
 // formatBR — converte ISO date "YYYY-MM-DD" para "DD/MM"
 // ---------------------------------------------------------------------------
 
@@ -186,6 +167,7 @@ async function processMessage(
 			raffleDate: webEnv.NEXT_PUBLIC_RAFFLE_DATE,
 			termsVersion: env.TERMS_VERSION,
 			welcomeImageUrl: webEnv.NEXT_PUBLIC_WHATSAPP_WELCOME_IMAGE_URL,
+			logoUrl: webEnv.NEXT_PUBLIC_WHATSAPP_LOGO_URL,
 			vendorPhone: env.WHATSAPP_REDIRECT_VENDOR_PHONE,
 			eventStartBR: formatBR(env.WHATSAPP_REDIRECT_EVENT_START),
 			eventEndBR: formatBR(env.WHATSAPP_REDIRECT_EVENT_END),
@@ -237,11 +219,8 @@ async function processMessage(
 			await handleOutboundAction(action, waId, participant, config);
 		}
 
-		// 9. Se enviamos redirect (NON_PARTICIPANT ou DECLINED), registra timestamp e incrementa contador
-		const sentRedirect = result.outbounds.some(
-			(a) => a.kind === "interactive" && isRedirectInteractive(a.interactive)
-		);
-		if (sentRedirect && participant !== null) {
+		// 9. Se enviamos eventNotice, registra timestamp e incrementa contador
+		if (result.wasEventNotice && participant !== null) {
 			await db
 				.update(participants)
 				.set({

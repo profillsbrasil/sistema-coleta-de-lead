@@ -13,13 +13,20 @@ Backend de captação via QR Code → WhatsApp. Isolado da coleta de leads dos v
 
 ## States e comportamento
 
-- **NON_PARTICIPANT:** cliente enviou mensagem não-keyword na primeira vez. Recebe redirect com botões de sorteio. Anti-loop via `redirect_sent_at` (cooldown 4h default). Keyword ou botão `want_to_participate` faz transição para `AWAITING_CONSENT`.
-- **DECLINED + mensagem não-keyword:** envia redirect (não reoffer). Reoffer só com keyword ou botão `want_to_participate`.
-- **`redirect_sent_at`:** setado pelo webhook (`route.ts`) após enviar outbound redirect — a state machine retorna `participantPatch: null` nesse caso; o webhook detecta pelo botão `want_to_participate` na resposta.
+- **Princípio: sorteio é exceção, não regra.** Cliente que entra em contato sem citar keyword (`sorteio`/`participar`) recebe `eventNotice` — mensagem de atendimento focada em "fale com a equipe", botão CTA URL nativo pra `wa.me/<vendor>`. **Não menciona sorteio.**
+- **Fluxo do sorteio entra apenas via keyword** (`sorteio` ou `participar`, normalizado sem acento) ou via QR Code (texto pré-preenchido contém keyword).
+- **NON_PARTICIPANT:** cliente comum (não-keyword na primeira interação). Recebe `eventNotice`. Anti-loop via `redirect_sent_at` (cooldown 4h default) + limite total de 3 envios (`redirect_count`). Após 3 envios entra em silêncio permanente. Keyword reabre fluxo do sorteio.
+- **DECLINED + keyword:** reabre fluxo (cliente mudou de ideia → AWAITING_CONSENT + welcome).
+- **DECLINED + não-keyword:** mesma lógica de NON_PARTICIPANT (eventNotice com cooldown + limite).
+- **COMPLETED + qualquer mensagem:** responde `alreadyParticipated` (já tem botão CTA URL pra contato).
+- **`wasEventNotice` no HandleResult:** state machine sinaliza ao webhook quando enviou eventNotice. Webhook usa esse flag pra setar `redirectSentAt` + incrementar `redirectCount`. Coluna mantém nome `redirect_*` por compatibilidade com schema antigo.
+- **Botões removidos:** `want_to_participate` / `already_registered` não existem mais. Quem veio pelo sorteio digita keyword OU usa QR (que injeta keyword).
 
 ## Envs
 
 `WHATSAPP_*` em `apps/web/.env` (lista canônica em `packages/env/src/server.ts`).
-Redirect/CTA: `WHATSAPP_REDIRECT_VENDOR_PHONE`, `WHATSAPP_REDIRECT_EVENT_START`, `WHATSAPP_REDIRECT_EVENT_END`. **Não existe env de nome de vendedor** — o número é o canal Profills; comunicação não cita pessoa.
+- `WHATSAPP_REDIRECT_VENDOR_PHONE`, `WHATSAPP_REDIRECT_EVENT_START/END` — usados pelo `eventNotice`. **Não existe env de nome de vendedor** — o número é o canal Profills; comunicação não cita pessoa.
+- `NEXT_PUBLIC_WHATSAPP_LOGO_URL` — URL pública do logo Profills usada como header de imagem do `eventNotice` (opcional; sem ela a mensagem sai sem header).
+- `NEXT_PUBLIC_WHATSAPP_WELCOME_IMAGE_URL` — banner do `welcome` (mensagem que abre o fluxo do sorteio).
 
 Stack / scripts gerais → `../../../../CLAUDE.md`.

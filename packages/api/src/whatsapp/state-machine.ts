@@ -14,9 +14,9 @@ import {
 	askName,
 	companyInvalid,
 	declined,
+	eventNotice,
 	invalidConsentRetry,
 	nameInvalid,
-	redirect,
 	welcome,
 } from "./messages";
 import type { InboundMessage } from "./types";
@@ -59,6 +59,7 @@ export interface StateMachineConfig {
 	eventEndBR: string; // "29/05"
 	eventName: string;
 	eventStartBR: string; // "26/05"
+	logoUrl?: string; // header de imagem do eventNotice (logo Profills)
 	raffleDate?: string;
 	redirectCooldownMs?: number; // default 4h
 	termsVersion: string;
@@ -70,6 +71,12 @@ export interface HandleResult {
 	createParticipant?: { waId: string; state: ParticipantState };
 	outbounds: OutboundAction[];
 	participantPatch: ParticipantPatch | null;
+	/**
+	 * Sinaliza ao webhook que o outbound enviado foi um eventNotice
+	 * (mensagem de atendimento). O webhook usa pra setar redirectSentAt
+	 * e incrementar redirectCount.
+	 */
+	wasEventNotice?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -131,22 +138,24 @@ function isButtonReply(message: InboundMessage, id: string): boolean {
 	);
 }
 
-/** Retorna a action de redirect para reuso nos handlers. */
-function redirectAction(config: StateMachineConfig): OutboundAction {
+/** Retorna a action de eventNotice (atendimento) para reuso nos handlers. */
+function eventNoticeAction(config: StateMachineConfig): OutboundAction {
 	return toInteractiveAction(
-		redirect({
+		eventNotice({
 			vendorPhone: config.vendorPhone,
 			eventStart: config.eventStartBR,
 			eventEnd: config.eventEndBR,
+			logoUrl: config.logoUrl,
 		})
 	);
 }
 
 /**
- * Verifica se o participante atingiu o limite de redirects (fix #12).
- * Quando redirectCount >= 3, o bot fica em silêncio permanente.
+ * Verifica se o participante atingiu o limite de envios de eventNotice.
+ * Quando redirectCount >= 3, o bot fica em silêncio permanente para esse waId.
+ * O nome da coluna mantém "redirect" por compatibilidade com schema antigo.
  */
-function hasExhaustedRedirects(participant: Participant): boolean {
+function hasExhaustedNotices(participant: Participant): boolean {
 	return (participant.redirectCount ?? 0) >= 3;
 }
 
@@ -191,25 +200,6 @@ function handleNew(args: {
 	const waId = message.from;
 	const body = getTextBody(message);
 
-	// Botão de redirect: cliente clicou "Participar sorteio" ou "Ja me cadastrei" sem ter participant
-	if (
-		isButtonReply(message, "want_to_participate") ||
-		isButtonReply(message, "already_registered")
-	) {
-		return {
-			participantPatch: null,
-			createParticipant: { waId, state: "AWAITING_CONSENT" },
-			outbounds: [
-				toInteractiveAction(
-					welcome({
-						eventName: config.eventName,
-						imageUrl: config.welcomeImageUrl,
-					})
-				),
-			],
-		};
-	}
-
 	// Keyword detectada → fluxo do sorteio
 	if (body !== null && isSorteioKeyword(body)) {
 		return {
@@ -226,11 +216,12 @@ function handleNew(args: {
 		};
 	}
 
-	// Não-keyword: cria participant NON_PARTICIPANT e envia redirect
+	// Cliente comum: cria participant NON_PARTICIPANT e envia eventNotice (atendimento).
 	return {
 		participantPatch: null,
 		createParticipant: { waId, state: "NON_PARTICIPANT" },
-		outbounds: [redirectAction(config)],
+		outbounds: [eventNoticeAction(config)],
+		wasEventNotice: true,
 	};
 }
 
@@ -275,10 +266,9 @@ function handleAwaitingConsent(args: {
 	// Invalid — increment retry counter
 	const newRetryCount = participant.retryCount + 1;
 
-	// Fix #9: após 3 tentativas inválidas → NON_PARTICIPANT + redirect (não silêncio)
+	// Fix #9: após 3 tentativas inválidas → NON_PARTICIPANT + eventNotice (não silêncio)
 	if (newRetryCount >= 3) {
-		// Checar limite de redirect antes de enviar (fix #12)
-		if (hasExhaustedRedirects(participant)) {
+		if (hasExhaustedNotices(participant)) {
 			return {
 				participantPatch: { retryCount: newRetryCount, state: "NON_PARTICIPANT" },
 				outbounds: [],
@@ -289,7 +279,8 @@ function handleAwaitingConsent(args: {
 				retryCount: newRetryCount,
 				state: "NON_PARTICIPANT",
 			},
-			outbounds: [redirectAction(config)],
+			outbounds: [eventNoticeAction(config)],
+			wasEventNotice: true,
 		};
 	}
 
@@ -337,7 +328,7 @@ function handleNameInvalid(args: {
 	const newRetryCount = participant.retryCount + 1;
 
 	if (newRetryCount >= 3) {
-		if (hasExhaustedRedirects(participant)) {
+		if (hasExhaustedNotices(participant)) {
 			return {
 				participantPatch: {
 					retryCount: newRetryCount,
@@ -351,7 +342,8 @@ function handleNameInvalid(args: {
 				retryCount: newRetryCount,
 				state: "NON_PARTICIPANT",
 			},
-			outbounds: [redirectAction(config)],
+			outbounds: [eventNoticeAction(config)],
+			wasEventNotice: true,
 		};
 	}
 
@@ -399,7 +391,7 @@ function handleCompanyInvalid(args: {
 	const newRetryCount = participant.retryCount + 1;
 
 	if (newRetryCount >= 3) {
-		if (hasExhaustedRedirects(participant)) {
+		if (hasExhaustedNotices(participant)) {
 			return {
 				participantPatch: {
 					retryCount: newRetryCount,
@@ -413,7 +405,8 @@ function handleCompanyInvalid(args: {
 				retryCount: newRetryCount,
 				state: "NON_PARTICIPANT",
 			},
-			outbounds: [redirectAction(config)],
+			outbounds: [eventNoticeAction(config)],
+			wasEventNotice: true,
 		};
 	}
 
@@ -431,59 +424,7 @@ function handleNonParticipant(args: {
 	const { participant, message, config } = args;
 	const body = getTextBody(message);
 
-	// Botão "Participar sorteio" → entra no fluxo
-	if (isButtonReply(message, "want_to_participate")) {
-		return {
-			participantPatch: {
-				state: "AWAITING_CONSENT",
-				retryCount: 0,
-				redirectSentAt: null,
-			},
-			outbounds: [
-				toInteractiveAction(
-					welcome({
-						eventName: config.eventName,
-						imageUrl: config.welcomeImageUrl,
-					})
-				),
-			],
-		};
-	}
-
-	// Botão "Ja me cadastrei" → checa se tem código; se não tem, entra no fluxo
-	if (isButtonReply(message, "already_registered")) {
-		if (participant.raffleCode && participant.name) {
-			return {
-				participantPatch: null,
-				outbounds: [
-					toInteractiveAction(
-						alreadyParticipated({
-							name: participant.name,
-							raffleCode: participant.raffleCode,
-							vendorPhone: config.vendorPhone,
-						})
-					),
-				],
-			};
-		}
-		return {
-			participantPatch: {
-				state: "AWAITING_CONSENT",
-				retryCount: 0,
-				redirectSentAt: null,
-			},
-			outbounds: [
-				toInteractiveAction(
-					welcome({
-						eventName: config.eventName,
-						imageUrl: config.welcomeImageUrl,
-					})
-				),
-			],
-		};
-	}
-
-	// Keyword detectada → entra no fluxo
+	// Keyword detectada → entra no fluxo do sorteio
 	if (body !== null && isSorteioKeyword(body)) {
 		return {
 			participantPatch: {
@@ -502,20 +443,21 @@ function handleNonParticipant(args: {
 		};
 	}
 
-	// Fix #12: limite de 3 redirects — silêncio permanente
-	if (hasExhaustedRedirects(participant)) {
+	// Limite de 3 envios — silêncio permanente para esse waId
+	if (hasExhaustedNotices(participant)) {
 		return { participantPatch: null, outbounds: [] };
 	}
 
-	// Outra mensagem: aplica anti-loop (4h cooldown padrão)
+	// Anti-loop: cooldown 4h padrão entre envios
 	const cooldownMs = config.redirectCooldownMs ?? 4 * 60 * 60 * 1000;
 	if (isWithinCooldown(participant, cooldownMs)) {
 		return { participantPatch: null, outbounds: [] };
 	}
 
 	return {
-		participantPatch: null, // redirectSentAt e redirectCount setados pelo webhook após enviar
-		outbounds: [redirectAction(config)],
+		participantPatch: null, // webhook seta redirectSentAt/Count via wasEventNotice
+		outbounds: [eventNoticeAction(config)],
+		wasEventNotice: true,
 	};
 }
 
@@ -547,14 +489,16 @@ function handleDeclined(args: {
 	config: StateMachineConfig;
 }): HandleResult {
 	const { participant, message, config } = args;
+	const body = getTextBody(message);
 
-	// Fix #11: botão "Participar sorteio" → AWAITING_CONSENT + welcome (não reoffer)
-	if (isButtonReply(message, "want_to_participate")) {
+	// Keyword → cliente mudou de ideia, reabre fluxo do sorteio
+	if (body !== null && isSorteioKeyword(body)) {
 		return {
 			participantPatch: {
 				state: "AWAITING_CONSENT",
 				declinedAt: null,
 				retryCount: 0,
+				redirectSentAt: null,
 			},
 			outbounds: [
 				toInteractiveAction(
@@ -567,11 +511,8 @@ function handleDeclined(args: {
 		};
 	}
 
-	// Fix #11: keyword ou qualquer outra mensagem → redirect com cooldown + limite
-	// (keyword não mais faz reoffer)
-
-	// Fix #12: limite de 3 redirects — silêncio permanente
-	if (hasExhaustedRedirects(participant)) {
+	// Limite de 3 envios — silêncio permanente
+	if (hasExhaustedNotices(participant)) {
 		return { participantPatch: null, outbounds: [] };
 	}
 
@@ -583,7 +524,8 @@ function handleDeclined(args: {
 
 	return {
 		participantPatch: null,
-		outbounds: [redirectAction(config)],
+		outbounds: [eventNoticeAction(config)],
+		wasEventNotice: true,
 	};
 }
 
