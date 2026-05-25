@@ -17,8 +17,12 @@ import {
 	eventNotice,
 	invalidConsentRetry,
 	nameInvalid,
-	tasksConfirm,
-	tasksList,
+	TASK_STEP_BUTTON_IDS,
+	taskNudge,
+	taskPost,
+	taskStep,
+	taskStepConfirm,
+	tasksIntro,
 	welcome,
 } from "./messages";
 import type { InboundMessage } from "./types";
@@ -35,7 +39,11 @@ export type ParticipantState =
 	| "AWAITING_CONSENT"
 	| "AWAITING_NAME"
 	| "AWAITING_COMPANY"
-	| "AWAITING_TASKS"
+	| "AWAITING_TASKS" // legacy — leads pré-fluxo guiado caem em handleAwaitingTasks
+	| "AWAITING_TASK_1"
+	| "AWAITING_TASK_2"
+	| "AWAITING_TASK_3"
+	| "AWAITING_TASK_POST"
 	| "COMPLETED"
 	| "DECLINED";
 
@@ -203,6 +211,10 @@ const INTERMEDIATE_STATES: ParticipantState[] = [
 	"AWAITING_NAME",
 	"AWAITING_COMPANY",
 	"AWAITING_TASKS",
+	"AWAITING_TASK_1",
+	"AWAITING_TASK_2",
+	"AWAITING_TASK_3",
+	"AWAITING_TASK_POST",
 ];
 
 const TTL_MS = 24 * 60 * 60 * 1000; // 24h
@@ -406,20 +418,15 @@ function handleAwaitingCompany(args: {
 
 	return {
 		participantPatch: {
-			state: "AWAITING_TASKS",
+			state: "AWAITING_TASK_1",
 			company: result.value,
 			retryCount: 0,
+			taskProgress: { ...EMPTY_TASK_PROGRESS },
 		},
-		outbounds: [
-			toInteractiveAction(
-				tasksList({
-					name: participant.name ?? "",
-					profiles: config.instagramProfiles,
-					officialPostUrl: config.officialPostUrl,
-				})
-			),
-			toInteractiveAction(tasksConfirm()),
-		],
+		outbounds: openTaskFlowOutbounds({
+			name: participant.name ?? "",
+			profiles: config.instagramProfiles,
+		}),
 	};
 }
 
@@ -498,6 +505,176 @@ function handleNonParticipant(args: {
 	};
 }
 
+// ---------------------------------------------------------------------------
+// Fluxo guiado de tarefas (Opção B): 4 substates lineares.
+// AWAITING_TASK_1 → _2 → _3 → _POST → COMPLETED
+// ---------------------------------------------------------------------------
+
+/** Flavor variável por índice — vira a linha "intro" do taskStep. */
+const TASK_INTRO_BY_INDEX = {
+	1: (handle: string) => `Para começar, siga *${handle}*.`,
+	2: (handle: string) => `Agora siga *${handle}*.`,
+	3: (handle: string) => `E também siga *${handle}*.`,
+} as const;
+
+/** Outbounds da entrada do fluxo: tasksIntro + step 1 + confirm 1. */
+function openTaskFlowOutbounds(args: {
+	name: string;
+	profiles: ReadonlyArray<{ handle: string; url: string }>;
+}): OutboundAction[] {
+	return [
+		toTextAction(tasksIntro({ name: args.name })),
+		...taskStepOutbounds({ index: 1, profiles: args.profiles }),
+	];
+}
+
+/** Outbounds de um step intermediário (1/2/3): taskStep + taskStepConfirm. */
+function taskStepOutbounds(args: {
+	index: 1 | 2 | 3;
+	profiles: ReadonlyArray<{ handle: string; url: string }>;
+}): OutboundAction[] {
+	const profile = args.profiles[args.index - 1];
+	if (!profile) {
+		// Config inválida: 3 perfis exigidos pelo schema (Zod). Não deveria ocorrer.
+		return [];
+	}
+	const stepKey = (`follow_${args.index}` as const) satisfies
+		| "follow_1"
+		| "follow_2"
+		| "follow_3";
+	return [
+		toInteractiveAction(
+			taskStep({
+				index: args.index,
+				intro: TASK_INTRO_BY_INDEX[args.index](profile.handle),
+				profileUrl: profile.url,
+			})
+		),
+		toInteractiveAction(taskStepConfirm({ step: stepKey })),
+	];
+}
+
+/** Outbounds do último step: taskPost + taskStepConfirm("post"). */
+function taskPostOutbounds(officialPostUrl: string): OutboundAction[] {
+	return [
+		toInteractiveAction(taskPost({ postUrl: officialPostUrl })),
+		toInteractiveAction(taskStepConfirm({ step: "post" })),
+	];
+}
+
+/** Nudge curto com cooldown anti-spam — usado quando texto livre cai em qualquer substate. */
+function nudgeWithCooldown(
+	participant: Participant,
+	config: StateMachineConfig
+): HandleResult {
+	const cooldownMs = config.responseCooldownMs ?? DEFAULT_RESPONSE_COOLDOWN_MS;
+	if (isWithinResponseCooldown(participant, cooldownMs)) {
+		return { participantPatch: null, outbounds: [] };
+	}
+	return {
+		participantPatch: null,
+		outbounds: [toTextAction(taskNudge())],
+	};
+}
+
+function handleAwaitingTask1(args: {
+	participant: Participant;
+	message: InboundMessage;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, message, config } = args;
+
+	if (isButtonReply(message, TASK_STEP_BUTTON_IDS.follow_1)) {
+		const progress: TaskProgress = {
+			...(participant.taskProgress ?? EMPTY_TASK_PROGRESS),
+			follow_1: true,
+		};
+		return {
+			participantPatch: { state: "AWAITING_TASK_2", taskProgress: progress },
+			outbounds: taskStepOutbounds({
+				index: 2,
+				profiles: config.instagramProfiles,
+			}),
+		};
+	}
+
+	return nudgeWithCooldown(participant, config);
+}
+
+function handleAwaitingTask2(args: {
+	participant: Participant;
+	message: InboundMessage;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, message, config } = args;
+
+	if (isButtonReply(message, TASK_STEP_BUTTON_IDS.follow_2)) {
+		const progress: TaskProgress = {
+			...(participant.taskProgress ?? EMPTY_TASK_PROGRESS),
+			follow_2: true,
+		};
+		return {
+			participantPatch: { state: "AWAITING_TASK_3", taskProgress: progress },
+			outbounds: taskStepOutbounds({
+				index: 3,
+				profiles: config.instagramProfiles,
+			}),
+		};
+	}
+
+	return nudgeWithCooldown(participant, config);
+}
+
+function handleAwaitingTask3(args: {
+	participant: Participant;
+	message: InboundMessage;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, message, config } = args;
+
+	if (isButtonReply(message, TASK_STEP_BUTTON_IDS.follow_3)) {
+		const progress: TaskProgress = {
+			...(participant.taskProgress ?? EMPTY_TASK_PROGRESS),
+			follow_3: true,
+		};
+		return {
+			participantPatch: {
+				state: "AWAITING_TASK_POST",
+				taskProgress: progress,
+			},
+			outbounds: taskPostOutbounds(config.officialPostUrl),
+		};
+	}
+
+	return nudgeWithCooldown(participant, config);
+}
+
+function handleAwaitingTaskPost(args: {
+	participant: Participant;
+	message: InboundMessage;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, message, config } = args;
+
+	if (isButtonReply(message, TASK_STEP_BUTTON_IDS.post)) {
+		const progress: TaskProgress = {
+			...(participant.taskProgress ?? EMPTY_TASK_PROGRESS),
+			comment: true,
+		};
+		return {
+			participantPatch: { state: "COMPLETED", taskProgress: progress },
+			outbounds: [{ kind: "generateAndSendCode" }],
+		};
+	}
+
+	return nudgeWithCooldown(participant, config);
+}
+
+/**
+ * Legacy: leads que ficaram em AWAITING_TASKS antes do fluxo guiado.
+ * Aceita o botão antigo `tasks_done` (path de saída direta) e, em qualquer
+ * outra mensagem, reabre o fluxo novo a partir do AWAITING_TASK_1.
+ */
 function handleAwaitingTasks(args: {
 	participant: Participant;
 	message: InboundMessage;
@@ -520,20 +697,15 @@ function handleAwaitingTasks(args: {
 		};
 	}
 
-	// Qualquer outra mensagem (texto, mídia, botão inesperado) — repete a lista
-	// e a confirmação. Cooldown de 8s no handleInbound evita spam em flood.
 	return {
-		participantPatch: null,
-		outbounds: [
-			toInteractiveAction(
-				tasksList({
-					name: participant.name ?? "",
-					profiles: config.instagramProfiles,
-					officialPostUrl: config.officialPostUrl,
-				})
-			),
-			toInteractiveAction(tasksConfirm()),
-		],
+		participantPatch: {
+			state: "AWAITING_TASK_1",
+			taskProgress: { ...EMPTY_TASK_PROGRESS },
+		},
+		outbounds: openTaskFlowOutbounds({
+			name: participant.name ?? "",
+			profiles: config.instagramProfiles,
+		}),
 	};
 }
 
@@ -667,6 +839,18 @@ function dispatch(args: {
 
 		case "AWAITING_TASKS":
 			return handleAwaitingTasks({ participant, message, config });
+
+		case "AWAITING_TASK_1":
+			return handleAwaitingTask1({ participant, message, config });
+
+		case "AWAITING_TASK_2":
+			return handleAwaitingTask2({ participant, message, config });
+
+		case "AWAITING_TASK_3":
+			return handleAwaitingTask3({ participant, message, config });
+
+		case "AWAITING_TASK_POST":
+			return handleAwaitingTaskPost({ participant, message, config });
 
 		case "COMPLETED":
 			return handleCompleted({ participant, message, config });

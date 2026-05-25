@@ -633,18 +633,25 @@ describe("handleInbound — state=AWAITING_NAME", () => {
 // ---------------------------------------------------------------------------
 
 describe("handleInbound — state=AWAITING_COMPANY", () => {
-	it("empresa válida → AWAITING_TASKS + tasksList + tasksConfirm", () => {
+	it("empresa válida → AWAITING_TASK_1 + tasksIntro + step1 + confirm1", () => {
 		const result = handleInbound({
 			participant: makeParticipant({ state: "AWAITING_COMPANY", name: "João" }),
 			message: textMsg("Profills"),
 			config: BASE_CONFIG,
 		});
 
-		expect(result.participantPatch?.state).toBe("AWAITING_TASKS");
+		expect(result.participantPatch?.state).toBe("AWAITING_TASK_1");
 		expect(result.participantPatch?.company).toBe("Profills");
-		expect(result.outbounds).toHaveLength(2);
-		expect(result.outbounds[0]?.kind).toBe("interactive");
-		expect(result.outbounds[1]?.kind).toBe("interactive");
+		expect(result.participantPatch?.taskProgress).toEqual({
+			follow_1: false,
+			follow_2: false,
+			follow_3: false,
+			comment: false,
+		});
+		expect(result.outbounds).toHaveLength(3);
+		expect(result.outbounds[0]?.kind).toBe("text"); // tasksIntro
+		expect(result.outbounds[1]?.kind).toBe("interactive"); // taskStep(1)
+		expect(result.outbounds[2]?.kind).toBe("interactive"); // taskStepConfirm
 	});
 
 	it("empresa com espaços é trimada antes de salvar", () => {
@@ -733,8 +740,12 @@ describe("handleInbound — state=AWAITING_COMPANY", () => {
 // describe: AWAITING_TASKS
 // ---------------------------------------------------------------------------
 
-describe("handleInbound — state=AWAITING_TASKS", () => {
-	function tasksParticipant(overrides: Partial<Participant> = {}): Participant {
+// ---------------------------------------------------------------------------
+// describe: AWAITING_TASKS (legacy)
+// ---------------------------------------------------------------------------
+
+describe("handleInbound — state=AWAITING_TASKS (legacy)", () => {
+	function legacyParticipant(overrides: Partial<Participant> = {}): Participant {
 		return makeParticipant({
 			state: "AWAITING_TASKS",
 			name: "João Silva",
@@ -743,9 +754,9 @@ describe("handleInbound — state=AWAITING_TASKS", () => {
 		});
 	}
 
-	it("botão tasks_done → COMPLETED + generateAndSendCode", () => {
+	it("botão legacy tasks_done → COMPLETED + generateAndSendCode", () => {
 		const result = handleInbound({
-			participant: tasksParticipant(),
+			participant: legacyParticipant(),
 			message: buttonReplyMsg("tasks_done", "Já concluí"),
 			config: BASE_CONFIG,
 		});
@@ -760,26 +771,211 @@ describe("handleInbound — state=AWAITING_TASKS", () => {
 		expect(result.outbounds[0]?.kind).toBe("generateAndSendCode");
 	});
 
-	it("texto livre em AWAITING_TASKS → repete tasksIntro", () => {
+	it("qualquer outra mensagem → reabre fluxo novo em AWAITING_TASK_1", () => {
 		const result = handleInbound({
-			participant: tasksParticipant(),
-			message: textMsg("já segui"),
+			participant: legacyParticipant(),
+			message: textMsg("oi"),
 			config: BASE_CONFIG,
 		});
 
-		expect(result.participantPatch?.taskProgress).toBeUndefined();
+		expect(result.participantPatch?.state).toBe("AWAITING_TASK_1");
+		expect(result.participantPatch?.taskProgress).toEqual({
+			follow_1: false,
+			follow_2: false,
+			follow_3: false,
+			comment: false,
+		});
+		expect(result.outbounds).toHaveLength(3);
+		expect(result.outbounds[0]?.kind).toBe("text");
+		expect(result.outbounds[1]?.kind).toBe("interactive");
+		expect(result.outbounds[2]?.kind).toBe("interactive");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// describe: AWAITING_TASK_1 / _2 / _3 / _POST (fluxo guiado)
+// ---------------------------------------------------------------------------
+
+describe("handleInbound — state=AWAITING_TASK_1", () => {
+	function p(overrides: Partial<Participant> = {}): Participant {
+		return makeParticipant({
+			state: "AWAITING_TASK_1",
+			name: "Ana",
+			company: "Profills",
+			...overrides,
+		});
+	}
+
+	it("reply task_done_1 → AWAITING_TASK_2 + step 2 + confirm 2 + follow_1=true", () => {
+		const result = handleInbound({
+			participant: p(),
+			message: buttonReplyMsg("task_done_1", "✓ Segui"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("AWAITING_TASK_2");
+		expect(result.participantPatch?.taskProgress).toMatchObject({
+			follow_1: true,
+			follow_2: false,
+			follow_3: false,
+			comment: false,
+		});
+		expect(result.outbounds).toHaveLength(2);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
+		expect(result.outbounds[1]?.kind).toBe("interactive");
 	});
 
-	it("button_reply inesperado em AWAITING_TASKS → repete tasksIntro", () => {
+	it("texto livre → taskNudge (text)", () => {
 		const result = handleInbound({
-			participant: tasksParticipant(),
-			message: buttonReplyMsg("follow_1", "Segui o 1º"),
+			participant: p(),
+			message: textMsg("ok já fiz"),
 			config: BASE_CONFIG,
 		});
 
-		expect(result.participantPatch?.taskProgress).toBeUndefined();
+		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("text");
+	});
+
+	it("button_reply errado (task_done_3) → nudge, sem avanço", () => {
+		const result = handleInbound({
+			participant: p(),
+			message: buttonReplyMsg("task_done_3", "✓ Segui"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.outbounds[0]?.kind).toBe("text");
+	});
+
+	it("texto livre dentro do cooldown → silêncio (0 outbounds)", () => {
+		const recent = new Date(Date.now() - 1000); // 1s atrás
+		const result = handleInbound({
+			participant: p({ lastResponseAt: recent }),
+			message: textMsg("?"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds).toHaveLength(0);
+	});
+});
+
+describe("handleInbound — state=AWAITING_TASK_2", () => {
+	it("reply task_done_2 → AWAITING_TASK_3 + follow_2=true (preserva follow_1)", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_TASK_2",
+				name: "Bruno",
+				taskProgress: {
+					follow_1: true,
+					follow_2: false,
+					follow_3: false,
+					comment: false,
+				},
+			}),
+			message: buttonReplyMsg("task_done_2", "✓ Segui"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("AWAITING_TASK_3");
+		expect(result.participantPatch?.taskProgress).toMatchObject({
+			follow_1: true,
+			follow_2: true,
+			follow_3: false,
+		});
+		expect(result.outbounds).toHaveLength(2);
+	});
+});
+
+describe("handleInbound — state=AWAITING_TASK_3", () => {
+	it("reply task_done_3 → AWAITING_TASK_POST + follow_3=true + taskPost + confirm post", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_TASK_3",
+				name: "Clara",
+				taskProgress: {
+					follow_1: true,
+					follow_2: true,
+					follow_3: false,
+					comment: false,
+				},
+			}),
+			message: buttonReplyMsg("task_done_3", "✓ Segui"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("AWAITING_TASK_POST");
+		expect(result.participantPatch?.taskProgress).toMatchObject({
+			follow_1: true,
+			follow_2: true,
+			follow_3: true,
+			comment: false,
+		});
+		expect(result.outbounds).toHaveLength(2);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
+		expect(result.outbounds[1]?.kind).toBe("interactive");
+	});
+});
+
+describe("handleInbound — state=AWAITING_TASK_POST", () => {
+	it("reply task_done_post → COMPLETED + comment=true + generateAndSendCode", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_TASK_POST",
+				name: "Diego",
+				taskProgress: {
+					follow_1: true,
+					follow_2: true,
+					follow_3: true,
+					comment: false,
+				},
+			}),
+			message: buttonReplyMsg("task_done_post", "✓ Pronto"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("COMPLETED");
+		expect(result.participantPatch?.taskProgress).toEqual({
+			follow_1: true,
+			follow_2: true,
+			follow_3: true,
+			comment: true,
+		});
+		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("generateAndSendCode");
+	});
+
+	it("texto livre → taskNudge", () => {
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "AWAITING_TASK_POST",
+				name: "Diego",
+			}),
+			message: textMsg("já curti"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.outbounds[0]?.kind).toBe("text");
+	});
+});
+
+describe("TTL stale nos substates de tasks", () => {
+	it.each([
+		"AWAITING_TASK_1",
+		"AWAITING_TASK_2",
+		"AWAITING_TASK_3",
+		"AWAITING_TASK_POST",
+	] as const)("state=%s com updatedAt >24h → trata como NEW", (state) => {
+		const old = new Date(Date.now() - 25 * 60 * 60 * 1000);
+		const result = handleInbound({
+			participant: makeParticipant({ state, updatedAt: old }),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		// NEW + texto não-keyword → eventNotice (atendimento)
+		expect(result.wasEventNotice).toBe(true);
 	});
 });
 
