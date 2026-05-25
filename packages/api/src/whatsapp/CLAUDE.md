@@ -5,7 +5,7 @@ Backend de captação via QR Code → WhatsApp. Isolado da coleta de leads dos v
 ## Mistakes / gotchas
 
 - **LGPD: opt-in obrigatório** por botão `Aceito` / `Nao aceito`. Quem recusa fica em state `DECLINED` com **apenas `wa_id + declined_at + terms_version`** (sem nome/empresa).
-- **Sem comando SAIR no bot** — eliminação de dados é por canal humano. Não inventar fluxo de opt-out via mensagem.
+- **Opt-out via keyword é REATIVO, NÃO destrutivo** (A1): keywords `PARAR|SAIR|CANCELAR|STOP|UNSUBSCRIBE|DESCADASTRAR` (word-boundary, sem acento, lowercase) marcam `participants.opted_out_at` + `opted_out_reason` e silenciam o bot — **NÃO deletam dado**. `VOLTAR` ou `RETORNAR` limpa a flag e reabre. Eliminação real de dados continua sendo apenas via DSR manual no admin. Precedência máxima: opt-out roda antes de sorteio/handoff.
 - **Signature HMAC-SHA256 sobre RAW body**, comparação timing-safe (`signature.ts`). Não usar body parseado.
 - **Sistema NÃO persiste vencedor, prêmio sorteado ou notificação de vencedor.** O sorteio acontece fora do sistema (terceiro). `participants.raffle_code` é só identificação da inscrição.
 - Webhook em `apps/web/src/app/api/whatsapp/webhook/route.ts` faz: verify token (GET) + HMAC + dedup por `wamid` + rate limit + state machine + persist + send. Manter ordem.

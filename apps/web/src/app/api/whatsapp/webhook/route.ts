@@ -2,11 +2,15 @@ import { generateRaffleCode } from "@dashboard-leads-profills/api/whatsapp/code-
 import { getWhatsappConfig } from "@dashboard-leads-profills/api/whatsapp/config-repository";
 import {
 	isHandoffKeyword,
+	isOptInKeyword,
+	isOptOutKeyword,
 	isSorteioKeyword,
 } from "@dashboard-leads-profills/api/whatsapp/keyword";
 import {
 	codeGenerated,
 	handoffRedirect,
+	optInConfirm,
+	optOutConfirm,
 	unsupportedMediaReply,
 } from "@dashboard-leads-profills/api/whatsapp/messages";
 import { checkWhatsappRateLimit } from "@dashboard-leads-profills/api/whatsapp/rate-limit";
@@ -250,9 +254,112 @@ async function processMessage(
 			return;
 		}
 
+		const textBody = getInboundTextBody(message);
+
+		// 3a-1. Opt-out (A1 ajustado): se já optado pra fora, silencia tudo
+		// exceto VOLTAR (que limpa a flag). Não deleta dados — DSR manual.
+		if (participant?.optedOutAt) {
+			if (textBody !== null && isOptInKeyword(textBody)) {
+				await db
+					.update(participants)
+					.set({ optedOutAt: null, optedOutReason: null })
+					.where(eq(participants.id, participant.id));
+				participant = {
+					...participant,
+					optedOutAt: null,
+					optedOutReason: null,
+				};
+				await db.insert(messagesTable).values({
+					participantId: participant.id,
+					direction: "inbound",
+					wamid: messageId,
+					type: message.type,
+					payload: message as Record<string, unknown>,
+				});
+				const reply = optInConfirm();
+				await loggedSend(
+					waId,
+					() => sendText(waId, reply.body),
+					participant,
+					"text",
+					{ body: reply.body }
+				);
+				console.log(
+					JSON.stringify({
+						tag: "whatsapp:webhook",
+						event: "opt_in",
+						waId,
+						messageId,
+					})
+				);
+				return;
+			}
+			await db.insert(messagesTable).values({
+				participantId: participant.id,
+				direction: "inbound",
+				wamid: messageId,
+				type: message.type,
+				payload: message as Record<string, unknown>,
+			});
+			console.log(
+				JSON.stringify({
+					tag: "whatsapp:webhook",
+					event: "opt_out_silence",
+					waId,
+					messageId,
+				})
+			);
+			return;
+		}
+
+		// 3a-2. Keyword de opt-out: precedência máxima sobre sorteio/handoff.
+		// Marca opted_out_at + opted_out_reason e responde com confirmação.
+		// NÃO deleta dados (eliminação só por DSR manual no admin).
+		if (textBody !== null && isOptOutKeyword(textBody)) {
+			if (participant === null) {
+				const [inserted] = await db
+					.insert(participants)
+					.values({ waId, state: "NON_PARTICIPANT" })
+					.returning();
+				participant = inserted ?? null;
+			}
+			if (participant !== null) {
+				await db.insert(messagesTable).values({
+					participantId: participant.id,
+					direction: "inbound",
+					wamid: messageId,
+					type: message.type,
+					payload: message as Record<string, unknown>,
+				});
+				const reply = optOutConfirm();
+				await loggedSend(
+					waId,
+					() => sendText(waId, reply.body),
+					participant,
+					"text",
+					{ body: reply.body }
+				);
+				await db
+					.update(participants)
+					.set({
+						optedOutAt: new Date(),
+						optedOutReason: "user_keyword",
+					})
+					.where(eq(participants.id, participant.id));
+				console.log(
+					JSON.stringify({
+						tag: "whatsapp:webhook",
+						event: "opt_out",
+						waId,
+						messageId,
+					})
+				);
+			}
+			return;
+		}
+
 		// 3b. Handoff humano (A3): se já houve handoff, silencia tudo exceto keyword
 		// sorteio (que reabre o fluxo e limpa a flag). Trilha do inbound continua.
-		const textBody = getInboundTextBody(message);
 		if (participant?.humanHandoffRequestedAt) {
 			if (textBody !== null && isSorteioKeyword(textBody)) {
 				// Reabre fluxo — limpa flag pro bot voltar a responder normalmente.

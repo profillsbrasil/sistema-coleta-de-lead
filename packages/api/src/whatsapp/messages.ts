@@ -287,6 +287,18 @@ export function unsupportedMediaReply(): TextMessage {
 	);
 }
 
+export function optOutConfirm(): TextMessage {
+	return text(
+		"Beleza, parei por aqui. Se quiser voltar a receber mensagens, é só mandar *VOLTAR*."
+	);
+}
+
+export function optInConfirm(): TextMessage {
+	return text(
+		"Show, você voltou! 👋 Se quiser participar do sorteio, mande *sorteio*."
+	);
+}
+
 export function handoffRedirect({
 	vendorPhone,
 }: {
