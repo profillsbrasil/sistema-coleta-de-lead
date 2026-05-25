@@ -281,6 +281,12 @@ export function companyInvalid(reason: ValidationError): TextMessage {
 	return text(body[reason]);
 }
 
+export function unsupportedMediaReply(): TextMessage {
+	return text(
+		"Só consigo ler texto e botões por aqui. Mande *sorteio* pra começar."
+	);
+}
+
 export function eventNotice({
 	vendorPhone,
 	eventStart,

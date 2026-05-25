@@ -1,6 +1,9 @@
 import { generateRaffleCode } from "@dashboard-leads-profills/api/whatsapp/code-generator";
 import { getWhatsappConfig } from "@dashboard-leads-profills/api/whatsapp/config-repository";
-import { codeGenerated } from "@dashboard-leads-profills/api/whatsapp/messages";
+import {
+	codeGenerated,
+	unsupportedMediaReply,
+} from "@dashboard-leads-profills/api/whatsapp/messages";
 import { checkWhatsappRateLimit } from "@dashboard-leads-profills/api/whatsapp/rate-limit";
 import {
 	sendInteractive,
@@ -40,6 +43,17 @@ function formatBR(isoDate: string): string {
 function formatBRDate(isoDate: string): string {
 	const [y, m, d] = isoDate.split("-");
 	return `${d}/${m}/${y}`;
+}
+
+// ---------------------------------------------------------------------------
+// Inbound message type guard
+// ---------------------------------------------------------------------------
+
+// "button" = clique em template button (raro). Mantemos compat — não é mídia.
+const SUPPORTED_INBOUND_TYPES = new Set(["text", "interactive", "button"]);
+
+function isUnsupportedInbound(type: string): boolean {
+	return !SUPPORTED_INBOUND_TYPES.has(type);
 }
 
 // ---------------------------------------------------------------------------
@@ -184,6 +198,45 @@ async function processMessage(
 			.limit(1);
 
 		let participant: Participant | null = participantRows[0] ?? null;
+
+		// 3a. Mídia inbound (image/audio/video/sticker/document/location/...) →
+		// resposta padrão e early-return. Sem download de mídia.
+		if (isUnsupportedInbound(message.type)) {
+			if (participant === null) {
+				const [inserted] = await db
+					.insert(participants)
+					.values({ waId, state: "NON_PARTICIPANT" })
+					.returning();
+				participant = inserted ?? null;
+			}
+			if (participant !== null) {
+				await db.insert(messagesTable).values({
+					participantId: participant.id,
+					direction: "inbound",
+					wamid: messageId,
+					type: message.type,
+					payload: message as Record<string, unknown>,
+				});
+			}
+			const reply = unsupportedMediaReply();
+			await loggedSend(
+				waId,
+				() => sendText(waId, reply.body),
+				participant,
+				"text",
+				{ body: reply.body }
+			);
+			console.log(
+				JSON.stringify({
+					tag: "whatsapp:webhook",
+					event: "unsupported_media_replied",
+					waId,
+					messageId,
+					inboundType: message.type,
+				})
+			);
+			return;
+		}
 
 		// 4. Build config — campos textuais/visuais vêm da tabela whatsapp.config,
 		// editável via admin. Secrets continuam em ENV.
