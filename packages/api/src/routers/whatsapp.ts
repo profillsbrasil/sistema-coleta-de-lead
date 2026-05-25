@@ -1,6 +1,11 @@
 import { db } from "@dashboard-leads-profills/db";
-import { participants } from "@dashboard-leads-profills/db/schema/whatsapp";
+import {
+	dsrAudit,
+	participants,
+	rateLimit,
+} from "@dashboard-leads-profills/db/schema/whatsapp";
 import { and, desc, eq, like, or, type SQL, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import z from "zod";
 
 import { adminProcedure, router } from "../index";
@@ -182,5 +187,49 @@ export const whatsappRouter = router({
 		.mutation(async ({ ctx, input }) => {
 			await updateWhatsappConfig(input, ctx.user.id);
 			return { ok: true };
+		}),
+
+	// DSR (data subject request) — exclusão LGPD por canal humano.
+	// Hard delete cascade: participant → messages (FK cascade), rate_limit.
+	// Snapshot do participant gravado em dsr_audit pra auditoria.
+	dsrDelete: adminProcedure
+		.input(
+			z.object({
+				waId: z.string().min(8, "wa_id muito curto"),
+				reason: z.string().min(3, "Informe o motivo").max(500),
+				confirm: z.literal(true, {
+					message: "É preciso confirmar a exclusão",
+				}),
+			})
+		)
+		.mutation(async ({ ctx, input }) => {
+			const rows = await db
+				.select()
+				.from(participants)
+				.where(eq(participants.waId, input.waId))
+				.limit(1);
+			const participant = rows[0];
+			if (!participant) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: `Nenhum participant com wa_id ${input.waId}`,
+				});
+			}
+
+			await db.transaction(async (tx) => {
+				await tx.insert(dsrAudit).values({
+					waId: input.waId,
+					deletedByUserId: ctx.user.id,
+					reason: input.reason,
+					participantSnapshot: participant as Record<string, unknown>,
+				});
+				await tx.delete(rateLimit).where(eq(rateLimit.waId, input.waId));
+				// FK cascade em whatsapp.messages → apaga junto.
+				await tx
+					.delete(participants)
+					.where(eq(participants.id, participant.id));
+			});
+
+			return { ok: true, deletedParticipantId: participant.id };
 		}),
 });

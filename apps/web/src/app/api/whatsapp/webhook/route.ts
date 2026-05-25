@@ -445,6 +445,7 @@ async function processMessageAsync(
 			eventEndBR: formatBR(dbConfig.eventEnd),
 			instagramProfiles: dbConfig.instagramProfiles,
 			officialPostUrl: dbConfig.officialPostUrl,
+			privacyPolicyUrl: dbConfig.privacyPolicyUrl,
 		};
 
 		// 5. State machine — participant sempre existe (claimInbound criou se null).

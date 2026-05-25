@@ -62,6 +62,7 @@ export type ParticipantPatch = Partial<{
 	consentAt: Date;
 	declinedAt: Date | null;
 	termsVersion: string;
+	termsUrlSnapshot: string | null;
 	retryCount: number;
 	raffleCode: string;
 	redirectSentAt: Date | null;
@@ -87,6 +88,7 @@ export interface StateMachineConfig {
 	welcomeImageUrl?: string;
 	instagramProfiles: ReadonlyArray<{ handle: string; url: string }>;
 	officialPostUrl: string;
+	privacyPolicyUrl?: string | null; // gravada como snapshot no consent
 }
 
 export interface HandleResult {
@@ -233,6 +235,7 @@ function handleNew(args: {
 					welcome({
 						eventName: config.eventName,
 						imageUrl: config.welcomeImageUrl,
+						privacyPolicyUrl: config.privacyPolicyUrl,
 					})
 				),
 			],
@@ -266,6 +269,7 @@ function handleAwaitingConsent(args: {
 				state: "AWAITING_NAME",
 				consentAt: new Date(),
 				termsVersion: config.termsVersion,
+				termsUrlSnapshot: config.privacyPolicyUrl ?? null,
 			},
 			outbounds: [toTextAction(askName())],
 		};
@@ -475,6 +479,7 @@ function handleNonParticipant(args: {
 					welcome({
 						eventName: config.eventName,
 						imageUrl: config.welcomeImageUrl,
+						privacyPolicyUrl: config.privacyPolicyUrl,
 					})
 				),
 			],
@@ -582,6 +587,7 @@ function handleDeclined(args: {
 					welcome({
 						eventName: config.eventName,
 						imageUrl: config.welcomeImageUrl,
+						privacyPolicyUrl: config.privacyPolicyUrl,
 					})
 				),
 			],

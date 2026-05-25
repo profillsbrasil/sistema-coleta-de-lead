@@ -36,6 +36,7 @@ export const whatsappConfigSchema = z
 			)
 			.length(3, "Precisa de exatamente 3 perfis"),
 		officialPostUrl: z.string().url("URL inválida"),
+		privacyPolicyUrl: optionalUrl,
 	})
 	.refine((v) => v.eventEnd >= v.eventStart, {
 		message: "Fim do evento precisa ser depois do início",

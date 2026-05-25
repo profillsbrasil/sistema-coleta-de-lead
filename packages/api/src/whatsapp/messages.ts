@@ -130,10 +130,16 @@ export type InstagramProfile = { handle: string; url: string };
 export function welcome({
 	eventName: _eventName,
 	imageUrl,
+	privacyPolicyUrl,
 }: {
 	eventName: string;
 	imageUrl?: string;
+	privacyPolicyUrl?: string | null;
 }): InteractiveMessage {
+	const policyLine = privacyPolicyUrl
+		? `\n\nTermos e política de privacidade: ${privacyPolicyUrl}`
+		: "";
+
 	const bodyText =
 		"*Sorteio Profills Fispal 2026* 🎉\n\n" +
 		"Participe e concorra a vários prêmios:\n" +
@@ -141,8 +147,9 @@ export function welcome({
 		"• Churrasqueira Champions Grill\n" +
 		"• Cooler Profills\n\n" +
 		"📅 Sorteio: *05/06/2026*\n\n" +
-		"Ao aceitar, você autoriza a Profills a utilizar seus dados para o sorteio e contato comercial relacionado.\n\n" +
-		"Deseja participar?";
+		"Ao aceitar, você autoriza a Profills a utilizar seus dados para o sorteio e contato comercial relacionado." +
+		policyLine +
+		"\n\nDeseja participar?";
 
 	return interactive(
 		bodyText,
