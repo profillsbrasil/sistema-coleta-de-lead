@@ -111,7 +111,7 @@ function interactiveCta(
 
 const CONSENT_BUTTONS = [
 	{ id: "accept", title: "Aceito" },
-	{ id: "decline", title: "Nao aceito" },
+	{ id: "decline", title: "Não aceito" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -178,10 +178,10 @@ export function codeGenerated({
 	raffleDate?: string;
 }): TextMessage {
 	return text(
-		`Inscrição confirmada, *${name}*.\n\n` +
-			`Código: *${raffleCode}*\n` +
-			`Sorteio: ${raffleDate ?? "05/06/2026"}\n\n` +
-			"Se você for sorteado, a equipe Profills entrará em contato por este WhatsApp. Boa sorte!"
+		`Inscrição confirmada, *${name}*! 🎉\n\n` +
+			`🎟️ Código: *${raffleCode}*\n` +
+			`📅 Sorteio: ${raffleDate ?? "05/06/2026"}\n\n` +
+			"Se você for sorteado, a equipe Profills entrará em contato por este WhatsApp. Boa sorte! 🍀"
 	);
 }
 
@@ -191,14 +191,14 @@ export function tasksIntro({
 	name: string;
 }): InteractiveButtonMessage {
 	const bodyText =
-		`Falta pouco, *${name}*.\n\n` +
+		`Falta pouco, *${name}*! 🎯\n\n` +
 		"Antes de liberar seu código, conclua os passos abaixo:\n\n" +
-		`*1.* Seguir ${INSTAGRAM_PROFILES[0].handle} — ${INSTAGRAM_PROFILES[0].url}\n` +
-		`*2.* Seguir ${INSTAGRAM_PROFILES[1].handle} — ${INSTAGRAM_PROFILES[1].url}\n` +
-		`*3.* Seguir ${INSTAGRAM_PROFILES[2].handle} — ${INSTAGRAM_PROFILES[2].url}\n` +
-		`*4.* Comentar no último post: ${LAST_POST_URL}\n` +
-		`Frase a comentar: "${COMMENT_TEXT}"\n\n` +
-		"Quando terminar, toque no botão para confirmar.";
+		`1️⃣ Seguir ${INSTAGRAM_PROFILES[0].handle} — ${INSTAGRAM_PROFILES[0].url}\n` +
+		`2️⃣ Seguir ${INSTAGRAM_PROFILES[1].handle} — ${INSTAGRAM_PROFILES[1].url}\n` +
+		`3️⃣ Seguir ${INSTAGRAM_PROFILES[2].handle} — ${INSTAGRAM_PROFILES[2].url}\n` +
+		`4️⃣ Comentar no último post — ${LAST_POST_URL}\n` +
+		`   💬 Frase: "${COMMENT_TEXT}"\n\n` +
+		"Quando terminar, toque no botão abaixo para confirmar.";
 
 	return interactive(bodyText, [
 		{ id: TASKS_DONE_BUTTON_ID, title: "Já concluí" },
