@@ -27,6 +27,7 @@ import {
 	ClipboardList,
 	Gift,
 	LogOut,
+	MessageCircle,
 	Moon,
 	PlusCircle,
 	Sun,
@@ -53,6 +54,7 @@ const ADMIN_ITEMS = [
 	{ href: "/admin/users", label: "Usuários", icon: Users },
 	{ href: "/admin/stats", label: "Stats globais", icon: BarChart3 },
 	{ href: "/admin/sorteio", label: "Sorteio", icon: Gift },
+	{ href: "/admin/whatsapp", label: "Bot WhatsApp", icon: MessageCircle },
 ] as const;
 
 const WHITESPACE_RE = /\s+/;
