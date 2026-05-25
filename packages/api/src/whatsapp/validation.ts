@@ -10,11 +10,15 @@ export const NAME_MAX = 80;
 export const COMPANY_MIN = 3;
 export const COMPANY_MAX = 80;
 
+const NAME_PART_MIN = 2;
+
 export type ValidationError =
 	| "empty"
 	| "too_short"
 	| "too_long"
-	| "invalid_chars";
+	| "invalid_chars"
+	| "missing_surname"
+	| "only_digits";
 
 export type ValidationResult =
 	| { ok: true; value: string }
@@ -25,6 +29,8 @@ const NAME_RE = /^[\p{L}\s'\-]+$/u;
 
 // Empresa: nome + dígitos, espaço e símbolos comuns (S.A., R&D, Ltda., etc.).
 const COMPANY_RE = /^[\p{L}\d\s'\-.&/]+$/u;
+
+const LETTER_RE = /\p{L}/u;
 
 export function validateName(input: unknown): ValidationResult {
 	if (typeof input !== "string") {
@@ -42,6 +48,10 @@ export function validateName(input: unknown): ValidationResult {
 	}
 	if (!NAME_RE.test(trimmed)) {
 		return { ok: false, reason: "invalid_chars" };
+	}
+	const parts = trimmed.split(/\s+/).filter((p) => p.length >= NAME_PART_MIN);
+	if (parts.length < 2) {
+		return { ok: false, reason: "missing_surname" };
 	}
 	return { ok: true, value: trimmed };
 }
@@ -62,6 +72,9 @@ export function validateCompany(input: unknown): ValidationResult {
 	}
 	if (!COMPANY_RE.test(trimmed)) {
 		return { ok: false, reason: "invalid_chars" };
+	}
+	if (!LETTER_RE.test(trimmed)) {
+		return { ok: false, reason: "only_digits" };
 	}
 	return { ok: true, value: trimmed };
 }

@@ -35,6 +35,7 @@ function makeParticipant(overrides: Partial<Participant> = {}): Participant {
 		retryCount: 0,
 		redirectSentAt: null,
 		redirectCount: 0,
+		lastResponseAt: null,
 		createdAt: new Date(),
 		updatedAt: new Date(), // recente por padrão — testes de TTL sobrescrevem explicitamente
 		...overrides,
@@ -467,7 +468,8 @@ describe("handleInbound — TTL 24h em estados intermediários", () => {
 		});
 
 		// Deve responder com alreadyParticipated, não tratar como NEW
-		expect(result.participantPatch).toBeNull();
+		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.participantPatch?.lastResponseAt).toBeInstanceOf(Date);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 });
@@ -492,12 +494,24 @@ describe("handleInbound — state=AWAITING_NAME", () => {
 	it("nome com espaços nas bordas é trimado antes de salvar", () => {
 		const result = handleInbound({
 			participant: makeParticipant({ state: "AWAITING_NAME" }),
-			message: textMsg("  Ana  "),
+			message: textMsg("  Ana Silva  "),
 			config: BASE_CONFIG,
 		});
 
-		expect(result.participantPatch?.name).toBe("Ana");
+		expect(result.participantPatch?.name).toBe("Ana Silva");
 		expect(result.participantPatch?.state).toBe("AWAITING_COMPANY");
+	});
+
+	it("nome sem sobrenome → nameInvalid + retryCount incrementa", () => {
+		const result = handleInbound({
+			participant: makeParticipant({ state: "AWAITING_NAME", retryCount: 0 }),
+			message: textMsg("Othavio"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.participantPatch?.retryCount).toBe(1);
+		expect(result.outbounds[0]?.kind).toBe("text");
 	});
 
 	it("nome com apenas 1 char → nameInvalid, retryCount incrementa", () => {
@@ -526,7 +540,7 @@ describe("handleInbound — state=AWAITING_NAME", () => {
 	});
 
 	it("nome com exatamente 80 chars é válido", () => {
-		const name80 = "B".repeat(80);
+		const name80 = `${"B".repeat(40)} ${"C".repeat(39)}`;
 		const result = handleInbound({
 			participant: makeParticipant({ state: "AWAITING_NAME" }),
 			message: textMsg(name80),
@@ -712,7 +726,7 @@ describe("handleInbound — state=COMPLETED", () => {
 			config: BASE_CONFIG,
 		});
 
-		expect(result.participantPatch).toBeNull();
+		expect(result.participantPatch?.lastResponseAt).toBeInstanceOf(Date);
 		const action = result.outbounds[0];
 		expect(action?.kind).toBe("interactive");
 		if (action?.kind !== "interactive") {
@@ -758,6 +772,40 @@ describe("handleInbound — state=COMPLETED", () => {
 		});
 
 		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	it("dentro do cooldown de resposta → silêncio (anti-flood)", () => {
+		const recent = new Date(Date.now() - 2_000);
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "COMPLETED",
+				name: "João Silva",
+				raffleCode: "PROF-0001",
+				lastResponseAt: recent,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds).toHaveLength(0);
+		expect(result.participantPatch).toBeNull();
+	});
+
+	it("fora do cooldown → responde normalmente", () => {
+		const old = new Date(Date.now() - 30_000);
+		const result = handleInbound({
+			participant: makeParticipant({
+				state: "COMPLETED",
+				name: "João Silva",
+				raffleCode: "PROF-0001",
+				lastResponseAt: old,
+			}),
+			message: textMsg("oi"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.outbounds).toHaveLength(1);
+		expect(result.participantPatch?.lastResponseAt).toBeInstanceOf(Date);
 	});
 });
 

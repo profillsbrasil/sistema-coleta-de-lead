@@ -4,7 +4,6 @@
  * Módulo puro: apenas constantes e helpers de interpolação. Sem I/O.
  */
 
-import { COMPANY_MAX, COMPANY_MIN, NAME_MAX, NAME_MIN } from "./validation";
 import type { ValidationError } from "./validation";
 
 // ---------------------------------------------------------------------------
@@ -218,25 +217,27 @@ export function invalidConsentRetry(): InteractiveMessage {
 }
 
 export function nameInvalid(reason: ValidationError): TextMessage {
-	const body = {
-		empty:
-			"Não consegui identificar seu nome. Por favor, envie seu nome completo.",
-		too_short: `Seu nome está muito curto. Envie pelo menos ${NAME_MIN} letras.`,
-		too_long: `Seu nome está muito longo (máximo ${NAME_MAX} caracteres).`,
-		invalid_chars: "Use apenas letras e espaços, por favor.",
-	}[reason];
-	return text(body);
+	const body: Record<ValidationError, string> = {
+		empty: "Não consegui identificar seu nome. Pode tentar de novo?",
+		too_short: "Seu nome está muito curto. Tente de novo.",
+		too_long: "Seu nome está muito longo. Pode encurtar?",
+		invalid_chars: "Use apenas letras no nome, por favor.",
+		missing_surname: "Por favor, envie seu nome e sobrenome.",
+		only_digits: "Use apenas letras no nome, por favor.",
+	};
+	return text(body[reason]);
 }
 
 export function companyInvalid(reason: ValidationError): TextMessage {
-	const body = {
+	const body: Record<ValidationError, string> = {
 		empty: "Por favor, informe o nome da empresa.",
-		too_short: `Nome da empresa muito curto (mínimo ${COMPANY_MIN} caracteres).`,
-		too_long: `Nome da empresa muito longo (máximo ${COMPANY_MAX} caracteres).`,
-		invalid_chars:
-			"Nome de empresa inválido. Use apenas letras, números e símbolos básicos.",
-	}[reason];
-	return text(body);
+		too_short: "Nome da empresa está muito curto. Tente de novo.",
+		too_long: "Nome da empresa está muito longo. Pode encurtar?",
+		invalid_chars: "Nome de empresa inválido. Tente de novo.",
+		missing_surname: "Nome de empresa inválido. Tente de novo.",
+		only_digits: "O nome da empresa precisa conter letras.",
+	};
+	return text(body[reason]);
 }
 
 export function eventNotice({

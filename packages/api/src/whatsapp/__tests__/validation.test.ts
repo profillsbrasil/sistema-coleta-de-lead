@@ -21,9 +21,9 @@ describe("validateName", () => {
 	});
 
 	it("trim antes de validar", () => {
-		const r = validateName("  Ana  ");
+		const r = validateName("  Ana Silva  ");
 		expect(r.ok).toBe(true);
-		if (r.ok) expect(r.value).toBe("Ana");
+		if (r.ok) expect(r.value).toBe("Ana Silva");
 	});
 
 	it("string vazia → empty", () => {
@@ -46,8 +46,8 @@ describe("validateName", () => {
 		expect(r).toEqual({ ok: false, reason: "too_short" });
 	});
 
-	it("min exato passa", () => {
-		const r = validateName("Jo");
+	it("min exato com sobrenome passa", () => {
+		const r = validateName("Jo Da");
 		expect(r.ok).toBe(true);
 	});
 
@@ -56,8 +56,10 @@ describe("validateName", () => {
 		expect(r).toEqual({ ok: false, reason: "too_long" });
 	});
 
-	it("max exato passa", () => {
-		const r = validateName("A".repeat(NAME_MAX));
+	it("max exato com sobrenome passa", () => {
+		const first = "A".repeat(40);
+		const last = "B".repeat(39);
+		const r = validateName(`${first} ${last}`);
 		expect(r.ok).toBe(true);
 	});
 
@@ -74,6 +76,21 @@ describe("validateName", () => {
 	it("rejeita emoji", () => {
 		const r = validateName("João 👋");
 		expect(r).toEqual({ ok: false, reason: "invalid_chars" });
+	});
+
+	it("só primeiro nome → missing_surname", () => {
+		const r = validateName("Othavio");
+		expect(r).toEqual({ ok: false, reason: "missing_surname" });
+	});
+
+	it("sobrenome com 1 letra → missing_surname", () => {
+		const r = validateName("Othavio Q");
+		expect(r).toEqual({ ok: false, reason: "missing_surname" });
+	});
+
+	it("aceita nome composto (3+ palavras)", () => {
+		const r = validateName("Maria da Silva");
+		expect(r.ok).toBe(true);
 	});
 });
 
@@ -142,6 +159,16 @@ describe("validateCompany", () => {
 	it("rejeita emoji", () => {
 		const r = validateCompany("Profills 🚀");
 		expect(r).toEqual({ ok: false, reason: "invalid_chars" });
+	});
+
+	it("rejeita só números → only_digits", () => {
+		const r = validateCompany("12345");
+		expect(r).toEqual({ ok: false, reason: "only_digits" });
+	});
+
+	it("rejeita números com símbolos mas sem letras → only_digits", () => {
+		const r = validateCompany("123 456");
+		expect(r).toEqual({ ok: false, reason: "only_digits" });
 	});
 });
 
