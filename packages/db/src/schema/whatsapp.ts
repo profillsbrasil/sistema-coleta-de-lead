@@ -106,6 +106,12 @@ export const messages = whatsappSchema.table(
 		failedReason: text("failed_reason"),
 		pricingCategory: text("pricing_category"),
 		pricingBillable: boolean("pricing_billable"),
+		// Replay automático (tech-debt #37): contador de tentativas já feitas
+		// pra essa mensagem lógica. Quando processamos status failed retentável,
+		// criamos uma NOVA outbound row com replay_count = old.replay_count + 1.
+		// Cap em 1 evita loop infinito.
+		replayCount: integer("replay_count").notNull().default(0),
+		replayOfMessageId: uuid("replay_of_message_id"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -114,6 +120,7 @@ export const messages = whatsappSchema.table(
 		index("messages_participant_id_idx").on(table.participantId),
 		index("messages_wamid_idx").on(table.wamid),
 		index("messages_failed_at_idx").on(table.failedAt),
+		index("messages_replay_of_idx").on(table.replayOfMessageId),
 	]
 );
 

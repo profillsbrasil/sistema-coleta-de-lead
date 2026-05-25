@@ -228,18 +228,6 @@ em perda de dados, segurança ou bloqueio de evolução.
   (sidebar vs bottom-nav) por CSS. Enquanto isso, componentes reutilizáveis devem
   gerar IDs com `useId()` em vez de strings fixas.
 
-### 37. Status webhook: replay automático para failed retentável
-
-- **Arquivo:** `apps/web/src/app/api/whatsapp/webhook/route.ts` (`processStatusAsync`)
-- **Causa raiz:** quando a Meta envia `status: failed` com `error.code` retentável (5xx
-  upstream, 130429, 131056), o sistema só grava `failed_at/code/reason` e loga
-  `outbound_failed_status`. Replay automático exigiria reconstruir o payload original,
-  decidir se o efeito colateral já aconteceu (ex.: `redirect_count` já incrementado) e
-  evitar loop com a próxima falha — não é trivial em fluxo reativo.
-- **Ação sugerida:** quando entrar em volume de evento real, decidir entre (a) replay
-  manual via tela admin com botão "reenviar mensagem N" ou (b) job dedicado que lê o
-  payload da row outbound original e respeita janela 24h via guard rail.
-
 ## Severidade Baixa
 
 ### 23. `syncStatus: "conflict"` declarado mas nunca escrito
