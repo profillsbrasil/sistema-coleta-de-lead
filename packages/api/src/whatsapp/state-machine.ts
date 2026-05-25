@@ -12,11 +12,15 @@ import {
 	alreadyParticipated,
 	askCompany,
 	askName,
+	commentConfirm,
+	commentPrompt,
 	companyInvalid,
 	declined,
 	eventNotice,
 	invalidConsentRetry,
 	nameInvalid,
+	tasksIntro,
+	tasksProgress,
 	welcome,
 } from "./messages";
 import type { InboundMessage } from "./types";
@@ -33,8 +37,23 @@ export type ParticipantState =
 	| "AWAITING_CONSENT"
 	| "AWAITING_NAME"
 	| "AWAITING_COMPANY"
+	| "AWAITING_TASKS"
 	| "COMPLETED"
 	| "DECLINED";
+
+export type TaskProgress = {
+	follow_1: boolean;
+	follow_2: boolean;
+	follow_3: boolean;
+	comment: boolean;
+};
+
+export const EMPTY_TASK_PROGRESS: TaskProgress = {
+	follow_1: false,
+	follow_2: false,
+	follow_3: false,
+	comment: false,
+};
 
 export type Participant = typeof ParticipantTable.$inferSelect;
 
@@ -50,6 +69,7 @@ export type ParticipantPatch = Partial<{
 	redirectSentAt: Date | null;
 	redirectCount: number;
 	lastResponseAt: Date | null;
+	taskProgress: TaskProgress;
 }>;
 
 export type OutboundAction =
@@ -191,6 +211,7 @@ const INTERMEDIATE_STATES: ParticipantState[] = [
 	"AWAITING_CONSENT",
 	"AWAITING_NAME",
 	"AWAITING_COMPANY",
+	"AWAITING_TASKS",
 ];
 
 const TTL_MS = 24 * 60 * 60 * 1000; // 24h
@@ -392,11 +413,18 @@ function handleAwaitingCompany(args: {
 
 	return {
 		participantPatch: {
-			state: "COMPLETED",
+			state: "AWAITING_TASKS",
 			company: result.value,
 			retryCount: 0,
 		},
-		outbounds: [{ kind: "generateAndSendCode" }],
+		outbounds: [
+			toInteractiveAction(
+				tasksIntro({
+					name: participant.name ?? "",
+					progress: EMPTY_TASK_PROGRESS,
+				})
+			),
+		],
 	};
 }
 
@@ -477,6 +505,62 @@ function handleNonParticipant(args: {
 		participantPatch: null, // webhook seta redirectSentAt/Count via wasEventNotice
 		outbounds: [eventNoticeAction(config)],
 		wasEventNotice: true,
+	};
+}
+
+function isAllFollowed(progress: TaskProgress): boolean {
+	return progress.follow_1 && progress.follow_2 && progress.follow_3;
+}
+
+function handleAwaitingTasks(args: {
+	participant: Participant;
+	message: InboundMessage;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, message } = args;
+	const current = (participant.taskProgress ?? EMPTY_TASK_PROGRESS) as TaskProgress;
+
+	// Botões de follow_N: marca o respectivo e devolve resumo + botões restantes.
+	for (const key of ["follow_1", "follow_2", "follow_3"] as const) {
+		if (isButtonReply(message, key) && !current[key]) {
+			const next: TaskProgress = { ...current, [key]: true };
+			const outbounds: OutboundAction[] = [
+				toInteractiveAction(tasksProgress({ progress: next })),
+			];
+			// Se acabou de marcar o 3º follow, já envia o prompt do comentário.
+			if (isAllFollowed(next) && !next.comment) {
+				outbounds.push(toInteractiveAction(commentPrompt()));
+				outbounds.push(toInteractiveAction(commentConfirm()));
+			}
+			return {
+				participantPatch: { taskProgress: next },
+				outbounds,
+			};
+		}
+	}
+
+	// Botão "Já comentei": exige todos os follows marcados antes de liberar.
+	if (isButtonReply(message, "commented")) {
+		if (!isAllFollowed(current)) {
+			return {
+				participantPatch: null,
+				outbounds: [toInteractiveAction(tasksProgress({ progress: current }))],
+			};
+		}
+		const next: TaskProgress = { ...current, comment: true };
+		return {
+			participantPatch: {
+				state: "COMPLETED",
+				taskProgress: next,
+			},
+			outbounds: [{ kind: "generateAndSendCode" }],
+		};
+	}
+
+	// Qualquer outra mensagem (texto, mídia) — repete o estado atual.
+	return {
+		participantPatch: null,
+		outbounds: [toInteractiveAction(tasksProgress({ progress: current }))],
 	};
 }
 
@@ -612,6 +696,9 @@ function dispatch(args: {
 
 		case "AWAITING_COMPANY":
 			return handleAwaitingCompany({ participant, message, config });
+
+		case "AWAITING_TASKS":
+			return handleAwaitingTasks({ participant, message, config });
 
 		case "COMPLETED":
 			return handleCompleted({ participant, message, config });

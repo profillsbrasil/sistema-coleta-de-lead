@@ -1,0 +1,1 @@
+ALTER TABLE "whatsapp"."participants" ADD COLUMN IF NOT EXISTS "task_progress" jsonb DEFAULT '{"follow_1":false,"follow_2":false,"follow_3":false,"comment":false}'::jsonb NOT NULL;

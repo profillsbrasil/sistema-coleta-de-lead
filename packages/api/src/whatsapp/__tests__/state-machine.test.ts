@@ -36,6 +36,12 @@ function makeParticipant(overrides: Partial<Participant> = {}): Participant {
 		redirectSentAt: null,
 		redirectCount: 0,
 		lastResponseAt: null,
+		taskProgress: {
+			follow_1: false,
+			follow_2: false,
+			follow_3: false,
+			comment: false,
+		},
 		createdAt: new Date(),
 		updatedAt: new Date(), // recente por padrão — testes de TTL sobrescrevem explicitamente
 		...overrides,
@@ -613,17 +619,17 @@ describe("handleInbound — state=AWAITING_NAME", () => {
 // ---------------------------------------------------------------------------
 
 describe("handleInbound — state=AWAITING_COMPANY", () => {
-	it("empresa válida → COMPLETED + generateAndSendCode", () => {
+	it("empresa válida → AWAITING_TASKS + tasksIntro", () => {
 		const result = handleInbound({
 			participant: makeParticipant({ state: "AWAITING_COMPANY", name: "João" }),
 			message: textMsg("Profills"),
 			config: BASE_CONFIG,
 		});
 
-		expect(result.participantPatch?.state).toBe("COMPLETED");
+		expect(result.participantPatch?.state).toBe("AWAITING_TASKS");
 		expect(result.participantPatch?.company).toBe("Profills");
 		expect(result.outbounds).toHaveLength(1);
-		expect(result.outbounds[0]?.kind).toBe("generateAndSendCode");
+		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
 	it("empresa com espaços é trimada antes de salvar", () => {
@@ -704,6 +710,123 @@ describe("handleInbound — state=AWAITING_COMPANY", () => {
 		expect(result.participantPatch?.state).toBe("NON_PARTICIPANT");
 		expect(result.participantPatch?.retryCount).toBe(3);
 		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// describe: AWAITING_TASKS
+// ---------------------------------------------------------------------------
+
+describe("handleInbound — state=AWAITING_TASKS", () => {
+	function tasksParticipant(overrides: Partial<Participant> = {}): Participant {
+		return makeParticipant({
+			state: "AWAITING_TASKS",
+			name: "João Silva",
+			company: "Profills",
+			...overrides,
+		});
+	}
+
+	it("botão follow_1 → marca no taskProgress e responde com resumo", () => {
+		const result = handleInbound({
+			participant: tasksParticipant(),
+			message: buttonReplyMsg("follow_1", "Segui o 1º"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.taskProgress).toEqual({
+			follow_1: true,
+			follow_2: false,
+			follow_3: false,
+			comment: false,
+		});
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	it("3º follow marcado → envia também commentPrompt + commentConfirm", () => {
+		const result = handleInbound({
+			participant: tasksParticipant({
+				taskProgress: {
+					follow_1: true,
+					follow_2: true,
+					follow_3: false,
+					comment: false,
+				},
+			}),
+			message: buttonReplyMsg("follow_3", "Segui o 3º"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.taskProgress?.follow_3).toBe(true);
+		expect(result.outbounds).toHaveLength(3);
+	});
+
+	it("clicar follow_1 quando já está marcado → ignora", () => {
+		const result = handleInbound({
+			participant: tasksParticipant({
+				taskProgress: {
+					follow_1: true,
+					follow_2: false,
+					follow_3: false,
+					comment: false,
+				},
+			}),
+			message: buttonReplyMsg("follow_1", "Segui o 1º"),
+			config: BASE_CONFIG,
+		});
+
+		// Cai no fallback de "qualquer outra mensagem" → repete progresso sem alterar taskProgress
+		expect(result.participantPatch?.taskProgress).toBeUndefined();
+		expect(result.outbounds).toHaveLength(1);
+	});
+
+	it("commented sem todos os follows marcados → repete progresso", () => {
+		const result = handleInbound({
+			participant: tasksParticipant({
+				taskProgress: {
+					follow_1: true,
+					follow_2: false,
+					follow_3: false,
+					comment: false,
+				},
+			}),
+			message: buttonReplyMsg("commented", "Já comentei"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBeUndefined();
+		expect(result.participantPatch?.taskProgress).toBeUndefined();
+		expect(result.outbounds).toHaveLength(1);
+	});
+
+	it("commented com todos os follows → COMPLETED + generateAndSendCode", () => {
+		const result = handleInbound({
+			participant: tasksParticipant({
+				taskProgress: {
+					follow_1: true,
+					follow_2: true,
+					follow_3: true,
+					comment: false,
+				},
+			}),
+			message: buttonReplyMsg("commented", "Já comentei"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.state).toBe("COMPLETED");
+		expect(result.participantPatch?.taskProgress?.comment).toBe(true);
+		expect(result.outbounds[0]?.kind).toBe("generateAndSendCode");
+	});
+
+	it("texto livre em AWAITING_TASKS → repete o progresso", () => {
+		const result = handleInbound({
+			participant: tasksParticipant(),
+			message: textMsg("já segui"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.taskProgress).toBeUndefined();
 		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 });

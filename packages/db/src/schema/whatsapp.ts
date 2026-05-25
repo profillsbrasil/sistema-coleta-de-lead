@@ -38,6 +38,20 @@ export const participants = whatsappSchema.table(
 			withTimezone: true,
 			mode: "date",
 		}),
+		taskProgress: jsonb("task_progress")
+			.$type<{
+				follow_1: boolean;
+				follow_2: boolean;
+				follow_3: boolean;
+				comment: boolean;
+			}>()
+			.notNull()
+			.default({
+				follow_1: false,
+				follow_2: false,
+				follow_3: false,
+				comment: false,
+			}),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
