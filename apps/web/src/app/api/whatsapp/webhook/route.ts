@@ -1,7 +1,12 @@
 import { generateRaffleCode } from "@dashboard-leads-profills/api/whatsapp/code-generator";
 import { getWhatsappConfig } from "@dashboard-leads-profills/api/whatsapp/config-repository";
 import {
+	isHandoffKeyword,
+	isSorteioKeyword,
+} from "@dashboard-leads-profills/api/whatsapp/keyword";
+import {
 	codeGenerated,
+	handoffRedirect,
 	unsupportedMediaReply,
 } from "@dashboard-leads-profills/api/whatsapp/messages";
 import { checkWhatsappRateLimit } from "@dashboard-leads-profills/api/whatsapp/rate-limit";
@@ -54,6 +59,13 @@ const SUPPORTED_INBOUND_TYPES = new Set(["text", "interactive", "button"]);
 
 function isUnsupportedInbound(type: string): boolean {
 	return !SUPPORTED_INBOUND_TYPES.has(type);
+}
+
+/** Extrai o texto cru de uma inbound message text — null se não for texto. */
+function getInboundTextBody(message: InboundMessage): string | null {
+	if (message.type !== "text") return null;
+	const m = message as Extract<InboundMessage, { type: "text" }>;
+	return m.text.body;
 }
 
 // ---------------------------------------------------------------------------
@@ -235,6 +247,84 @@ async function processMessage(
 					inboundType: message.type,
 				})
 			);
+			return;
+		}
+
+		// 3b. Handoff humano (A3): se já houve handoff, silencia tudo exceto keyword
+		// sorteio (que reabre o fluxo e limpa a flag). Trilha do inbound continua.
+		const textBody = getInboundTextBody(message);
+		if (participant?.humanHandoffRequestedAt) {
+			if (textBody !== null && isSorteioKeyword(textBody)) {
+				// Reabre fluxo — limpa flag pro bot voltar a responder normalmente.
+				await db
+					.update(participants)
+					.set({ humanHandoffRequestedAt: null })
+					.where(eq(participants.id, participant.id));
+				participant = { ...participant, humanHandoffRequestedAt: null };
+			} else {
+				await db.insert(messagesTable).values({
+					participantId: participant.id,
+					direction: "inbound",
+					wamid: messageId,
+					type: message.type,
+					payload: message as Record<string, unknown>,
+				});
+				console.log(
+					JSON.stringify({
+						tag: "whatsapp:webhook",
+						event: "handoff_silence",
+						waId,
+						messageId,
+					})
+				);
+				return;
+			}
+		}
+
+		// 3c. Keyword de handoff (A3): atende qualquer estado, envia CTA pro vendor,
+		// marca human_handoff_requested_at e silencia daqui em diante (via 3b).
+		if (
+			textBody !== null &&
+			!isSorteioKeyword(textBody) &&
+			isHandoffKeyword(textBody)
+		) {
+			if (participant === null) {
+				const [inserted] = await db
+					.insert(participants)
+					.values({ waId, state: "NON_PARTICIPANT" })
+					.returning();
+				participant = inserted ?? null;
+			}
+			if (participant !== null) {
+				await db.insert(messagesTable).values({
+					participantId: participant.id,
+					direction: "inbound",
+					wamid: messageId,
+					type: message.type,
+					payload: message as Record<string, unknown>,
+				});
+				const dbConfig = await getWhatsappConfig();
+				const reply = handoffRedirect({ vendorPhone: dbConfig.vendorPhone });
+				await loggedSend(
+					waId,
+					() => sendInteractive(waId, reply.interactive),
+					participant,
+					"interactive",
+					{ interactive: reply.interactive }
+				);
+				await db
+					.update(participants)
+					.set({ humanHandoffRequestedAt: new Date() })
+					.where(eq(participants.id, participant.id));
+				console.log(
+					JSON.stringify({
+						tag: "whatsapp:webhook",
+						event: "handoff_triggered",
+						waId,
+						messageId,
+					})
+				);
+			}
 			return;
 		}
 

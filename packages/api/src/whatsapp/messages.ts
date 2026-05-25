@@ -287,6 +287,20 @@ export function unsupportedMediaReply(): TextMessage {
 	);
 }
 
+export function handoffRedirect({
+	vendorPhone,
+}: {
+	vendorPhone: string;
+}): InteractiveCtaMessage {
+	return interactiveCta(
+		"Beleza! Toque no botão abaixo pra falar com nossa equipe agora mesmo.",
+		{
+			displayText: "Falar com a equipe",
+			url: `https://wa.me/${vendorPhone}`,
+		}
+	);
+}
+
 export function eventNotice({
 	vendorPhone,
 	eventStart,

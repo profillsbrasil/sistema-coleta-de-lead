@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSorteioKeyword } from "../keyword";
+import { isHandoffKeyword, isSorteioKeyword } from "../keyword";
 
 describe("isSorteioKeyword", () => {
 	it("retorna true para 'Sorteio Profills Fispal 2026' (exato do wa.me)", () => {
@@ -44,5 +44,47 @@ describe("isSorteioKeyword", () => {
 
 	it("retorna true para 'não quero participar' (falso positivo conhecido — filtrado por LGPD downstream)", () => {
 		expect(isSorteioKeyword("não quero participar")).toBe(true);
+	});
+});
+
+describe("isHandoffKeyword", () => {
+	it("retorna true para 'atendente'", () => {
+		expect(isHandoffKeyword("atendente")).toBe(true);
+	});
+
+	it("retorna true para 'preciso de ajuda'", () => {
+		expect(isHandoffKeyword("preciso de ajuda")).toBe(true);
+	});
+
+	it("retorna true para 'falar com alguem' (sem acento)", () => {
+		expect(isHandoffKeyword("falar com alguem")).toBe(true);
+	});
+
+	it("retorna true para 'tem alguém aí' (com acento)", () => {
+		expect(isHandoffKeyword("tem alguém aí")).toBe(true);
+	});
+
+	it("retorna true para 'estou com um problema no produto'", () => {
+		expect(isHandoffKeyword("estou com um problema no produto")).toBe(true);
+	});
+
+	it("retorna true para 'SUPORTE' (case-insensitive)", () => {
+		expect(isHandoffKeyword("SUPORTE")).toBe(true);
+	});
+
+	it("retorna true para 'humano' (isolado)", () => {
+		expect(isHandoffKeyword("humano")).toBe(true);
+	});
+
+	it("retorna false para 'oi tudo bem'", () => {
+		expect(isHandoffKeyword("oi tudo bem")).toBe(false);
+	});
+
+	it("retorna false para texto vazio", () => {
+		expect(isHandoffKeyword("")).toBe(false);
+	});
+
+	it("retorna false para não-string", () => {
+		expect(isHandoffKeyword(null as unknown as string)).toBe(false);
 	});
 });

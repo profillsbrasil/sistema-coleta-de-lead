@@ -24,3 +24,34 @@ export function isSorteioKeyword(text: unknown): boolean {
 	}
 	return normalized.includes("sorteio") || normalized.includes("participar");
 }
+
+/**
+ * Detecta se a mensagem pede atendimento humano.
+ *
+ * Match por substring após normalização. Cobre as expressões típicas em PT-BR:
+ * "atendente", "humano", "ajuda", "suporte", "falar com alguém", "tem alguém",
+ * "problema". Falsos positivos possíveis ("não preciso de ajuda"); decisão
+ * conservadora: CTA pro vendor é não-destrutivo, melhor encaminhar a mais.
+ */
+export function isHandoffKeyword(text: unknown): boolean {
+	if (typeof text !== "string") {
+		return false;
+	}
+	const normalized = text
+		.normalize("NFD")
+		.replace(/\p{Diacritic}/gu, "")
+		.toLowerCase()
+		.trim();
+	if (normalized.length === 0) {
+		return false;
+	}
+	return (
+		normalized.includes("atendente") ||
+		normalized.includes("humano") ||
+		normalized.includes("ajuda") ||
+		normalized.includes("suporte") ||
+		normalized.includes("falar com algu") ||
+		normalized.includes("tem algu") ||
+		normalized.includes("problema")
+	);
+}
