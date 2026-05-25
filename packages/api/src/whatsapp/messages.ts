@@ -115,8 +115,8 @@ const CONSENT_BUTTONS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Tarefas pré-código (seguir 3 perfis + comentar). Placeholders pra teste —
-// substituir quando os perfis e a frase forem definidos.
+// Pré-requisitos no Instagram (3 perfis + comentário). Placeholders pra teste —
+// substituir pelos handles, post e frase definitivos.
 // ---------------------------------------------------------------------------
 
 export const INSTAGRAM_PROFILES = [
@@ -128,44 +128,7 @@ export const INSTAGRAM_PROFILES = [
 export const LAST_POST_URL = "https://instagram.com/profills";
 export const COMMENT_TEXT = "[mensagem a definir]";
 
-type TaskProgress = {
-	follow_1: boolean;
-	follow_2: boolean;
-	follow_3: boolean;
-	comment: boolean;
-};
-
-const FOLLOW_BUTTON_IDS = ["follow_1", "follow_2", "follow_3"] as const;
-const COMMENT_BUTTON_ID = "commented";
-
-function progressLine(done: boolean, label: string): string {
-	return `${done ? "✅" : "⬜"} ${label}`;
-}
-
-function progressSummary(progress: TaskProgress): string {
-	return [
-		progressLine(progress.follow_1, `Seguir ${INSTAGRAM_PROFILES[0].handle}`),
-		progressLine(progress.follow_2, `Seguir ${INSTAGRAM_PROFILES[1].handle}`),
-		progressLine(progress.follow_3, `Seguir ${INSTAGRAM_PROFILES[2].handle}`),
-		progressLine(progress.comment, "Comentar no último post"),
-	].join("\n");
-}
-
-function pendingFollowButtons(
-	progress: TaskProgress
-): Array<{ id: string; title: string }> {
-	const result: Array<{ id: string; title: string }> = [];
-	if (!progress.follow_1) {
-		result.push({ id: FOLLOW_BUTTON_IDS[0], title: "Segui o 1º" });
-	}
-	if (!progress.follow_2) {
-		result.push({ id: FOLLOW_BUTTON_IDS[1], title: "Segui o 2º" });
-	}
-	if (!progress.follow_3) {
-		result.push({ id: FOLLOW_BUTTON_IDS[2], title: "Segui o 3º" });
-	}
-	return result;
-}
+export const TASKS_DONE_BUTTON_ID = "tasks_done";
 
 // ---------------------------------------------------------------------------
 // Exports
@@ -215,73 +178,35 @@ export function codeGenerated({
 	raffleDate?: string;
 }): TextMessage {
 	return text(
-		`Inscrição confirmada, *${name}*! 🎉\n\n` +
-			`🎟️ Código: *${raffleCode}*\n` +
-			`📅 Sorteio: ${raffleDate ?? "05/06/2026"}\n\n` +
-			"A equipe Profills entrará em contato por este WhatsApp caso você seja sorteado. Boa sorte! 🍀"
+		`Inscrição confirmada, *${name}*.\n\n` +
+			`Código: *${raffleCode}*\n` +
+			`Sorteio: ${raffleDate ?? "05/06/2026"}\n\n` +
+			"Se você for sorteado, a equipe Profills entrará em contato por este WhatsApp. Boa sorte!"
 	);
 }
 
 export function tasksIntro({
 	name,
-	progress,
 }: {
 	name: string;
-	progress: TaskProgress;
 }): InteractiveButtonMessage {
 	const bodyText =
-		`Falta pouco, *${name}*! 🎯\n\n` +
-		"Pra concorrer ao sorteio, complete estes passos:\n\n" +
-		`1️⃣ Siga ${INSTAGRAM_PROFILES[0].handle}\n` +
-		`   ${INSTAGRAM_PROFILES[0].url}\n\n` +
-		`2️⃣ Siga ${INSTAGRAM_PROFILES[1].handle}\n` +
-		`   ${INSTAGRAM_PROFILES[1].url}\n\n` +
-		`3️⃣ Siga ${INSTAGRAM_PROFILES[2].handle}\n` +
-		`   ${INSTAGRAM_PROFILES[2].url}\n\n` +
-		"Quando seguir cada perfil, marque abaixo.";
+		`Falta pouco, *${name}*.\n\n` +
+		"Antes de liberar seu código, conclua os passos abaixo:\n\n" +
+		`*1.* Seguir ${INSTAGRAM_PROFILES[0].handle}\n` +
+		`${INSTAGRAM_PROFILES[0].url}\n\n` +
+		`*2.* Seguir ${INSTAGRAM_PROFILES[1].handle}\n` +
+		`${INSTAGRAM_PROFILES[1].url}\n\n` +
+		`*3.* Seguir ${INSTAGRAM_PROFILES[2].handle}\n` +
+		`${INSTAGRAM_PROFILES[2].url}\n\n` +
+		"*4.* Comentar a frase abaixo no nosso último post:\n" +
+		`"${COMMENT_TEXT}"\n` +
+		`${LAST_POST_URL}\n\n` +
+		"Quando terminar, toque no botão para confirmar.";
 
-	return interactive(bodyText, pendingFollowButtons(progress));
-}
-
-export function tasksProgress({
-	progress,
-}: {
-	progress: TaskProgress;
-}): InteractiveButtonMessage {
-	const allFollowed =
-		progress.follow_1 && progress.follow_2 && progress.follow_3;
-	const bodyText = `*Progresso:*\n\n${progressSummary(progress)}\n\n${
-		allFollowed
-			? "Agora é só comentar no último post pra confirmar."
-			: "Falta pouco! Marque os perfis restantes."
-	}`;
-
-	const buttons = pendingFollowButtons(progress);
-	if (buttons.length === 0) {
-		// Fallback caso essa função seja chamada com tudo marcado (não deveria).
-		buttons.push({ id: COMMENT_BUTTON_ID, title: "Já comentei" });
-	}
-	return interactive(bodyText, buttons);
-}
-
-export function commentPrompt(): InteractiveCtaMessage {
-	const bodyText =
-		"Última etapa! 💬\n\n" +
-		"Comente esta frase no nosso último post:\n\n" +
-		`_"${COMMENT_TEXT}"_\n\n` +
-		"Toque no botão abaixo pra abrir o post.";
-
-	return interactiveCta(bodyText, {
-		displayText: "Abrir último post",
-		url: LAST_POST_URL,
-	});
-}
-
-export function commentConfirm(): InteractiveButtonMessage {
-	return interactive(
-		"Depois de comentar, toque abaixo pra liberar seu código do sorteio.",
-		[{ id: COMMENT_BUTTON_ID, title: "Já comentei" }]
-	);
+	return interactive(bodyText, [
+		{ id: TASKS_DONE_BUTTON_ID, title: "Já concluí" },
+	]);
 }
 
 export function alreadyParticipated({

@@ -728,101 +728,38 @@ describe("handleInbound — state=AWAITING_TASKS", () => {
 		});
 	}
 
-	it("botão follow_1 → marca no taskProgress e responde com resumo", () => {
+	it("botão tasks_done → COMPLETED + generateAndSendCode", () => {
 		const result = handleInbound({
 			participant: tasksParticipant(),
-			message: buttonReplyMsg("follow_1", "Segui o 1º"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.participantPatch?.taskProgress).toEqual({
-			follow_1: true,
-			follow_2: false,
-			follow_3: false,
-			comment: false,
-		});
-		expect(result.outbounds[0]?.kind).toBe("interactive");
-	});
-
-	it("3º follow marcado → envia também commentPrompt + commentConfirm", () => {
-		const result = handleInbound({
-			participant: tasksParticipant({
-				taskProgress: {
-					follow_1: true,
-					follow_2: true,
-					follow_3: false,
-					comment: false,
-				},
-			}),
-			message: buttonReplyMsg("follow_3", "Segui o 3º"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.participantPatch?.taskProgress?.follow_3).toBe(true);
-		expect(result.outbounds).toHaveLength(3);
-	});
-
-	it("clicar follow_1 quando já está marcado → ignora", () => {
-		const result = handleInbound({
-			participant: tasksParticipant({
-				taskProgress: {
-					follow_1: true,
-					follow_2: false,
-					follow_3: false,
-					comment: false,
-				},
-			}),
-			message: buttonReplyMsg("follow_1", "Segui o 1º"),
-			config: BASE_CONFIG,
-		});
-
-		// Cai no fallback de "qualquer outra mensagem" → repete progresso sem alterar taskProgress
-		expect(result.participantPatch?.taskProgress).toBeUndefined();
-		expect(result.outbounds).toHaveLength(1);
-	});
-
-	it("commented sem todos os follows marcados → repete progresso", () => {
-		const result = handleInbound({
-			participant: tasksParticipant({
-				taskProgress: {
-					follow_1: true,
-					follow_2: false,
-					follow_3: false,
-					comment: false,
-				},
-			}),
-			message: buttonReplyMsg("commented", "Já comentei"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.participantPatch?.state).toBeUndefined();
-		expect(result.participantPatch?.taskProgress).toBeUndefined();
-		expect(result.outbounds).toHaveLength(1);
-	});
-
-	it("commented com todos os follows → COMPLETED + generateAndSendCode", () => {
-		const result = handleInbound({
-			participant: tasksParticipant({
-				taskProgress: {
-					follow_1: true,
-					follow_2: true,
-					follow_3: true,
-					comment: false,
-				},
-			}),
-			message: buttonReplyMsg("commented", "Já comentei"),
+			message: buttonReplyMsg("tasks_done", "Já concluí"),
 			config: BASE_CONFIG,
 		});
 
 		expect(result.participantPatch?.state).toBe("COMPLETED");
-		expect(result.participantPatch?.taskProgress?.comment).toBe(true);
+		expect(result.participantPatch?.taskProgress).toEqual({
+			follow_1: true,
+			follow_2: true,
+			follow_3: true,
+			comment: true,
+		});
 		expect(result.outbounds[0]?.kind).toBe("generateAndSendCode");
 	});
 
-	it("texto livre em AWAITING_TASKS → repete o progresso", () => {
+	it("texto livre em AWAITING_TASKS → repete tasksIntro", () => {
 		const result = handleInbound({
 			participant: tasksParticipant(),
 			message: textMsg("já segui"),
+			config: BASE_CONFIG,
+		});
+
+		expect(result.participantPatch?.taskProgress).toBeUndefined();
+		expect(result.outbounds[0]?.kind).toBe("interactive");
+	});
+
+	it("button_reply inesperado em AWAITING_TASKS → repete tasksIntro", () => {
+		const result = handleInbound({
+			participant: tasksParticipant(),
+			message: buttonReplyMsg("follow_1", "Segui o 1º"),
 			config: BASE_CONFIG,
 		});
 

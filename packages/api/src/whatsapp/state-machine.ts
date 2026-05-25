@@ -12,15 +12,12 @@ import {
 	alreadyParticipated,
 	askCompany,
 	askName,
-	commentConfirm,
-	commentPrompt,
 	companyInvalid,
 	declined,
 	eventNotice,
 	invalidConsentRetry,
 	nameInvalid,
 	tasksIntro,
-	tasksProgress,
 	welcome,
 } from "./messages";
 import type { InboundMessage } from "./types";
@@ -418,12 +415,7 @@ function handleAwaitingCompany(args: {
 			retryCount: 0,
 		},
 		outbounds: [
-			toInteractiveAction(
-				tasksIntro({
-					name: participant.name ?? "",
-					progress: EMPTY_TASK_PROGRESS,
-				})
-			),
+			toInteractiveAction(tasksIntro({ name: participant.name ?? "" })),
 		],
 	};
 }
@@ -508,59 +500,34 @@ function handleNonParticipant(args: {
 	};
 }
 
-function isAllFollowed(progress: TaskProgress): boolean {
-	return progress.follow_1 && progress.follow_2 && progress.follow_3;
-}
-
 function handleAwaitingTasks(args: {
 	participant: Participant;
 	message: InboundMessage;
 	config: StateMachineConfig;
 }): HandleResult {
 	const { participant, message } = args;
-	const current = (participant.taskProgress ?? EMPTY_TASK_PROGRESS) as TaskProgress;
 
-	// Botões de follow_N: marca o respectivo e devolve resumo + botões restantes.
-	for (const key of ["follow_1", "follow_2", "follow_3"] as const) {
-		if (isButtonReply(message, key) && !current[key]) {
-			const next: TaskProgress = { ...current, [key]: true };
-			const outbounds: OutboundAction[] = [
-				toInteractiveAction(tasksProgress({ progress: next })),
-			];
-			// Se acabou de marcar o 3º follow, já envia o prompt do comentário.
-			if (isAllFollowed(next) && !next.comment) {
-				outbounds.push(toInteractiveAction(commentPrompt()));
-				outbounds.push(toInteractiveAction(commentConfirm()));
-			}
-			return {
-				participantPatch: { taskProgress: next },
-				outbounds,
-			};
-		}
-	}
-
-	// Botão "Já comentei": exige todos os follows marcados antes de liberar.
-	if (isButtonReply(message, "commented")) {
-		if (!isAllFollowed(current)) {
-			return {
-				participantPatch: null,
-				outbounds: [toInteractiveAction(tasksProgress({ progress: current }))],
-			};
-		}
-		const next: TaskProgress = { ...current, comment: true };
+	if (isButtonReply(message, "tasks_done")) {
 		return {
 			participantPatch: {
 				state: "COMPLETED",
-				taskProgress: next,
+				taskProgress: {
+					follow_1: true,
+					follow_2: true,
+					follow_3: true,
+					comment: true,
+				},
 			},
 			outbounds: [{ kind: "generateAndSendCode" }],
 		};
 	}
 
-	// Qualquer outra mensagem (texto, mídia) — repete o estado atual.
+	// Qualquer outra mensagem (texto, mídia, botão inesperado) — repete a lista.
 	return {
 		participantPatch: null,
-		outbounds: [toInteractiveAction(tasksProgress({ progress: current }))],
+		outbounds: [
+			toInteractiveAction(tasksIntro({ name: participant.name ?? "" })),
+		],
 	};
 }
 
