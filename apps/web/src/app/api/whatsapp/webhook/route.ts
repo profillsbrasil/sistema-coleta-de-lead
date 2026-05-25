@@ -1,3 +1,4 @@
+import { recordAlert } from "@dashboard-leads-profills/api/whatsapp/alerts";
 import { generateRaffleCode } from "@dashboard-leads-profills/api/whatsapp/code-generator";
 import { getWhatsappConfig } from "@dashboard-leads-profills/api/whatsapp/config-repository";
 import {
@@ -565,19 +566,25 @@ async function processStatusAsync(status: InboundStatus): Promise<void> {
 			const code = status.errors?.[0]?.code ?? null;
 			const isPermanent =
 				code !== null && PERMANENT_FAILED_CODES.has(code);
+			const eventName = isPermanent
+				? "outbound_failed_permanent"
+				: "outbound_failed_status";
 			console.error(
 				JSON.stringify({
 					tag: "whatsapp:webhook",
-					event: isPermanent
-						? "outbound_failed_permanent"
-						: "outbound_failed_status",
+					event: eventName,
 					wamid: status.id,
 					recipient: status.recipient_id,
 					code,
 				})
 			);
+			await recordAlert(eventName, isPermanent ? "high" : "warning", {
+				wamid: status.id,
+				recipient: status.recipient_id,
+				code,
+			});
 			// TODO: replay automático para códigos retentáveis exige reconstruir
-			// o payload original e respeitar contadores — dívida registrada.
+			// o payload original e respeitar contadores — dívida #37.
 		}
 	} catch (err) {
 		console.error(
@@ -640,6 +647,10 @@ async function handleOutboundAction(
 					participantId: participant.id,
 				})
 			);
+			await recordAlert("code_generation_exhausted", "critical", {
+				waId,
+				participantId: participant.id,
+			});
 			await loggedSend(
 				waId,
 				() =>
@@ -707,6 +718,11 @@ async function loggedSend(
 				lastInboundAt: participant.lastInboundAt.toISOString(),
 			})
 		);
+		await recordAlert("outbound_blocked_outside_window", "high", {
+			waId,
+			participantId: participant.id,
+			lastInboundAt: participant.lastInboundAt.toISOString(),
+		});
 		return;
 	}
 
@@ -745,6 +761,13 @@ async function loggedSend(
 					attempts: err.attempts,
 				})
 			);
+			await recordAlert("outbound_failed_dead_letter", "high", {
+				waId,
+				participantId: participant?.id ?? null,
+				status: err.status,
+				metaCode: err.metaCode,
+				attempts: err.attempts,
+			});
 			return;
 		}
 		// Erro inesperado — re-throw pra o catch-all do processMessageAsync logar.

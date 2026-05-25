@@ -228,6 +228,12 @@ em perda de dados, segurança ou bloqueio de evolução.
   (sidebar vs bottom-nav) por CSS. Enquanto isso, componentes reutilizáveis devem
   gerar IDs com `useId()` em vez de strings fixas.
 
+### 38. Cron Vercel pra snapshot de quality_rating WhatsApp
+
+- **Arquivo:** (não implementado)
+- **Causa raiz:** o plano original do hardening (C2) previa `GET /api/cron/whatsapp-quality-snapshot` rodando 1×/dia, puxando `quality_rating` + `messaging_limit_tier` da Graph API e gravando em `whatsapp.health_snapshots` + alerta quando degradado. Implementação parou por exigir env nova `CRON_SECRET` + revisão de uso de `WHATSAPP_BUSINESS_ACCOUNT_ID` (já declarado mas não usado), além de configuração no `vercel.json`. O dashboard `/admin/whatsapp/health` funciona sem isso — só não mostra histórico do quality rating.
+- **Ação sugerida:** criar `vercel.json` no root com cron `0 6 * * *` → `/api/cron/whatsapp-quality-snapshot`, adicionar `CRON_SECRET` em `packages/env/src/server.ts` + `turbo.json -> tasks.build.env`, validar `Authorization: Bearer ${CRON_SECRET}` no handler, popular `health_snapshots`, comparar com último snapshot e gerar alerta `quality_rating_degraded` via `recordAlert`.
+
 ### 37. Status webhook: replay automático para failed retentável
 
 - **Arquivo:** `apps/web/src/app/api/whatsapp/webhook/route.ts` (`processStatusAsync`)

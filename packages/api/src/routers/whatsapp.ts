@@ -1,10 +1,12 @@
 import { db } from "@dashboard-leads-profills/db";
 import {
+	alerts,
 	dsrAudit,
+	messages as messagesTable,
 	participants,
 	rateLimit,
 } from "@dashboard-leads-profills/db/schema/whatsapp";
-import { and, desc, eq, like, or, type SQL, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, like, or, type SQL, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 
@@ -232,4 +234,116 @@ export const whatsappRouter = router({
 
 			return { ok: true, deletedParticipantId: participant.id };
 		}),
+
+	// C2: lista de alertas pra inbox admin. Por padrão só não-lidos.
+	alertsList: adminProcedure
+		.input(
+			z
+				.object({
+					onlyUnread: z.boolean().default(true),
+					limit: z.number().int().min(1).max(200).default(50),
+				})
+				.default({ onlyUnread: true, limit: 50 })
+		)
+		.query(async ({ input }) => {
+			const where = input.onlyUnread ? isNull(alerts.readAt) : undefined;
+			const [rows, countUnread] = await Promise.all([
+				db
+					.select()
+					.from(alerts)
+					.where(where)
+					.orderBy(desc(alerts.createdAt))
+					.limit(input.limit),
+				db
+					.select({ n: sql<number>`count(*)::int` })
+					.from(alerts)
+					.where(isNull(alerts.readAt)),
+			]);
+			return { items: rows, unread: countUnread[0]?.n ?? 0 };
+		}),
+
+	alertMarkRead: adminProcedure
+		.input(z.object({ id: z.string().uuid() }))
+		.mutation(async ({ input }) => {
+			await db
+				.update(alerts)
+				.set({ readAt: new Date() })
+				.where(eq(alerts.id, input.id));
+			return { ok: true };
+		}),
+
+	// Resumo de saúde — usado pelo dashboard /admin/whatsapp/health.
+	healthSummary: adminProcedure.query(async () => {
+		const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+		const [msgCounts, participantStates, topFailedCodes, pricingAgg] =
+			await Promise.all([
+				db
+					.select({
+						inbound: sql<number>`count(*) FILTER (WHERE direction = 'inbound')::int`,
+						outboundOk: sql<number>`count(*) FILTER (WHERE direction = 'outbound' AND failed_at IS NULL)::int`,
+						outboundFailed: sql<number>`count(*) FILTER (WHERE direction = 'outbound' AND failed_at IS NOT NULL)::int`,
+					})
+					.from(messagesTable)
+					.where(sql`${messagesTable.createdAt} >= ${since}`),
+				db
+					.select({
+						state: participants.state,
+						n: sql<number>`count(*)::int`,
+					})
+					.from(participants)
+					.groupBy(participants.state),
+				db
+					.select({
+						code: messagesTable.failedCode,
+						n: sql<number>`count(*)::int`,
+					})
+					.from(messagesTable)
+					.where(
+						and(
+							sql`${messagesTable.failedAt} IS NOT NULL`,
+							sql`${messagesTable.createdAt} >= ${since}`
+						)
+					)
+					.groupBy(messagesTable.failedCode)
+					.orderBy(sql`count(*) DESC`)
+					.limit(5),
+				db
+					.select({
+						category: messagesTable.pricingCategory,
+						billable: sql<number>`count(*) FILTER (WHERE pricing_billable = true)::int`,
+						total: sql<number>`count(*)::int`,
+					})
+					.from(messagesTable)
+					.where(
+						and(
+							sql`${messagesTable.pricingCategory} IS NOT NULL`,
+							sql`${messagesTable.createdAt} >= ${since}`
+						)
+					)
+					.groupBy(messagesTable.pricingCategory),
+			]);
+
+		const counts = msgCounts[0] ?? {
+			inbound: 0,
+			outboundOk: 0,
+			outboundFailed: 0,
+		};
+		const outboundTotal = counts.outboundOk + counts.outboundFailed;
+		const dropRate =
+			outboundTotal === 0 ? 0 : counts.outboundFailed / outboundTotal;
+
+		return {
+			window: { from: since.toISOString(), to: new Date().toISOString() },
+			messages: {
+				inbound: counts.inbound,
+				outboundOk: counts.outboundOk,
+				outboundFailed: counts.outboundFailed,
+				dropRate,
+			},
+			participantStates,
+			topFailedCodes,
+			pricing: pricingAgg,
+		};
+	}),
 });
