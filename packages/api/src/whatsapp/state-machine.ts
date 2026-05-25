@@ -260,7 +260,7 @@ function handleAwaitingConsent(args: {
 				state: "DECLINED",
 				declinedAt: new Date(),
 			},
-			outbounds: [toTextAction(declined())],
+			outbounds: [toInteractiveAction(declined({ vendorPhone: config.vendorPhone }))],
 		};
 	}
 

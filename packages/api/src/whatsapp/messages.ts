@@ -192,11 +192,20 @@ export function alreadyParticipated({
 }
 
 
-export function declined(): TextMessage {
-	return text(
-		"Sem problemas. Você optou por não participar do sorteio.\n\n" +
-			"A Profills agradece pelo seu tempo! 👋"
-	);
+export function declined({
+	vendorPhone,
+}: {
+	vendorPhone: string;
+}): InteractiveCtaMessage {
+	const bodyText =
+		"Sem problemas! Você optou por não participar do sorteio.\n" +
+		"A Profills agradece pelo seu tempo. 👋\n\n" +
+		"Para falar com nosso time durante o evento, toque no botão abaixo.";
+
+	return interactiveCta(bodyText, {
+		displayText: "Falar com a equipe",
+		url: `https://wa.me/${vendorPhone}`,
+	});
 }
 
 

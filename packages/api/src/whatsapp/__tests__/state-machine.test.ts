@@ -173,7 +173,7 @@ describe("handleInbound — state=AWAITING_CONSENT", () => {
 
 		expect(result.participantPatch?.state).toBe("DECLINED");
 		expect(result.participantPatch?.declinedAt).toBeInstanceOf(Date);
-		expect(result.outbounds[0]?.kind).toBe("text");
+		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
 	it("texto 'aceito' → AWAITING_NAME", () => {
