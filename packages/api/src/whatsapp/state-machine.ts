@@ -81,7 +81,6 @@ export interface StateMachineConfig {
 	eventStartBR: string; // "26/05"
 	logoUrl?: string; // header de imagem do eventNotice (logo Profills)
 	raffleDate?: string;
-	redirectCooldownMs?: number; // default 4h
 	responseCooldownMs?: number; // default 8s — silencia respostas repetidas em COMPLETED/AWAITING_CONSENT
 	termsVersion: string;
 	vendorPhone: string;
@@ -174,23 +173,13 @@ function eventNoticeAction(config: StateMachineConfig): OutboundAction {
 }
 
 /**
- * Verifica se o participante atingiu o limite de envios de eventNotice.
- * Quando redirectCount >= 3, o bot fica em silêncio permanente para esse waId.
- * O nome da coluna mantém "redirect" por compatibilidade com schema antigo.
+ * Verifica se o participante já recebeu o eventNotice (envio único).
+ * Após o 1º envio, o bot fica em silêncio permanente para esse waId até
+ * que a keyword `sorteio` reabra o fluxo. O nome da coluna mantém
+ * "redirect" por compatibilidade com schema antigo.
  */
 function hasExhaustedNotices(participant: Participant): boolean {
-	return (participant.redirectCount ?? 0) >= 3;
-}
-
-/**
- * Verifica se o anti-loop de cooldown está ativo.
- */
-function isWithinCooldown(
-	participant: Participant,
-	cooldownMs: number
-): boolean {
-	const lastSent = participant.redirectSentAt;
-	return !!lastSent && Date.now() - lastSent.getTime() < cooldownMs;
+	return (participant.redirectCount ?? 0) >= 1;
 }
 
 const DEFAULT_RESPONSE_COOLDOWN_MS = 8_000;
@@ -492,14 +481,8 @@ function handleNonParticipant(args: {
 		};
 	}
 
-	// Limite de 3 envios — silêncio permanente para esse waId
+	// Envio único de eventNotice — após o 1º envio, silêncio permanente até keyword
 	if (hasExhaustedNotices(participant)) {
-		return { participantPatch: null, outbounds: [] };
-	}
-
-	// Anti-loop: cooldown 4h padrão entre envios
-	const cooldownMs = config.redirectCooldownMs ?? 4 * 60 * 60 * 1000;
-	if (isWithinCooldown(participant, cooldownMs)) {
 		return { participantPatch: null, outbounds: [] };
 	}
 
@@ -605,14 +588,8 @@ function handleDeclined(args: {
 		};
 	}
 
-	// Limite de 3 envios — silêncio permanente
+	// Envio único de eventNotice — após o 1º envio, silêncio permanente até keyword
 	if (hasExhaustedNotices(participant)) {
-		return { participantPatch: null, outbounds: [] };
-	}
-
-	// Anti-loop cooldown
-	const cooldownMs = config.redirectCooldownMs ?? 4 * 60 * 60 * 1000;
-	if (isWithinCooldown(participant, cooldownMs)) {
 		return { participantPatch: null, outbounds: [] };
 	}
 

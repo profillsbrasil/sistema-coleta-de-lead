@@ -15,9 +15,9 @@ Backend de captação via QR Code → WhatsApp. Isolado da coleta de leads dos v
 
 - **Princípio: sorteio é exceção, não regra.** Cliente que entra em contato sem citar keyword (`sorteio`/`participar`) recebe `eventNotice` — mensagem de atendimento focada em "fale com a equipe", botão CTA URL nativo pra `wa.me/<vendor>`. **Não menciona sorteio.**
 - **Fluxo do sorteio entra apenas via keyword** (`sorteio` ou `participar`, normalizado sem acento) ou via QR Code (texto pré-preenchido contém keyword).
-- **NON_PARTICIPANT:** cliente comum (não-keyword na primeira interação). Recebe `eventNotice`. Anti-loop via `redirect_sent_at` (cooldown 4h default) + limite total de 3 envios (`redirect_count`). Após 3 envios entra em silêncio permanente. Keyword reabre fluxo do sorteio.
+- **NON_PARTICIPANT:** cliente comum (não-keyword na primeira interação). Recebe **1 envio único** de `eventNotice`; após isso silêncio permanente para esse `wa_id`. Controlado por `redirect_count` (≥1 = silêncio). Keyword `sorteio` sempre reabre fluxo, mesmo após silêncio. Sem cooldown — limite hard de 1 evita spam e custo desnecessário (A5).
 - **DECLINED + keyword:** reabre fluxo (cliente mudou de ideia → AWAITING_CONSENT + welcome).
-- **DECLINED + não-keyword:** mesma lógica de NON_PARTICIPANT (eventNotice com cooldown + limite).
+- **DECLINED + não-keyword:** mesma lógica de NON_PARTICIPANT (1 eventNotice e silêncio).
 - **COMPLETED + qualquer mensagem:** responde `alreadyParticipated` (já tem botão CTA URL pra contato).
 - **`wasEventNotice` no HandleResult:** state machine sinaliza ao webhook quando enviou eventNotice. Webhook usa esse flag pra setar `redirectSentAt` + incrementar `redirectCount`. Coluna mantém nome `redirect_*` por compatibilidade com schema antigo.
 - **Botões removidos:** `want_to_participate` / `already_registered` não existem mais. Quem veio pelo sorteio digita keyword OU usa QR (que injeta keyword).
