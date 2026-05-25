@@ -18,7 +18,8 @@ export type ValidationError =
 	| "too_long"
 	| "invalid_chars"
 	| "missing_surname"
-	| "only_digits";
+	| "only_digits"
+	| "garbage";
 
 export type ValidationResult =
 	| { ok: true; value: string }
@@ -31,6 +32,18 @@ const NAME_RE = /^[\p{L}\s'\-]+$/u;
 const COMPANY_RE = /^[\p{L}\d\s'\-.&/]+$/u;
 
 const LETTER_RE = /\p{L}/u;
+const VOWEL_RE = /[aeiouyàáâãäåèéêëìíîïòóôõöùúûüỳýÿ]/iu;
+
+// 4+ chars iguais seguidos em qualquer parte (xxxx, aaaa). Garbage.
+const LONG_RUN_RE = /(\p{L})\1{3,}/u;
+
+function hasVowel(word: string): boolean {
+	return VOWEL_RE.test(word);
+}
+
+function hasLongRun(input: string): boolean {
+	return LONG_RUN_RE.test(input);
+}
 
 export function validateName(input: unknown): ValidationResult {
 	if (typeof input !== "string") {
@@ -52,6 +65,9 @@ export function validateName(input: unknown): ValidationResult {
 	const parts = trimmed.split(/\s+/).filter((p) => p.length >= NAME_PART_MIN);
 	if (parts.length < 2) {
 		return { ok: false, reason: "missing_surname" };
+	}
+	if (hasLongRun(trimmed) || parts.some((p) => !hasVowel(p))) {
+		return { ok: false, reason: "garbage" };
 	}
 	return { ok: true, value: trimmed };
 }
@@ -75,6 +91,9 @@ export function validateCompany(input: unknown): ValidationResult {
 	}
 	if (!LETTER_RE.test(trimmed)) {
 		return { ok: false, reason: "only_digits" };
+	}
+	if (hasLongRun(trimmed)) {
+		return { ok: false, reason: "garbage" };
 	}
 	return { ok: true, value: trimmed };
 }

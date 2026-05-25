@@ -263,6 +263,7 @@ export function nameInvalid(reason: ValidationError): TextMessage {
 		invalid_chars: "Use apenas letras no nome, por favor.",
 		missing_surname: "Por favor, envie seu nome e sobrenome.",
 		only_digits: "Use apenas letras no nome, por favor.",
+		garbage: "Esse nome não parece válido. Pode digitar seu nome completo?",
 	};
 	return text(body[reason]);
 }
@@ -275,6 +276,7 @@ export function companyInvalid(reason: ValidationError): TextMessage {
 		invalid_chars: "Nome de empresa inválido. Tente de novo.",
 		missing_surname: "Nome de empresa inválido. Tente de novo.",
 		only_digits: "O nome da empresa precisa conter letras.",
+		garbage: "Esse nome de empresa não parece válido. Pode tentar de novo?",
 	};
 	return text(body[reason]);
 }

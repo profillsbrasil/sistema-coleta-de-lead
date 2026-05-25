@@ -48,6 +48,11 @@ function makeParticipant(overrides: Partial<Participant> = {}): Participant {
 			follow_3: false,
 			comment: false,
 		},
+		optedOutAt: null,
+		optedOutReason: null,
+		humanHandoffRequestedAt: null,
+		lastInboundAt: null,
+		termsUrlSnapshot: null,
 		createdAt: new Date(),
 		updatedAt: new Date(), // recente por padrão — testes de TTL sobrescrevem explicitamente
 		...overrides,
@@ -552,7 +557,10 @@ describe("handleInbound — state=AWAITING_NAME", () => {
 	});
 
 	it("nome com exatamente 80 chars é válido", () => {
-		const name80 = `${"B".repeat(40)} ${"C".repeat(39)}`;
+		// Padrão alternado pra não disparar long-run (4+ chars iguais).
+		const first = "Ab".repeat(20); // 40 chars
+		const last = "Cd".repeat(19) + "e"; // 39 chars
+		const name80 = `${first} ${last}`;
 		const result = handleInbound({
 			participant: makeParticipant({ state: "AWAITING_NAME" }),
 			message: textMsg(name80),
