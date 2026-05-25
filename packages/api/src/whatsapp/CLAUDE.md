@@ -8,7 +8,7 @@ Backend de captação via QR Code → WhatsApp. Isolado da coleta de leads dos v
 - **Opt-out via keyword é REATIVO, NÃO destrutivo** (A1): keywords `PARAR|SAIR|CANCELAR|STOP|UNSUBSCRIBE|DESCADASTRAR` (word-boundary, sem acento, lowercase) marcam `participants.opted_out_at` + `opted_out_reason` e silenciam o bot — **NÃO deletam dado**. `VOLTAR` ou `RETORNAR` limpa a flag e reabre. Eliminação real de dados continua sendo apenas via DSR manual no admin. Precedência máxima: opt-out roda antes de sorteio/handoff.
 - **Signature HMAC-SHA256 sobre RAW body**, comparação timing-safe (`signature.ts`). Não usar body parseado.
 - **Sistema NÃO persiste vencedor, prêmio sorteado ou notificação de vencedor.** O sorteio acontece fora do sistema (terceiro). `participants.raffle_code` é só identificação da inscrição.
-- Webhook em `apps/web/src/app/api/whatsapp/webhook/route.ts` faz: verify token (GET) + HMAC + dedup por `wamid` + rate limit + state machine + persist + send. Manter ordem.
+- **Webhook arch (B1+B2):** POST faz HMAC + parse e despacha `after(processMessageAsync)` — ACK 200 imediato. `processMessageAsync` começa por `claimInbound`, que abre transação, adquire `pg_advisory_xact_lock(hashtext(wa_id))`, carrega/cria participant (state=NEW) e faz `INSERT messages ... ON CONFLICT (wamid) DO NOTHING RETURNING` — dedup atômico. 0 rows = duplicate, return. Pós-claim: rate limit, branches (mídia/opt-out/handoff), state machine, outbounds. NÃO duplicar log de inbound nos branches — `claimInbound` já gravou.
 - Schema Postgres em `whatsapp.*` (não `public.*`), 3 tabelas. RLS habilitada nas três.
 
 ## States e comportamento

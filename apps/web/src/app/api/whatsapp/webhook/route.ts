@@ -37,7 +37,8 @@ import {
 } from "@dashboard-leads-profills/db/schema/whatsapp";
 import { env } from "@dashboard-leads-profills/env/server";
 import { env as webEnv } from "@dashboard-leads-profills/env/web";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
+import { after } from "next/server";
 
 // ---------------------------------------------------------------------------
 // formatBR — converte ISO date "YYYY-MM-DD" para "DD/MM"
@@ -123,16 +124,18 @@ export async function POST(request: Request): Promise<Response> {
 		return new Response("OK", { status: 200 });
 	}
 
+	// ACK imediato (B1): processamento async via after(). Meta exige resposta
+	// rápida; dedup atômico + advisory lock por wa_id (B2) garantem que retries
+	// e mensagens concorrentes do mesmo usuário fiquem seguros mesmo em paralelo.
 	for (const entry of parsed.entry) {
 		for (const change of entry.changes) {
 			const value = change.value;
 			const inboundMessages = value.messages;
 			if (!inboundMessages || inboundMessages.length === 0) {
-				// Status-only event or empty — skip
 				continue;
 			}
 			for (const message of inboundMessages) {
-				await processMessage(message, value);
+				after(() => processMessageAsync(message, value));
 			}
 		}
 	}
@@ -141,12 +144,77 @@ export async function POST(request: Request): Promise<Response> {
 }
 
 // ---------------------------------------------------------------------------
-// processMessage
+// claimInbound (B2) — advisory lock por wa_id + dedup atômico de wamid.
+//
+// Em uma única transação serializada por hashtext(wa_id):
+//   1. SELECT/INSERT participant (cria como state=NEW se não existir)
+//   2. INSERT inbound message ON CONFLICT (wamid) DO NOTHING RETURNING
+//   3. Se 0 rows → duplicate retry da Meta → rollback + skip
+//
+// Como o lock é por wa_id, mensagens concorrentes do mesmo usuário são
+// processadas em ordem, sem race de "dois INSERT participant simultâneos".
+// ---------------------------------------------------------------------------
+
+type ClaimResult =
+	| { isDuplicate: false; participant: Participant }
+	| { isDuplicate: true };
+
+async function claimInbound(message: InboundMessage): Promise<ClaimResult> {
+	const waId = message.from;
+	const messageId = message.id;
+
+	return await db.transaction(async (tx) => {
+		await tx.execute(
+			sql`SELECT pg_advisory_xact_lock(hashtext(${waId}))`
+		);
+
+		const existing = await tx
+			.select()
+			.from(participants)
+			.where(eq(participants.waId, waId))
+			.limit(1);
+
+		let participant: Participant;
+		if (existing[0]) {
+			participant = existing[0];
+		} else {
+			const [created] = await tx
+				.insert(participants)
+				.values({ waId, state: "NEW" })
+				.returning();
+			if (!created) {
+				throw new Error("claimInbound: failed to create participant");
+			}
+			participant = created;
+		}
+
+		const inserted = await tx
+			.insert(messagesTable)
+			.values({
+				participantId: participant.id,
+				direction: "inbound",
+				wamid: messageId,
+				type: message.type,
+				payload: message as Record<string, unknown>,
+			})
+			.onConflictDoNothing({ target: messagesTable.wamid })
+			.returning({ id: messagesTable.id });
+
+		if (inserted.length === 0) {
+			return { isDuplicate: true };
+		}
+
+		return { isDuplicate: false, participant };
+	});
+}
+
+// ---------------------------------------------------------------------------
+// processMessageAsync — rodado via after() depois do ACK 200
 // ---------------------------------------------------------------------------
 
 type WebhookValue = WebhookPayload["entry"][number]["changes"][number]["value"];
 
-async function processMessage(
+async function processMessageAsync(
 	message: InboundMessage,
 	_value: WebhookValue
 ): Promise<void> {
@@ -154,7 +222,22 @@ async function processMessage(
 	const messageId = message.id;
 
 	try {
-		// 1. Rate limit check
+		// 1. Dedup atômico + load/create participant (B2)
+		const claim = await claimInbound(message);
+		if (claim.isDuplicate) {
+			console.log(
+				JSON.stringify({
+					tag: "whatsapp:webhook",
+					event: "duplicate_skipped",
+					waId,
+					messageId,
+				})
+			);
+			return;
+		}
+		let participant: Participant = claim.participant;
+
+		// 2. Rate limit (inbound já tá logado pelo claim — trilha preservada)
 		const rl = await checkWhatsappRateLimit(waId);
 		if (!rl.allowed) {
 			console.log(
@@ -187,53 +270,9 @@ async function processMessage(
 			return;
 		}
 
-		// 2. Dedup: skip if wamid already processed
-		const existing = await db
-			.select({ id: messagesTable.id })
-			.from(messagesTable)
-			.where(eq(messagesTable.wamid, messageId))
-			.limit(1);
-
-		if (existing.length > 0) {
-			console.log(
-				JSON.stringify({
-					tag: "whatsapp:webhook",
-					event: "duplicate_skipped",
-					waId,
-					messageId,
-				})
-			);
-			return;
-		}
-
-		// 3. Load participant (may be null)
-		const participantRows = await db
-			.select()
-			.from(participants)
-			.where(eq(participants.waId, waId))
-			.limit(1);
-
-		let participant: Participant | null = participantRows[0] ?? null;
-
 		// 3a. Mídia inbound (image/audio/video/sticker/document/location/...) →
 		// resposta padrão e early-return. Sem download de mídia.
 		if (isUnsupportedInbound(message.type)) {
-			if (participant === null) {
-				const [inserted] = await db
-					.insert(participants)
-					.values({ waId, state: "NON_PARTICIPANT" })
-					.returning();
-				participant = inserted ?? null;
-			}
-			if (participant !== null) {
-				await db.insert(messagesTable).values({
-					participantId: participant.id,
-					direction: "inbound",
-					wamid: messageId,
-					type: message.type,
-					payload: message as Record<string, unknown>,
-				});
-			}
 			const reply = unsupportedMediaReply();
 			await loggedSend(
 				waId,
@@ -258,7 +297,7 @@ async function processMessage(
 
 		// 3a-1. Opt-out (A1 ajustado): se já optado pra fora, silencia tudo
 		// exceto VOLTAR (que limpa a flag). Não deleta dados — DSR manual.
-		if (participant?.optedOutAt) {
+		if (participant.optedOutAt) {
 			if (textBody !== null && isOptInKeyword(textBody)) {
 				await db
 					.update(participants)
@@ -269,13 +308,6 @@ async function processMessage(
 					optedOutAt: null,
 					optedOutReason: null,
 				};
-				await db.insert(messagesTable).values({
-					participantId: participant.id,
-					direction: "inbound",
-					wamid: messageId,
-					type: message.type,
-					payload: message as Record<string, unknown>,
-				});
 				const reply = optInConfirm();
 				await loggedSend(
 					waId,
@@ -294,13 +326,6 @@ async function processMessage(
 				);
 				return;
 			}
-			await db.insert(messagesTable).values({
-				participantId: participant.id,
-				direction: "inbound",
-				wamid: messageId,
-				type: message.type,
-				payload: message as Record<string, unknown>,
-			});
 			console.log(
 				JSON.stringify({
 					tag: "whatsapp:webhook",
@@ -313,69 +338,40 @@ async function processMessage(
 		}
 
 		// 3a-2. Keyword de opt-out: precedência máxima sobre sorteio/handoff.
-		// Marca opted_out_at + opted_out_reason e responde com confirmação.
-		// NÃO deleta dados (eliminação só por DSR manual no admin).
 		if (textBody !== null && isOptOutKeyword(textBody)) {
-			if (participant === null) {
-				const [inserted] = await db
-					.insert(participants)
-					.values({ waId, state: "NON_PARTICIPANT" })
-					.returning();
-				participant = inserted ?? null;
-			}
-			if (participant !== null) {
-				await db.insert(messagesTable).values({
-					participantId: participant.id,
-					direction: "inbound",
-					wamid: messageId,
-					type: message.type,
-					payload: message as Record<string, unknown>,
-				});
-				const reply = optOutConfirm();
-				await loggedSend(
+			const reply = optOutConfirm();
+			await loggedSend(
+				waId,
+				() => sendText(waId, reply.body),
+				participant,
+				"text",
+				{ body: reply.body }
+			);
+			await db
+				.update(participants)
+				.set({ optedOutAt: new Date(), optedOutReason: "user_keyword" })
+				.where(eq(participants.id, participant.id));
+			console.log(
+				JSON.stringify({
+					tag: "whatsapp:webhook",
+					event: "opt_out",
 					waId,
-					() => sendText(waId, reply.body),
-					participant,
-					"text",
-					{ body: reply.body }
-				);
-				await db
-					.update(participants)
-					.set({
-						optedOutAt: new Date(),
-						optedOutReason: "user_keyword",
-					})
-					.where(eq(participants.id, participant.id));
-				console.log(
-					JSON.stringify({
-						tag: "whatsapp:webhook",
-						event: "opt_out",
-						waId,
-						messageId,
-					})
-				);
-			}
+					messageId,
+				})
+			);
 			return;
 		}
 
-		// 3b. Handoff humano (A3): se já houve handoff, silencia tudo exceto keyword
-		// sorteio (que reabre o fluxo e limpa a flag). Trilha do inbound continua.
-		if (participant?.humanHandoffRequestedAt) {
+		// 3b. Handoff silence (A3): se já houve handoff, silencia tudo exceto
+		// keyword sorteio (que reabre o fluxo e limpa a flag).
+		if (participant.humanHandoffRequestedAt) {
 			if (textBody !== null && isSorteioKeyword(textBody)) {
-				// Reabre fluxo — limpa flag pro bot voltar a responder normalmente.
 				await db
 					.update(participants)
 					.set({ humanHandoffRequestedAt: null })
 					.where(eq(participants.id, participant.id));
 				participant = { ...participant, humanHandoffRequestedAt: null };
 			} else {
-				await db.insert(messagesTable).values({
-					participantId: participant.id,
-					direction: "inbound",
-					wamid: messageId,
-					type: message.type,
-					payload: message as Record<string, unknown>,
-				});
 				console.log(
 					JSON.stringify({
 						tag: "whatsapp:webhook",
@@ -388,55 +384,37 @@ async function processMessage(
 			}
 		}
 
-		// 3c. Keyword de handoff (A3): atende qualquer estado, envia CTA pro vendor,
-		// marca human_handoff_requested_at e silencia daqui em diante (via 3b).
+		// 3c. Keyword de handoff (A3): atende qualquer estado, envia CTA pro vendor.
 		if (
 			textBody !== null &&
 			!isSorteioKeyword(textBody) &&
 			isHandoffKeyword(textBody)
 		) {
-			if (participant === null) {
-				const [inserted] = await db
-					.insert(participants)
-					.values({ waId, state: "NON_PARTICIPANT" })
-					.returning();
-				participant = inserted ?? null;
-			}
-			if (participant !== null) {
-				await db.insert(messagesTable).values({
-					participantId: participant.id,
-					direction: "inbound",
-					wamid: messageId,
-					type: message.type,
-					payload: message as Record<string, unknown>,
-				});
-				const dbConfig = await getWhatsappConfig();
-				const reply = handoffRedirect({ vendorPhone: dbConfig.vendorPhone });
-				await loggedSend(
+			const dbConfig = await getWhatsappConfig();
+			const reply = handoffRedirect({ vendorPhone: dbConfig.vendorPhone });
+			await loggedSend(
+				waId,
+				() => sendInteractive(waId, reply.interactive),
+				participant,
+				"interactive",
+				{ interactive: reply.interactive }
+			);
+			await db
+				.update(participants)
+				.set({ humanHandoffRequestedAt: new Date() })
+				.where(eq(participants.id, participant.id));
+			console.log(
+				JSON.stringify({
+					tag: "whatsapp:webhook",
+					event: "handoff_triggered",
 					waId,
-					() => sendInteractive(waId, reply.interactive),
-					participant,
-					"interactive",
-					{ interactive: reply.interactive }
-				);
-				await db
-					.update(participants)
-					.set({ humanHandoffRequestedAt: new Date() })
-					.where(eq(participants.id, participant.id));
-				console.log(
-					JSON.stringify({
-						tag: "whatsapp:webhook",
-						event: "handoff_triggered",
-						waId,
-						messageId,
-					})
-				);
-			}
+					messageId,
+				})
+			);
 			return;
 		}
 
-		// 4. Build config — campos textuais/visuais vêm da tabela whatsapp.config,
-		// editável via admin. Secrets continuam em ENV.
+		// 4. Build config — campos textuais/visuais vêm da tabela whatsapp.config.
 		const dbConfig = await getWhatsappConfig();
 		const config: StateMachineConfig = {
 			eventName: dbConfig.eventName,
@@ -451,54 +429,35 @@ async function processMessage(
 			officialPostUrl: dbConfig.officialPostUrl,
 		};
 
-		// 5. Run state machine
+		// 5. State machine — participant sempre existe (claimInbound criou se null).
 		const result = handleInbound({ participant, message, config });
 
 		// 6. Apply DB changes
-		// 6a. Create participant if needed
+		// 6a. createParticipant da state machine vira UPDATE state (participant já existe).
 		if (result.createParticipant) {
-			const [inserted] = await db
-				.insert(participants)
-				.values({
-					waId: result.createParticipant.waId,
-					state: result.createParticipant.state,
-				})
-				.returning();
-			participant = inserted ?? null;
+			await db
+				.update(participants)
+				.set({ state: result.createParticipant.state })
+				.where(eq(participants.id, participant.id));
+			participant = { ...participant, state: result.createParticipant.state };
 		}
 
-		// 6b. Update participant if patch is provided
-		if (result.participantPatch && participant !== null) {
+		// 6b. Update participant patch.
+		if (result.participantPatch) {
 			await db
 				.update(participants)
 				.set(result.participantPatch)
 				.where(eq(participants.id, participant.id));
-			// Merge patch into local participant for use below (e.g., for code generation)
-			participant = {
-				...participant,
-				...result.participantPatch,
-			} as Participant;
+			participant = { ...participant, ...result.participantPatch } as Participant;
 		}
 
-		// 7. Log inbound message to whatsapp.messages
-		// participant must exist at this point (created above if new)
-		if (participant !== null) {
-			await db.insert(messagesTable).values({
-				participantId: participant.id,
-				direction: "inbound",
-				wamid: messageId,
-				type: message.type,
-				payload: message as Record<string, unknown>,
-			});
-		}
-
-		// 8. Process outbound actions
+		// 7. Outbound actions
 		for (const action of result.outbounds) {
 			await handleOutboundAction(action, waId, participant, config);
 		}
 
-		// 9. Se enviamos eventNotice, registra timestamp e incrementa contador
-		if (result.wasEventNotice && participant !== null) {
+		// 8. Se enviamos eventNotice, registra timestamp e incrementa contador.
+		if (result.wasEventNotice) {
 			await db
 				.update(participants)
 				.set({
@@ -518,7 +477,6 @@ async function processMessage(
 			})
 		);
 	} catch (err) {
-		// Catch-all: log but never rethrow — Meta should not retry on our internal errors
 		console.error(
 			JSON.stringify({
 				tag: "whatsapp:webhook",
