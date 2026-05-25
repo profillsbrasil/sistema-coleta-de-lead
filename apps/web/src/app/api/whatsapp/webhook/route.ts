@@ -28,6 +28,7 @@ import {
 } from "@dashboard-leads-profills/api/whatsapp/state-machine";
 import {
 	type InboundMessage,
+	type InboundStatus,
 	type WebhookPayload,
 	webhookPayloadSchema,
 } from "@dashboard-leads-profills/api/whatsapp/types";
@@ -132,11 +133,18 @@ export async function POST(request: Request): Promise<Response> {
 		for (const change of entry.changes) {
 			const value = change.value;
 			const inboundMessages = value.messages;
-			if (!inboundMessages || inboundMessages.length === 0) {
-				continue;
+			if (inboundMessages && inboundMessages.length > 0) {
+				for (const message of inboundMessages) {
+					after(() => processMessageAsync(message, value));
+				}
 			}
-			for (const message of inboundMessages) {
-				after(() => processMessageAsync(message, value));
+			// B4: status webhooks (sent/delivered/read/failed) — atualizam o
+			// outbound previamente gravado com timestamps, pricing e errors.
+			const statuses = value.statuses;
+			if (statuses && statuses.length > 0) {
+				for (const status of statuses) {
+					after(() => processStatusAsync(status));
+				}
 			}
 		}
 	}
@@ -493,6 +501,89 @@ async function processMessageAsync(
 				event: "error",
 				waId,
 				messageId,
+				err: String(err),
+			})
+		);
+	}
+}
+
+// ---------------------------------------------------------------------------
+// processStatusAsync (B4) — sent/delivered/read/failed do outbound
+// ---------------------------------------------------------------------------
+
+// Meta error codes que indicam falha permanente (não vale retentar).
+// 131026 = receiver não encontrado; 131047 = fora da janela 24h.
+const PERMANENT_FAILED_CODES = new Set([131026, 131047]);
+
+function pickStatusUpdate(status: InboundStatus): {
+	deliveredAt?: Date;
+	readAt?: Date;
+	failedAt?: Date;
+	failedCode?: number | null;
+	failedReason?: string | null;
+	pricingCategory?: string | null;
+	pricingBillable?: boolean | null;
+} {
+	const ts = new Date(Number(status.timestamp) * 1000);
+	const update: ReturnType<typeof pickStatusUpdate> = {};
+
+	if (status.status === "delivered") update.deliveredAt = ts;
+	else if (status.status === "read") update.readAt = ts;
+	else if (status.status === "failed") {
+		update.failedAt = ts;
+		const firstError = status.errors?.[0];
+		update.failedCode = firstError?.code ?? null;
+		update.failedReason =
+			firstError?.title ?? firstError?.message ?? "unknown";
+	}
+
+	if (status.pricing) {
+		if (status.pricing.category !== undefined) {
+			update.pricingCategory = status.pricing.category;
+		}
+		if (status.pricing.billable !== undefined) {
+			update.pricingBillable = status.pricing.billable;
+		}
+	}
+	return update;
+}
+
+async function processStatusAsync(status: InboundStatus): Promise<void> {
+	try {
+		const update = pickStatusUpdate(status);
+		if (Object.keys(update).length === 0) {
+			// "sent" sem pricing — nada a registrar (já gravado no envio).
+			return;
+		}
+		await db
+			.update(messagesTable)
+			.set(update)
+			.where(eq(messagesTable.wamid, status.id));
+
+		if (status.status === "failed") {
+			const code = status.errors?.[0]?.code ?? null;
+			const isPermanent =
+				code !== null && PERMANENT_FAILED_CODES.has(code);
+			console.error(
+				JSON.stringify({
+					tag: "whatsapp:webhook",
+					event: isPermanent
+						? "outbound_failed_permanent"
+						: "outbound_failed_status",
+					wamid: status.id,
+					recipient: status.recipient_id,
+					code,
+				})
+			);
+			// TODO: replay automático para códigos retentáveis exige reconstruir
+			// o payload original e respeitar contadores — dívida registrada.
+		}
+	} catch (err) {
+		console.error(
+			JSON.stringify({
+				tag: "whatsapp:webhook",
+				event: "status_update_error",
+				wamid: status.id,
 				err: String(err),
 			})
 		);
