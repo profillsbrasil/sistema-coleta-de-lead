@@ -583,8 +583,10 @@ async function processStatusAsync(status: InboundStatus): Promise<void> {
 				recipient: status.recipient_id,
 				code,
 			});
-			// TODO: replay automático para códigos retentáveis exige reconstruir
-			// o payload original e respeitar contadores — dívida #37.
+
+			if (!isPermanent) {
+				await tryReplayOutbound(status.id, code);
+			}
 		}
 	} catch (err) {
 		console.error(
@@ -596,6 +598,151 @@ async function processStatusAsync(status: InboundStatus): Promise<void> {
 			})
 		);
 	}
+}
+
+// ---------------------------------------------------------------------------
+// tryReplayOutbound (resolve tech-debt #37) — replay automático para failed
+// retentável. Cap em 1 tentativa por mensagem lógica.
+// ---------------------------------------------------------------------------
+
+const MAX_REPLAY_COUNT = 1;
+
+async function tryReplayOutbound(
+	wamid: string,
+	code: number | null
+): Promise<void> {
+	// Carrega outbound original + dados do participant pra send.
+	const rows = await db
+		.select({
+			id: messagesTable.id,
+			type: messagesTable.type,
+			payload: messagesTable.payload,
+			replayCount: messagesTable.replayCount,
+			participantId: messagesTable.participantId,
+			waId: participants.waId,
+			lastInboundAt: participants.lastInboundAt,
+		})
+		.from(messagesTable)
+		.innerJoin(participants, eq(participants.id, messagesTable.participantId))
+		.where(eq(messagesTable.wamid, wamid))
+		.limit(1);
+
+	const row = rows[0];
+	if (!row) {
+		return;
+	}
+
+	if (row.replayCount >= MAX_REPLAY_COUNT) {
+		console.log(
+			JSON.stringify({
+				tag: "whatsapp:webhook",
+				event: "outbound_replay_skipped_capped",
+				wamid,
+				replayCount: row.replayCount,
+			})
+		);
+		return;
+	}
+
+	// Guard rail 23h: se já passou da janela, replay viraria template fora-de-uso.
+	if (
+		row.lastInboundAt &&
+		Date.now() - row.lastInboundAt.getTime() > WINDOW_MS
+	) {
+		console.log(
+			JSON.stringify({
+				tag: "whatsapp:webhook",
+				event: "outbound_replay_skipped_window",
+				wamid,
+				lastInboundAt: row.lastInboundAt.toISOString(),
+			})
+		);
+		return;
+	}
+
+	const payload = row.payload as Record<string, unknown>;
+
+	let newWamid: string | null = null;
+	let sendError: unknown = null;
+	try {
+		if (row.type === "text" && typeof payload.body === "string") {
+			const r = await sendText(row.waId, payload.body);
+			newWamid = r.wamid;
+		} else if (row.type === "interactive" && payload.interactive) {
+			const r = await sendInteractive(
+				row.waId,
+				payload.interactive as Parameters<typeof sendInteractive>[1]
+			);
+			newWamid = r.wamid;
+		} else {
+			console.log(
+				JSON.stringify({
+					tag: "whatsapp:webhook",
+					event: "outbound_replay_skipped_unsupported_type",
+					wamid,
+					type: row.type,
+				})
+			);
+			return;
+		}
+	} catch (err) {
+		sendError = err;
+	}
+
+	if (newWamid !== null) {
+		await db.insert(messagesTable).values({
+			participantId: row.participantId,
+			direction: "outbound",
+			wamid: newWamid,
+			type: row.type,
+			payload,
+			replayCount: row.replayCount + 1,
+			replayOfMessageId: row.id,
+		});
+		console.log(
+			JSON.stringify({
+				tag: "whatsapp:webhook",
+				event: "outbound_replayed",
+				originalWamid: wamid,
+				newWamid,
+				replayCount: row.replayCount + 1,
+				triggerCode: code,
+			})
+		);
+		return;
+	}
+
+	// Send falhou (permanente após retries do sender) — grava dead-letter
+	// e alerta. Não tenta de novo.
+	if (sendError instanceof WhatsappSendPermanentError) {
+		await db.insert(messagesTable).values({
+			participantId: row.participantId,
+			direction: "outbound",
+			type: row.type,
+			payload,
+			failedAt: new Date(),
+			failedCode: sendError.metaCode,
+			failedReason: `replay_failed: ${sendError.responseBody.slice(0, 400)}`,
+			replayCount: row.replayCount + 1,
+			replayOfMessageId: row.id,
+		});
+		await recordAlert("outbound_replay_failed", "high", {
+			originalWamid: wamid,
+			status: sendError.status,
+			metaCode: sendError.metaCode,
+			triggerCode: code,
+		});
+		return;
+	}
+
+	console.error(
+		JSON.stringify({
+			tag: "whatsapp:webhook",
+			event: "outbound_replay_unexpected_error",
+			wamid,
+			err: String(sendError),
+		})
+	);
 }
 
 // ---------------------------------------------------------------------------
