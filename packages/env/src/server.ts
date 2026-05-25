@@ -26,6 +26,8 @@ export const env = createEnv({
 		// (DB, editável via /admin/whatsapp).
 		SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
 		TERMS_VERSION: z.string().min(1).default("v1"),
+		// Cron secret pra autenticar requests dos crons Vercel (Bearer header).
+		CRON_SECRET: z.string().min(16).optional(),
 	},
 	runtimeEnv: process.env,
 	emptyStringAsUndefined: true,

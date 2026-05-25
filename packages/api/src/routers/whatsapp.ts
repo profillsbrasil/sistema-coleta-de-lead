@@ -2,6 +2,7 @@ import { db } from "@dashboard-leads-profills/db";
 import {
 	alerts,
 	dsrAudit,
+	healthSnapshots,
 	messages as messagesTable,
 	participants,
 	rateLimit,
@@ -276,8 +277,13 @@ export const whatsappRouter = router({
 	healthSummary: adminProcedure.query(async () => {
 		const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-		const [msgCounts, participantStates, topFailedCodes, pricingAgg] =
-			await Promise.all([
+		const [
+			msgCounts,
+			participantStates,
+			topFailedCodes,
+			pricingAgg,
+			latestHealth,
+		] = await Promise.all([
 				db
 					.select({
 						inbound: sql<number>`count(*) FILTER (WHERE direction = 'inbound')::int`,
@@ -322,6 +328,15 @@ export const whatsappRouter = router({
 						)
 					)
 					.groupBy(messagesTable.pricingCategory),
+				db
+					.select({
+						capturedAt: healthSnapshots.capturedAt,
+						qualityRating: healthSnapshots.qualityRating,
+						messagingLimitTier: healthSnapshots.messagingLimitTier,
+					})
+					.from(healthSnapshots)
+					.orderBy(desc(healthSnapshots.capturedAt))
+					.limit(1),
 			]);
 
 		const counts = msgCounts[0] ?? {
@@ -344,6 +359,7 @@ export const whatsappRouter = router({
 			participantStates,
 			topFailedCodes,
 			pricing: pricingAgg,
+			latestHealth: latestHealth[0] ?? null,
 		};
 	}),
 });

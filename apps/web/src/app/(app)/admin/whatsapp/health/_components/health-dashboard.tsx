@@ -47,6 +47,32 @@ export function HealthDashboard() {
 
 	return (
 		<div className="flex flex-col gap-6 px-4">
+			{data.latestHealth ? (
+				<section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+					<Card
+						label="Quality rating (Meta)"
+						value={data.latestHealth.qualityRating ?? "—"}
+						hint={`snapshot: ${new Date(data.latestHealth.capturedAt).toLocaleString("pt-BR")}`}
+					/>
+					<Card
+						label="Messaging limit tier"
+						value={data.latestHealth.messagingLimitTier ?? "—"}
+					/>
+					<Card
+						label="Última coleta"
+						value={new Date(data.latestHealth.capturedAt).toLocaleDateString(
+							"pt-BR"
+						)}
+						hint="cron diário 06:00 UTC"
+					/>
+				</section>
+			) : (
+				<p className="rounded-md border border-dashed bg-card p-3 text-muted-foreground text-sm">
+					Nenhum snapshot de saúde Meta ainda. O cron diário popula essa seção
+					automaticamente.
+				</p>
+			)}
+
 			<section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
 				<Card label="Inbound (24h)" value={data.messages.inbound} />
 				<Card label="Outbound OK (24h)" value={data.messages.outboundOk} />
