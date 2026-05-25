@@ -31,6 +31,7 @@ import {
 	sendInteractive,
 	sendText,
 	WhatsappSendError,
+	WhatsappSendPermanentError,
 } from "../sender";
 
 describe("sendText", () => {
@@ -168,11 +169,70 @@ describe("WhatsappSendError", () => {
 		}
 	});
 
-	it("throws WhatsappSendError on 5xx", async () => {
-		vi.stubGlobal("fetch", makeFetchError(503, "Service Unavailable"));
+	it("5xx é retentável: após 3 tentativas joga WhatsappSendPermanentError", async () => {
+		vi.useFakeTimers();
+		const fetchMock = makeFetchError(503, "Service Unavailable");
+		vi.stubGlobal("fetch", fetchMock);
+
+		const handler = vi.fn();
+		const promise = sendText("5511999990000", "test").catch(handler);
+		// Avança backoffs (500 + 1500 + 4500 + folga jitter)
+		await vi.advanceTimersByTimeAsync(10_000);
+		await promise;
+
+		expect(handler).toHaveBeenCalledTimes(1);
+		expect(handler.mock.calls[0]?.[0]).toBeInstanceOf(WhatsappSendPermanentError);
+		expect(fetchMock).toHaveBeenCalledTimes(3);
+		vi.useRealTimers();
+	});
+
+	it("4xx não-retentável: 1 tentativa só → WhatsappSendPermanentError", async () => {
+		const fetchMock = makeFetchError(404, '{"error":{"code":131026}}');
+		vi.stubGlobal("fetch", fetchMock);
 
 		await expect(sendText("5511999990000", "test")).rejects.toThrow(
-			WhatsappSendError
+			WhatsappSendPermanentError
 		);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
+	it("Meta code 130429 (rate limit) é retentável", async () => {
+		vi.useFakeTimers();
+		const fetchMock = makeFetchError(400, '{"error":{"code":130429}}');
+		vi.stubGlobal("fetch", fetchMock);
+
+		const handler = vi.fn();
+		const promise = sendText("5511999990000", "test").catch(handler);
+		await vi.advanceTimersByTimeAsync(10_000);
+		await promise;
+
+		expect(handler).toHaveBeenCalledTimes(1);
+		expect(handler.mock.calls[0]?.[0]).toBeInstanceOf(WhatsappSendPermanentError);
+		expect(fetchMock).toHaveBeenCalledTimes(3);
+		vi.useRealTimers();
+	});
+
+	it("Sucesso na 2ª tentativa após 1 falha 5xx", async () => {
+		vi.useFakeTimers();
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValueOnce({
+				ok: false,
+				status: 502,
+				text: () => Promise.resolve("Bad Gateway"),
+			})
+			.mockResolvedValueOnce({
+				ok: true,
+				json: () => Promise.resolve({ messages: [{ id: "wamid.OK" }] }),
+			});
+		vi.stubGlobal("fetch", fetchMock);
+
+		const promise = sendText("5511999990000", "test");
+		await vi.advanceTimersByTimeAsync(1_000);
+
+		const result = await promise;
+		expect(result.wamid).toBe("wamid.OK");
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+		vi.useRealTimers();
 	});
 });

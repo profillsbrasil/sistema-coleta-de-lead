@@ -17,6 +17,7 @@ import { checkWhatsappRateLimit } from "@dashboard-leads-profills/api/whatsapp/r
 import {
 	sendInteractive,
 	sendText,
+	WhatsappSendPermanentError,
 } from "@dashboard-leads-profills/api/whatsapp/sender";
 import { verifySignature } from "@dashboard-leads-profills/api/whatsapp/signature";
 import {
@@ -203,6 +204,15 @@ async function claimInbound(message: InboundMessage): Promise<ClaimResult> {
 		if (inserted.length === 0) {
 			return { isDuplicate: true };
 		}
+
+		// Atualiza last_inbound_at — usado pelo guard rail 23h (B5) e por
+		// futuro check de janela 24h pra envio fora-de-template.
+		const now = new Date();
+		await tx
+			.update(participants)
+			.set({ lastInboundAt: now })
+			.where(eq(participants.id, participant.id));
+		participant = { ...participant, lastInboundAt: now };
 
 		return { isDuplicate: false, participant };
 	});
@@ -571,22 +581,82 @@ async function handleOutboundAction(
 // loggedSend — sends a message and logs the outbound record to the DB
 // ---------------------------------------------------------------------------
 
+const WINDOW_MS = 23 * 60 * 60 * 1000; // 23h — margem de 1h dentro da janela 24h
+
 async function loggedSend(
-	_waId: string,
+	waId: string,
 	send: () => Promise<{ wamid: string }>,
 	participant: Participant | null,
 	type: string,
 	payloadSnippet: Record<string, unknown>
 ): Promise<void> {
-	const { wamid } = await send();
-	if (participant !== null) {
+	// B5: guard rail anti-cobrança — não envia free-form fora da janela 24h.
+	// Bot é 100% reativo; só dispara em bug (cron acidental, retry tardio).
+	if (
+		participant !== null &&
+		participant.lastInboundAt &&
+		Date.now() - participant.lastInboundAt.getTime() > WINDOW_MS
+	) {
 		await db.insert(messagesTable).values({
 			participantId: participant.id,
 			direction: "outbound",
-			wamid,
 			type,
 			payload: payloadSnippet,
+			failedAt: new Date(),
+			failedCode: null,
+			failedReason: "blocked_outside_24h_window",
 		});
+		console.error(
+			JSON.stringify({
+				tag: "whatsapp:webhook",
+				event: "outbound_blocked_outside_window",
+				waId,
+				participantId: participant.id,
+				lastInboundAt: participant.lastInboundAt.toISOString(),
+			})
+		);
+		return;
+	}
+
+	try {
+		const { wamid } = await send();
+		if (participant !== null) {
+			await db.insert(messagesTable).values({
+				participantId: participant.id,
+				direction: "outbound",
+				wamid,
+				type,
+				payload: payloadSnippet,
+			});
+		}
+	} catch (err) {
+		if (err instanceof WhatsappSendPermanentError) {
+			if (participant !== null) {
+				await db.insert(messagesTable).values({
+					participantId: participant.id,
+					direction: "outbound",
+					type,
+					payload: payloadSnippet,
+					failedAt: new Date(),
+					failedCode: err.metaCode,
+					failedReason: err.responseBody.slice(0, 500),
+				});
+			}
+			console.error(
+				JSON.stringify({
+					tag: "whatsapp:webhook",
+					event: "outbound_failed_dead_letter",
+					waId,
+					participantId: participant?.id ?? null,
+					status: err.status,
+					metaCode: err.metaCode,
+					attempts: err.attempts,
+				})
+			);
+			return;
+		}
+		// Erro inesperado — re-throw pra o catch-all do processMessageAsync logar.
+		throw err;
 	}
 }
 
