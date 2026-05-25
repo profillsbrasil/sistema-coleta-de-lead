@@ -118,16 +118,35 @@ async function processMessage(
 
 	try {
 		// 1. Rate limit check
-		const allowed = await checkWhatsappRateLimit(waId);
-		if (!allowed) {
+		const rl = await checkWhatsappRateLimit(waId);
+		if (!rl.allowed) {
 			console.log(
 				JSON.stringify({
 					tag: "whatsapp:webhook",
 					event: "rate_limited",
 					waId,
 					messageId,
+					count: rl.count,
+					firstExceeded: rl.firstExceeded,
 				})
 			);
+			if (rl.firstExceeded) {
+				try {
+					await sendText(
+						waId,
+						"Recebemos suas mensagens! Aguarde um momento, vamos te responder em instantes."
+					);
+				} catch (err) {
+					console.error(
+						JSON.stringify({
+							tag: "whatsapp:webhook",
+							event: "rate_limit_warning_failed",
+							waId,
+							err: String(err),
+						})
+					);
+				}
+			}
 			return;
 		}
 

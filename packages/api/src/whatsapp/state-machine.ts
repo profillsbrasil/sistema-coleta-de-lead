@@ -49,6 +49,7 @@ export type ParticipantPatch = Partial<{
 	raffleCode: string;
 	redirectSentAt: Date | null;
 	redirectCount: number;
+	lastResponseAt: Date | null;
 }>;
 
 export type OutboundAction =
@@ -63,6 +64,7 @@ export interface StateMachineConfig {
 	logoUrl?: string; // header de imagem do eventNotice (logo Profills)
 	raffleDate?: string;
 	redirectCooldownMs?: number; // default 4h
+	responseCooldownMs?: number; // default 8s — silencia respostas repetidas em COMPLETED/AWAITING_CONSENT
 	termsVersion: string;
 	vendorPhone: string;
 	welcomeImageUrl?: string;
@@ -169,6 +171,16 @@ function isWithinCooldown(
 ): boolean {
 	const lastSent = participant.redirectSentAt;
 	return !!lastSent && Date.now() - lastSent.getTime() < cooldownMs;
+}
+
+const DEFAULT_RESPONSE_COOLDOWN_MS = 8_000;
+
+function isWithinResponseCooldown(
+	participant: Participant,
+	cooldownMs: number
+): boolean {
+	const last = participant.lastResponseAt;
+	return !!last && Date.now() - last.getTime() < cooldownMs;
 }
 
 // ---------------------------------------------------------------------------
@@ -282,6 +294,15 @@ function handleAwaitingConsent(args: {
 			},
 			outbounds: [eventNoticeAction(config)],
 			wasEventNotice: true,
+		};
+	}
+
+	// Anti-flood: silencia o invalidConsentRetry se acabamos de mandar um.
+	const cooldownMs = config.responseCooldownMs ?? DEFAULT_RESPONSE_COOLDOWN_MS;
+	if (isWithinResponseCooldown(participant, cooldownMs)) {
+		return {
+			participantPatch: { retryCount: newRetryCount },
+			outbounds: [],
 		};
 	}
 
@@ -466,6 +487,12 @@ function handleCompleted(args: {
 }): HandleResult {
 	const { participant, config } = args;
 
+	// Anti-flood: silencia se respondemos a mesma mensagem há pouco tempo.
+	const cooldownMs = config.responseCooldownMs ?? DEFAULT_RESPONSE_COOLDOWN_MS;
+	if (isWithinResponseCooldown(participant, cooldownMs)) {
+		return { participantPatch: null, outbounds: [] };
+	}
+
 	// Qualquer mensagem → alreadyParticipated (status e help removidos)
 	return {
 		participantPatch: null,
@@ -532,6 +559,27 @@ function handleDeclined(args: {
 // ---------------------------------------------------------------------------
 
 export function handleInbound(args: {
+	participant: Participant | null;
+	message: InboundMessage;
+	config: StateMachineConfig;
+}): HandleResult {
+	const { participant, message, config } = args;
+
+	const result = dispatch({ participant, message, config });
+
+	// Stamp lastResponseAt sempre que produzimos uma resposta, exceto eventNotice
+	// (que já tem o próprio timestamp redirectSentAt).
+	if (result.outbounds.length > 0 && !result.wasEventNotice) {
+		result.participantPatch = {
+			...(result.participantPatch ?? {}),
+			lastResponseAt: new Date(),
+		};
+	}
+
+	return result;
+}
+
+function dispatch(args: {
 	participant: Participant | null;
 	message: InboundMessage;
 	config: StateMachineConfig;

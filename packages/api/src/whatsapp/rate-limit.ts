@@ -2,8 +2,20 @@ import { db } from "@dashboard-leads-profills/db";
 import { sql } from "drizzle-orm";
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 30;
+const RATE_LIMIT_MAX = 10;
 const CLEANUP_PROBABILITY = 0.05;
+
+export interface RateLimitResult {
+	/** `true` se a mensagem está dentro do limite e deve ser processada. */
+	allowed: boolean;
+	/** Contagem atual da janela. */
+	count: number;
+	/**
+	 * `true` apenas na primeira mensagem que ultrapassa o limite na janela atual.
+	 * Use pra enviar um único aviso ao cliente sem spammar.
+	 */
+	firstExceeded: boolean;
+}
 
 /** Remove linhas cuja janela já expirou. Best-effort. */
 async function cleanupExpiredWhatsappRateLimits(): Promise<void> {
@@ -11,13 +23,17 @@ async function cleanupExpiredWhatsappRateLimits(): Promise<void> {
 }
 
 /**
- * Registra uma mensagem recebida do wa_id e devolve `true` se ainda está
- * dentro do limite (30 msgs por janela de 60s), `false` se deve ser descartado.
+ * Registra uma mensagem recebida do wa_id e devolve o estado do rate limit.
+ *
+ * Limite: 10 msgs por janela de 60s. Quando excede, o webhook deve enviar
+ * UMA mensagem de aviso (na transição count = MAX+1) e dropar as seguintes.
  *
  * O upsert é atômico: o `ON CONFLICT` decide num único statement se incrementa
  * o contador ou reinicia a janela, sem race entre instâncias concorrentes.
  */
-export async function checkWhatsappRateLimit(waId: string): Promise<boolean> {
+export async function checkWhatsappRateLimit(
+	waId: string
+): Promise<RateLimitResult> {
 	if (Math.random() < CLEANUP_PROBABILITY) {
 		try {
 			await cleanupExpiredWhatsappRateLimits();
@@ -40,5 +56,9 @@ export async function checkWhatsappRateLimit(waId: string): Promise<boolean> {
 
 	const rows = result.rows as { count: number }[];
 	const count = Number(rows[0]?.count ?? 0);
-	return count <= RATE_LIMIT_MAX;
+	return {
+		allowed: count <= RATE_LIMIT_MAX,
+		count,
+		firstExceeded: count === RATE_LIMIT_MAX + 1,
+	};
 }
