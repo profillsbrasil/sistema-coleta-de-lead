@@ -17,6 +17,7 @@ export interface WhatsappConfig {
 	logoUrl: string | null;
 	instagramProfiles: Array<{ handle: string; url: string }>;
 	officialPostUrl: string;
+	privacyPolicyUrl: string | null;
 	updatedAt: Date;
 	updatedByUserId: string | null;
 }
@@ -39,6 +40,7 @@ export async function getWhatsappConfig(): Promise<WhatsappConfig> {
 		logoUrl: row.logoUrl,
 		instagramProfiles: row.instagramProfiles,
 		officialPostUrl: row.officialPostUrl,
+		privacyPolicyUrl: row.privacyPolicyUrl,
 		updatedAt: row.updatedAt,
 		updatedByUserId: row.updatedByUserId,
 	};
@@ -65,6 +67,7 @@ export async function updateWhatsappConfig(
 			logoUrl: update.logoUrl,
 			instagramProfiles: update.instagramProfiles,
 			officialPostUrl: update.officialPostUrl,
+			privacyPolicyUrl: update.privacyPolicyUrl,
 			updatedByUserId,
 		})
 		.where(eq(config.id, 1));

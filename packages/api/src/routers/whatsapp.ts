@@ -1,6 +1,13 @@
 import { db } from "@dashboard-leads-profills/db";
-import { participants } from "@dashboard-leads-profills/db/schema/whatsapp";
-import { and, desc, eq, like, or, type SQL, sql } from "drizzle-orm";
+import {
+	alerts,
+	dsrAudit,
+	messages as messagesTable,
+	participants,
+	rateLimit,
+} from "@dashboard-leads-profills/db/schema/whatsapp";
+import { and, desc, eq, isNull, like, or, type SQL, sql } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
 import z from "zod";
 
 import { adminProcedure, router } from "../index";
@@ -183,4 +190,160 @@ export const whatsappRouter = router({
 			await updateWhatsappConfig(input, ctx.user.id);
 			return { ok: true };
 		}),
+
+	// DSR (data subject request) — exclusão LGPD por canal humano.
+	// Hard delete cascade: participant → messages (FK cascade), rate_limit.
+	// Snapshot do participant gravado em dsr_audit pra auditoria.
+	dsrDelete: adminProcedure
+		.input(
+			z.object({
+				waId: z.string().min(8, "wa_id muito curto"),
+				reason: z.string().min(3, "Informe o motivo").max(500),
+				confirm: z.literal(true, {
+					message: "É preciso confirmar a exclusão",
+				}),
+			})
+		)
+		.mutation(async ({ ctx, input }) => {
+			const rows = await db
+				.select()
+				.from(participants)
+				.where(eq(participants.waId, input.waId))
+				.limit(1);
+			const participant = rows[0];
+			if (!participant) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: `Nenhum participant com wa_id ${input.waId}`,
+				});
+			}
+
+			await db.transaction(async (tx) => {
+				await tx.insert(dsrAudit).values({
+					waId: input.waId,
+					deletedByUserId: ctx.user.id,
+					reason: input.reason,
+					participantSnapshot: participant as Record<string, unknown>,
+				});
+				await tx.delete(rateLimit).where(eq(rateLimit.waId, input.waId));
+				// FK cascade em whatsapp.messages → apaga junto.
+				await tx
+					.delete(participants)
+					.where(eq(participants.id, participant.id));
+			});
+
+			return { ok: true, deletedParticipantId: participant.id };
+		}),
+
+	// C2: lista de alertas pra inbox admin. Por padrão só não-lidos.
+	alertsList: adminProcedure
+		.input(
+			z
+				.object({
+					onlyUnread: z.boolean().default(true),
+					limit: z.number().int().min(1).max(200).default(50),
+				})
+				.default({ onlyUnread: true, limit: 50 })
+		)
+		.query(async ({ input }) => {
+			const where = input.onlyUnread ? isNull(alerts.readAt) : undefined;
+			const [rows, countUnread] = await Promise.all([
+				db
+					.select()
+					.from(alerts)
+					.where(where)
+					.orderBy(desc(alerts.createdAt))
+					.limit(input.limit),
+				db
+					.select({ n: sql<number>`count(*)::int` })
+					.from(alerts)
+					.where(isNull(alerts.readAt)),
+			]);
+			return { items: rows, unread: countUnread[0]?.n ?? 0 };
+		}),
+
+	alertMarkRead: adminProcedure
+		.input(z.object({ id: z.string().uuid() }))
+		.mutation(async ({ input }) => {
+			await db
+				.update(alerts)
+				.set({ readAt: new Date() })
+				.where(eq(alerts.id, input.id));
+			return { ok: true };
+		}),
+
+	// Resumo de saúde — usado pelo dashboard /admin/whatsapp/health.
+	healthSummary: adminProcedure.query(async () => {
+		const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+		const [msgCounts, participantStates, topFailedCodes, pricingAgg] =
+			await Promise.all([
+				db
+					.select({
+						inbound: sql<number>`count(*) FILTER (WHERE direction = 'inbound')::int`,
+						outboundOk: sql<number>`count(*) FILTER (WHERE direction = 'outbound' AND failed_at IS NULL)::int`,
+						outboundFailed: sql<number>`count(*) FILTER (WHERE direction = 'outbound' AND failed_at IS NOT NULL)::int`,
+					})
+					.from(messagesTable)
+					.where(sql`${messagesTable.createdAt} >= ${since}`),
+				db
+					.select({
+						state: participants.state,
+						n: sql<number>`count(*)::int`,
+					})
+					.from(participants)
+					.groupBy(participants.state),
+				db
+					.select({
+						code: messagesTable.failedCode,
+						n: sql<number>`count(*)::int`,
+					})
+					.from(messagesTable)
+					.where(
+						and(
+							sql`${messagesTable.failedAt} IS NOT NULL`,
+							sql`${messagesTable.createdAt} >= ${since}`
+						)
+					)
+					.groupBy(messagesTable.failedCode)
+					.orderBy(sql`count(*) DESC`)
+					.limit(5),
+				db
+					.select({
+						category: messagesTable.pricingCategory,
+						billable: sql<number>`count(*) FILTER (WHERE pricing_billable = true)::int`,
+						total: sql<number>`count(*)::int`,
+					})
+					.from(messagesTable)
+					.where(
+						and(
+							sql`${messagesTable.pricingCategory} IS NOT NULL`,
+							sql`${messagesTable.createdAt} >= ${since}`
+						)
+					)
+					.groupBy(messagesTable.pricingCategory),
+			]);
+
+		const counts = msgCounts[0] ?? {
+			inbound: 0,
+			outboundOk: 0,
+			outboundFailed: 0,
+		};
+		const outboundTotal = counts.outboundOk + counts.outboundFailed;
+		const dropRate =
+			outboundTotal === 0 ? 0 : counts.outboundFailed / outboundTotal;
+
+		return {
+			window: { from: since.toISOString(), to: new Date().toISOString() },
+			messages: {
+				inbound: counts.inbound,
+				outboundOk: counts.outboundOk,
+				outboundFailed: counts.outboundFailed,
+				dropRate,
+			},
+			participantStates,
+			topFailedCodes,
+			pricing: pricingAgg,
+		};
+	}),
 });

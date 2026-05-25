@@ -57,6 +57,27 @@ export const inboundStatusSchema = z
 		status: z.enum(["sent", "delivered", "read", "failed"]),
 		timestamp: z.string(),
 		recipient_id: z.string(),
+		pricing: z
+			.object({
+				billable: z.boolean().optional(),
+				category: z.string().optional(),
+				pricing_model: z.string().optional(),
+			})
+			.optional(),
+		errors: z
+			.array(
+				z
+					.object({
+						code: z.number().optional(),
+						title: z.string().optional(),
+						message: z.string().optional(),
+						error_data: z
+							.object({ details: z.string().optional() })
+							.optional(),
+					})
+					.passthrough()
+			)
+			.optional(),
 	})
 	.passthrough();
 
@@ -96,4 +117,5 @@ export const webhookPayloadSchema = z.object({
 });
 
 export type InboundMessage = z.infer<typeof inboundMessageSchema>;
+export type InboundStatus = z.infer<typeof inboundStatusSchema>;
 export type WebhookPayload = z.infer<typeof webhookPayloadSchema>;

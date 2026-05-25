@@ -25,6 +25,7 @@ const EMPTY_FORM: WhatsappConfigInput = {
 	logoUrl: null,
 	instagramProfiles: [EMPTY_PROFILE, EMPTY_PROFILE, EMPTY_PROFILE],
 	officialPostUrl: "",
+	privacyPolicyUrl: null,
 };
 
 type FieldErrors = Partial<Record<string, string>>;
@@ -69,6 +70,7 @@ export function WhatsappConfigForm() {
 					{ handle: string; url: string },
 				],
 				officialPostUrl: configQuery.data.officialPostUrl,
+				privacyPolicyUrl: configQuery.data.privacyPolicyUrl,
 			});
 		}
 	}, [configQuery.data]);
@@ -202,6 +204,28 @@ export function WhatsappConfigForm() {
 						onChange={(e) => updateField("logoUrl", e.target.value || null)}
 					/>
 					<FieldError message={getFieldError(errors, "logoUrl")} />
+				</div>
+			</section>
+
+			<section className="flex flex-col gap-3">
+				<h2 className="font-semibold text-sm">LGPD</h2>
+				<div className="flex flex-col gap-1.5">
+					<Label htmlFor="privacyPolicyUrl">
+						URL da política de privacidade (opcional)
+					</Label>
+					<Input
+						id="privacyPolicyUrl"
+						placeholder="https://profills.com.br/privacidade"
+						value={form.privacyPolicyUrl ?? ""}
+						onChange={(e) =>
+							updateField("privacyPolicyUrl", e.target.value || null)
+						}
+					/>
+					<FieldError message={getFieldError(errors, "privacyPolicyUrl")} />
+					<p className="text-muted-foreground text-xs">
+						Quando preenchida, aparece no welcome do bot e é gravada como
+						snapshot no participant no momento do consent.
+					</p>
 				</div>
 			</section>
 

@@ -48,6 +48,11 @@ function makeParticipant(overrides: Partial<Participant> = {}): Participant {
 			follow_3: false,
 			comment: false,
 		},
+		optedOutAt: null,
+		optedOutReason: null,
+		humanHandoffRequestedAt: null,
+		lastInboundAt: null,
+		termsUrlSnapshot: null,
 		createdAt: new Date(),
 		updatedAt: new Date(), // recente por padrão — testes de TTL sobrescrevem explicitamente
 		...overrides,
@@ -346,13 +351,13 @@ describe("handleInbound — state=AWAITING_CONSENT", () => {
 		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
-	// Fix #9 + #12: 3 retries mas redirectCount já exaurido → silêncio
-	it("3ª resposta inválida mas redirectCount >= 3 → NON_PARTICIPANT + silêncio", () => {
+	// Fix #9 + #12 (A5): 3 retries mas eventNotice já enviado → silêncio
+	it("3ª resposta inválida mas redirectCount >= 1 → NON_PARTICIPANT + silêncio", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "AWAITING_CONSENT",
 				retryCount: 2,
-				redirectCount: 3,
+				redirectCount: 1,
 			}),
 			message: textMsg("hmm"),
 			config: BASE_CONFIG,
@@ -552,7 +557,10 @@ describe("handleInbound — state=AWAITING_NAME", () => {
 	});
 
 	it("nome com exatamente 80 chars é válido", () => {
-		const name80 = `${"B".repeat(40)} ${"C".repeat(39)}`;
+		// Padrão alternado pra não disparar long-run (4+ chars iguais).
+		const first = "Ab".repeat(20); // 40 chars
+		const last = "Cd".repeat(19) + "e"; // 39 chars
+		const name80 = `${first} ${last}`;
 		const result = handleInbound({
 			participant: makeParticipant({ state: "AWAITING_NAME" }),
 			message: textMsg(name80),
@@ -603,13 +611,13 @@ describe("handleInbound — state=AWAITING_NAME", () => {
 		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
-	// Fix #14 + #12: 3 inválidas mas redirectCount exaurido → silêncio
-	it("3ª inválida em AWAITING_NAME mas redirectCount >= 3 → silêncio", () => {
+	// Fix #14 + #12 (A5): 3 inválidas mas eventNotice já enviado → silêncio
+	it("3ª inválida em AWAITING_NAME mas redirectCount >= 1 → silêncio", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "AWAITING_NAME",
 				retryCount: 2,
-				redirectCount: 3,
+				redirectCount: 1,
 			}),
 			message: unknownMsg(),
 			config: BASE_CONFIG,
@@ -881,12 +889,12 @@ describe("handleInbound — state=COMPLETED", () => {
 // ---------------------------------------------------------------------------
 
 describe("handleInbound — state=NON_PARTICIPANT", () => {
-	it("button_reply legacy (sem keyword) → eventNotice + cooldown", () => {
+	it("button_reply legacy (sem keyword) → eventNotice", () => {
 		// Botões antigos foram removidos; button_reply lingering cai no caminho não-keyword.
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "NON_PARTICIPANT",
-				redirectSentAt: null,
+				redirectCount: 0,
 			}),
 			message: buttonReplyMsg("want_to_participate", "Participar sorteio"),
 			config: BASE_CONFIG,
@@ -906,11 +914,11 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
 	});
 
-	it("outra mensagem SEM cooldown → reenvia eventNotice", () => {
+	it("primeira mensagem genérica (redirectCount=0) → envia eventNotice único", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "NON_PARTICIPANT",
-				redirectSentAt: null,
+				redirectCount: 0,
 			}),
 			message: textMsg("ainda estou aqui"),
 			config: BASE_CONFIG,
@@ -921,42 +929,12 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 		expect(result.wasEventNotice).toBe(true);
 	});
 
-	it("outra mensagem DENTRO do cooldown → silêncio", () => {
-		const recentSent = new Date(Date.now() - 60_000); // 1 min ago
+	// A5: envio único — segunda mensagem genérica vira silêncio permanente
+	it("segunda mensagem genérica (redirectCount=1) → silêncio permanente", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "NON_PARTICIPANT",
-				redirectSentAt: recentSent,
-			}),
-			message: textMsg("oi"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds).toHaveLength(0);
-	});
-
-	it("outra mensagem FORA do cooldown → reenvia eventNotice", () => {
-		const oldSent = new Date(Date.now() - 5 * 60 * 60 * 1000); // 5h ago
-		const result = handleInbound({
-			participant: makeParticipant({
-				state: "NON_PARTICIPANT",
-				redirectSentAt: oldSent,
-			}),
-			message: textMsg("oi"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds).toHaveLength(1);
-		expect(result.wasEventNotice).toBe(true);
-	});
-
-	// Fix #12: redirectCount >= 3 → silêncio permanente
-	it("redirectCount >= 3 → silêncio permanente (sem cooldown)", () => {
-		const result = handleInbound({
-			participant: makeParticipant({
-				state: "NON_PARTICIPANT",
-				redirectCount: 3,
-				redirectSentAt: null,
+				redirectCount: 1,
 			}),
 			message: textMsg("oi"),
 			config: BASE_CONFIG,
@@ -966,20 +944,18 @@ describe("handleInbound — state=NON_PARTICIPANT", () => {
 		expect(result.participantPatch).toBeNull();
 	});
 
-	// Fix #12: redirectCount >= 3 mesmo com cooldown expirado → silêncio
-	it("redirectCount=5 e cooldown expirado → ainda silêncio permanente", () => {
-		const oldSent = new Date(Date.now() - 10 * 60 * 60 * 1000); // 10h ago
+	// A5: keyword ainda reabre fluxo mesmo após eventNotice exaurido
+	it("redirectCount=1 mas keyword → reabre fluxo (override do silêncio)", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "NON_PARTICIPANT",
-				redirectCount: 5,
-				redirectSentAt: oldSent,
+				redirectCount: 1,
 			}),
-			message: textMsg("oi"),
+			message: textMsg("vim pelo sorteio"),
 			config: BASE_CONFIG,
 		});
 
-		expect(result.outbounds).toHaveLength(0);
+		expect(result.participantPatch?.state).toBe("AWAITING_CONSENT");
 	});
 });
 
@@ -1006,11 +982,11 @@ describe("handleInbound — state=DECLINED", () => {
 		expect(result.outbounds[0]?.kind).toBe("interactive");
 	});
 
-	it("mensagem não-keyword SEM cooldown → envia eventNotice", () => {
+	it("mensagem não-keyword com redirectCount=0 → envia eventNotice único", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "DECLINED",
-				redirectSentAt: null,
+				redirectCount: 0,
 			}),
 			message: textMsg("oi"),
 			config: BASE_CONFIG,
@@ -1022,42 +998,12 @@ describe("handleInbound — state=DECLINED", () => {
 		expect(result.wasEventNotice).toBe(true);
 	});
 
-	it("mensagem não-keyword DENTRO do cooldown → silêncio", () => {
-		const recentSent = new Date(Date.now() - 60_000);
+	// A5: envio único — segunda mensagem genérica vira silêncio permanente
+	it("redirectCount >= 1 em DECLINED → silêncio permanente", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "DECLINED",
-				redirectSentAt: recentSent,
-			}),
-			message: textMsg("oi"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds).toHaveLength(0);
-	});
-
-	it("mensagem não-keyword FORA do cooldown → reenvia eventNotice", () => {
-		const oldSent = new Date(Date.now() - 5 * 60 * 60 * 1000); // 5h ago
-		const result = handleInbound({
-			participant: makeParticipant({
-				state: "DECLINED",
-				redirectSentAt: oldSent,
-			}),
-			message: textMsg("oi"),
-			config: BASE_CONFIG,
-		});
-
-		expect(result.outbounds).toHaveLength(1);
-		expect(result.outbounds[0]?.kind).toBe("interactive");
-		expect(result.wasEventNotice).toBe(true);
-	});
-
-	it("redirectCount >= 3 em DECLINED → silêncio permanente", () => {
-		const result = handleInbound({
-			participant: makeParticipant({
-				state: "DECLINED",
-				redirectCount: 3,
-				redirectSentAt: null,
+				redirectCount: 1,
 			}),
 			message: textMsg("oi"),
 			config: BASE_CONFIG,
@@ -1067,11 +1013,11 @@ describe("handleInbound — state=DECLINED", () => {
 		expect(result.wasEventNotice).toBeUndefined();
 	});
 
-	it("redirectCount >= 3 mas keyword → ainda reabre fluxo (override do limite)", () => {
+	it("redirectCount >= 1 mas keyword → ainda reabre fluxo (override do limite)", () => {
 		const result = handleInbound({
 			participant: makeParticipant({
 				state: "DECLINED",
-				redirectCount: 3,
+				redirectCount: 1,
 			}),
 			message: textMsg("vim pelo sorteio"),
 			config: BASE_CONFIG,

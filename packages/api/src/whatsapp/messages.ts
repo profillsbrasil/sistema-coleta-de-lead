@@ -130,10 +130,16 @@ export type InstagramProfile = { handle: string; url: string };
 export function welcome({
 	eventName: _eventName,
 	imageUrl,
+	privacyPolicyUrl,
 }: {
 	eventName: string;
 	imageUrl?: string;
+	privacyPolicyUrl?: string | null;
 }): InteractiveMessage {
+	const policyLine = privacyPolicyUrl
+		? `\n\nTermos e política de privacidade: ${privacyPolicyUrl}`
+		: "";
+
 	const bodyText =
 		"*Sorteio Profills Fispal 2026* 🎉\n\n" +
 		"Participe e concorra a vários prêmios:\n" +
@@ -141,8 +147,9 @@ export function welcome({
 		"• Churrasqueira Champions Grill\n" +
 		"• Cooler Profills\n\n" +
 		"📅 Sorteio: *05/06/2026*\n\n" +
-		"Ao aceitar, você autoriza a Profills a utilizar seus dados para o sorteio e contato comercial relacionado.\n\n" +
-		"Deseja participar?";
+		"Ao aceitar, você autoriza a Profills a utilizar seus dados para o sorteio e contato comercial relacionado." +
+		policyLine +
+		"\n\nDeseja participar?";
 
 	return interactive(
 		bodyText,
@@ -263,6 +270,7 @@ export function nameInvalid(reason: ValidationError): TextMessage {
 		invalid_chars: "Use apenas letras no nome, por favor.",
 		missing_surname: "Por favor, envie seu nome e sobrenome.",
 		only_digits: "Use apenas letras no nome, por favor.",
+		garbage: "Esse nome não parece válido. Pode digitar seu nome completo?",
 	};
 	return text(body[reason]);
 }
@@ -275,8 +283,41 @@ export function companyInvalid(reason: ValidationError): TextMessage {
 		invalid_chars: "Nome de empresa inválido. Tente de novo.",
 		missing_surname: "Nome de empresa inválido. Tente de novo.",
 		only_digits: "O nome da empresa precisa conter letras.",
+		garbage: "Esse nome de empresa não parece válido. Pode tentar de novo?",
 	};
 	return text(body[reason]);
+}
+
+export function unsupportedMediaReply(): TextMessage {
+	return text(
+		"Só consigo ler texto e botões por aqui. Mande *sorteio* pra começar."
+	);
+}
+
+export function optOutConfirm(): TextMessage {
+	return text(
+		"Beleza, parei por aqui. Se quiser voltar a receber mensagens, é só mandar *VOLTAR*."
+	);
+}
+
+export function optInConfirm(): TextMessage {
+	return text(
+		"Show, você voltou! 👋 Se quiser participar do sorteio, mande *sorteio*."
+	);
+}
+
+export function handoffRedirect({
+	vendorPhone,
+}: {
+	vendorPhone: string;
+}): InteractiveCtaMessage {
+	return interactiveCta(
+		"Beleza! Toque no botão abaixo pra falar com nossa equipe agora mesmo.",
+		{
+			displayText: "Falar com a equipe",
+			url: `https://wa.me/${vendorPhone}`,
+		}
+	);
 }
 
 export function eventNotice({

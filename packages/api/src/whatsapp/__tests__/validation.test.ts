@@ -57,8 +57,8 @@ describe("validateName", () => {
 	});
 
 	it("max exato com sobrenome passa", () => {
-		const first = "A".repeat(40);
-		const last = "B".repeat(39);
+		const first = "Ab".repeat(20); // 40 chars, sem long-run
+		const last = "Cd".repeat(19) + "e"; // 39 chars
 		const r = validateName(`${first} ${last}`);
 		expect(r.ok).toBe(true);
 	});
@@ -90,6 +90,32 @@ describe("validateName", () => {
 
 	it("aceita nome composto (3+ palavras)", () => {
 		const r = validateName("Maria da Silva");
+		expect(r.ok).toBe(true);
+	});
+
+	it("rejeita 4+ chars iguais seguidos (xxxx yyyy) → garbage", () => {
+		const r = validateName("xxxx yyyy");
+		expect(r).toEqual({ ok: false, reason: "garbage" });
+	});
+
+	it("rejeita aaaa bbbb → garbage", () => {
+		const r = validateName("aaaa bbbb");
+		expect(r).toEqual({ ok: false, reason: "garbage" });
+	});
+
+	it("rejeita palavra sem vogal (sdf qwrt) → garbage", () => {
+		const r = validateName("sdf qwrt");
+		expect(r).toEqual({ ok: false, reason: "garbage" });
+	});
+
+	it("aceita asdf asdf (limítrofe: tem vogal a, sem long-run)", () => {
+		// heurística conservadora: aceita pra não bloquear nome legítimo similar
+		const r = validateName("asdf asdf");
+		expect(r.ok).toBe(true);
+	});
+
+	it("aceita Maria d'Ávila (apóstrofo + acento)", () => {
+		const r = validateName("Maria d'Ávila");
 		expect(r.ok).toBe(true);
 	});
 });
@@ -169,6 +195,21 @@ describe("validateCompany", () => {
 	it("rejeita números com símbolos mas sem letras → only_digits", () => {
 		const r = validateCompany("123 456");
 		expect(r).toEqual({ ok: false, reason: "only_digits" });
+	});
+
+	it("rejeita 4+ chars iguais seguidos (aaaa Ltda) → garbage", () => {
+		const r = validateCompany("aaaa Ltda");
+		expect(r).toEqual({ ok: false, reason: "garbage" });
+	});
+
+	it("aceita 3M Brasil (números + nome curto)", () => {
+		const r = validateCompany("3M Brasil");
+		expect(r.ok).toBe(true);
+	});
+
+	it("aceita WS Marketing", () => {
+		const r = validateCompany("WS Marketing");
+		expect(r.ok).toBe(true);
 	});
 });
 
