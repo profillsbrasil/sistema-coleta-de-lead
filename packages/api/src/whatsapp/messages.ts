@@ -180,12 +180,10 @@ export function alreadyParticipated({
 	vendorPhone: string;
 }): InteractiveCtaMessage {
 	const bodyText =
-		`Olá, *${name}*! Você já está inscrito.\n\n` +
-		`🎟️ Seu código: *${raffleCode}*\n\n` +
-		"📅 *Sorteio:* 05/06/2026\n\n" +
-		"A equipe Profills entrará em contato neste WhatsApp caso você seja sorteado.\n\n" +
-		"━━━━━━━━━━━━━━━━━━━\n\n" +
-		"Precisa de mais informações? Toque no botão abaixo para falar com a equipe Profills.";
+		`Olá, *${name}*! Você já está inscrito. 🎉\n\n` +
+		`🎟️ Código: *${raffleCode}*\n` +
+		"📅 Sorteio: 05/06/2026\n\n" +
+		"Precisa falar com a gente? Toque no botão abaixo.";
 
 	return interactiveCta(bodyText, {
 		displayText: "Entrar em contato",
