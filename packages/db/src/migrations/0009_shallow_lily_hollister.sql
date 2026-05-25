@@ -1,1 +1,1 @@
-ALTER TABLE "whatsapp"."participants" ADD COLUMN "last_response_at" timestamp with time zone;
+ALTER TABLE "whatsapp"."participants" ADD COLUMN IF NOT EXISTS "last_response_at" timestamp with time zone;
