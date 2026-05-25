@@ -193,15 +193,11 @@ export function tasksIntro({
 	const bodyText =
 		`Falta pouco, *${name}*.\n\n` +
 		"Antes de liberar seu código, conclua os passos abaixo:\n\n" +
-		`*1.* Seguir ${INSTAGRAM_PROFILES[0].handle}\n` +
-		`${INSTAGRAM_PROFILES[0].url}\n\n` +
-		`*2.* Seguir ${INSTAGRAM_PROFILES[1].handle}\n` +
-		`${INSTAGRAM_PROFILES[1].url}\n\n` +
-		`*3.* Seguir ${INSTAGRAM_PROFILES[2].handle}\n` +
-		`${INSTAGRAM_PROFILES[2].url}\n\n` +
-		"*4.* Comentar a frase abaixo no nosso último post:\n" +
-		`"${COMMENT_TEXT}"\n` +
-		`${LAST_POST_URL}\n\n` +
+		`*1.* Seguir ${INSTAGRAM_PROFILES[0].handle} — ${INSTAGRAM_PROFILES[0].url}\n` +
+		`*2.* Seguir ${INSTAGRAM_PROFILES[1].handle} — ${INSTAGRAM_PROFILES[1].url}\n` +
+		`*3.* Seguir ${INSTAGRAM_PROFILES[2].handle} — ${INSTAGRAM_PROFILES[2].url}\n` +
+		`*4.* Comentar no último post: ${LAST_POST_URL}\n` +
+		`Frase a comentar: "${COMMENT_TEXT}"\n\n` +
 		"Quando terminar, toque no botão para confirmar.";
 
 	return interactive(bodyText, [
