@@ -1,4 +1,5 @@
 import {
+	boolean,
 	check,
 	date,
 	index,
@@ -55,6 +56,20 @@ export const participants = whatsappSchema.table(
 				follow_3: false,
 				comment: false,
 			}),
+		optedOutAt: timestamp("opted_out_at", {
+			withTimezone: true,
+			mode: "date",
+		}),
+		optedOutReason: text("opted_out_reason"),
+		humanHandoffRequestedAt: timestamp("human_handoff_requested_at", {
+			withTimezone: true,
+			mode: "date",
+		}),
+		lastInboundAt: timestamp("last_inbound_at", {
+			withTimezone: true,
+			mode: "date",
+		}),
+		termsUrlSnapshot: text("terms_url_snapshot"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -63,7 +78,11 @@ export const participants = whatsappSchema.table(
 			.defaultNow()
 			.$onUpdate(() => new Date()),
 	},
-	(table) => [index("participants_state_idx").on(table.state)]
+	(table) => [
+		index("participants_state_idx").on(table.state),
+		index("participants_opted_out_at_idx").on(table.optedOutAt),
+		index("participants_handoff_at_idx").on(table.humanHandoffRequestedAt),
+	]
 );
 
 export const messages = whatsappSchema.table(
@@ -77,6 +96,16 @@ export const messages = whatsappSchema.table(
 		wamid: text("wamid").unique(),
 		type: text("type").notNull(),
 		payload: jsonb("payload").notNull(),
+		deliveredAt: timestamp("delivered_at", {
+			withTimezone: true,
+			mode: "date",
+		}),
+		readAt: timestamp("read_at", { withTimezone: true, mode: "date" }),
+		failedAt: timestamp("failed_at", { withTimezone: true, mode: "date" }),
+		failedCode: integer("failed_code"),
+		failedReason: text("failed_reason"),
+		pricingCategory: text("pricing_category"),
+		pricingBillable: boolean("pricing_billable"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.notNull()
 			.defaultNow(),
@@ -84,6 +113,7 @@ export const messages = whatsappSchema.table(
 	(table) => [
 		index("messages_participant_id_idx").on(table.participantId),
 		index("messages_wamid_idx").on(table.wamid),
+		index("messages_failed_at_idx").on(table.failedAt),
 	]
 );
 
@@ -108,6 +138,7 @@ export const config = whatsappSchema.table(
 			.$type<Array<{ handle: string; url: string }>>()
 			.notNull(),
 		officialPostUrl: text("official_post_url").notNull(),
+		privacyPolicyUrl: text("privacy_policy_url"),
 		updatedAt: timestamp("updated_at", { withTimezone: true })
 			.notNull()
 			.defaultNow()
@@ -116,3 +147,50 @@ export const config = whatsappSchema.table(
 	},
 	(table) => [check("config_singleton", sql`${table.id} = 1`)]
 );
+
+export const alerts = whatsappSchema.table(
+	"alerts",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		event: text("event").notNull(),
+		severity: text("severity").notNull().default("info"),
+		payload: jsonb("payload").notNull().default({}),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		readAt: timestamp("read_at", { withTimezone: true, mode: "date" }),
+	},
+	(table) => [
+		index("alerts_unread_idx")
+			.on(table.createdAt)
+			.where(sql`${table.readAt} IS NULL`),
+		index("alerts_event_idx").on(table.event),
+	]
+);
+
+export const healthSnapshots = whatsappSchema.table(
+	"health_snapshots",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		capturedAt: timestamp("captured_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+		qualityRating: text("quality_rating"),
+		messagingLimitTier: text("messaging_limit_tier"),
+		raw: jsonb("raw").notNull().default({}),
+	},
+	(table) => [
+		index("health_snapshots_captured_at_idx").on(table.capturedAt),
+	]
+);
+
+export const dsrAudit = whatsappSchema.table("dsr_audit", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	waId: text("wa_id").notNull(),
+	deletedByUserId: uuid("deleted_by_user_id"),
+	deletedAt: timestamp("deleted_at", { withTimezone: true })
+		.notNull()
+		.defaultNow(),
+	reason: text("reason"),
+	participantSnapshot: jsonb("participant_snapshot"),
+});
