@@ -17,7 +17,8 @@ import {
 	eventNotice,
 	invalidConsentRetry,
 	nameInvalid,
-	tasksIntro,
+	tasksConfirm,
+	tasksList,
 	welcome,
 } from "./messages";
 import type { InboundMessage } from "./types";
@@ -415,7 +416,8 @@ function handleAwaitingCompany(args: {
 			retryCount: 0,
 		},
 		outbounds: [
-			toInteractiveAction(tasksIntro({ name: participant.name ?? "" })),
+			toInteractiveAction(tasksList({ name: participant.name ?? "" })),
+			toInteractiveAction(tasksConfirm()),
 		],
 	};
 }
@@ -522,11 +524,13 @@ function handleAwaitingTasks(args: {
 		};
 	}
 
-	// Qualquer outra mensagem (texto, mídia, botão inesperado) — repete a lista.
+	// Qualquer outra mensagem (texto, mídia, botão inesperado) — repete a lista
+	// e a confirmação. Cooldown de 8s no handleInbound evita spam em flood.
 	return {
 		participantPatch: null,
 		outbounds: [
-			toInteractiveAction(tasksIntro({ name: participant.name ?? "" })),
+			toInteractiveAction(tasksList({ name: participant.name ?? "" })),
+			toInteractiveAction(tasksConfirm()),
 		],
 	};
 }

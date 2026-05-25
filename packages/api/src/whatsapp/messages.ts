@@ -115,18 +115,20 @@ const CONSENT_BUTTONS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Pré-requisitos no Instagram (3 perfis + comentário). Placeholders pra teste —
-// substituir pelos handles, post e frase definitivos.
+// Pré-requisitos no Instagram (3 perfis + curtida + comentário).
+// URL do post oficial é placeholder — substituir quando o post for publicado.
 // ---------------------------------------------------------------------------
 
 export const INSTAGRAM_PROFILES = [
-	{ handle: "@profills", url: "https://instagram.com/profills" },
-	{ handle: "@profills_perfil_2", url: "https://instagram.com/profills" },
-	{ handle: "@profills_perfil_3", url: "https://instagram.com/profills" },
+	{
+		handle: "@profillsdobrasil",
+		url: "https://instagram.com/profillsdobrasil",
+	},
+	{ handle: "@acarvalhovendas", url: "https://instagram.com/acarvalhovendas" },
+	{ handle: "@rafael_prachedes", url: "https://instagram.com/rafael_prachedes" },
 ] as const;
 
-export const LAST_POST_URL = "https://instagram.com/profills";
-export const COMMENT_TEXT = "[mensagem a definir]";
+export const OFFICIAL_POST_URL = "https://instagram.com/profillsdobrasil";
 
 export const TASKS_DONE_BUTTON_ID = "tasks_done";
 
@@ -185,22 +187,25 @@ export function codeGenerated({
 	);
 }
 
-export function tasksIntro({
-	name,
-}: {
-	name: string;
-}): InteractiveButtonMessage {
+export function tasksList({ name }: { name: string }): InteractiveCtaMessage {
 	const bodyText =
-		`Falta pouco, *${name}*! 🎯\n\n` +
-		"Antes de liberar seu código, conclua os passos abaixo:\n\n" +
-		`1️⃣ Seguir ${INSTAGRAM_PROFILES[0].handle} — ${INSTAGRAM_PROFILES[0].url}\n` +
-		`2️⃣ Seguir ${INSTAGRAM_PROFILES[1].handle} — ${INSTAGRAM_PROFILES[1].url}\n` +
-		`3️⃣ Seguir ${INSTAGRAM_PROFILES[2].handle} — ${INSTAGRAM_PROFILES[2].url}\n` +
-		`4️⃣ Comentar no último post — ${LAST_POST_URL}\n` +
-		`   💬 Frase: "${COMMENT_TEXT}"\n\n` +
-		"Quando terminar, toque no botão abaixo para confirmar.";
+		`Falta pouco, *${name}*!\n\n` +
+		"Faltam 3 passos para liberar seu código.\n\n" +
+		"*Passo 1.* Siga no Instagram:\n" +
+		`• ${INSTAGRAM_PROFILES[0].handle}\n` +
+		`• ${INSTAGRAM_PROFILES[1].handle}\n` +
+		`• ${INSTAGRAM_PROFILES[2].handle}\n\n` +
+		"*Passo 2.* Curta o post oficial do evento.\n\n" +
+		"*Passo 3.* Comente no mesmo post marcando 2 amigos que tenham indústria, comércio, produção ou negócio próprio.";
 
-	return interactive(bodyText, [
+	return interactiveCta(bodyText, {
+		displayText: "Abrir post oficial",
+		url: OFFICIAL_POST_URL,
+	});
+}
+
+export function tasksConfirm(): InteractiveButtonMessage {
+	return interactive("Quando terminar tudo, confirme abaixo.", [
 		{ id: TASKS_DONE_BUTTON_ID, title: "Já concluí" },
 	]);
 }

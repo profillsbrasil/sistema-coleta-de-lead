@@ -619,7 +619,7 @@ describe("handleInbound — state=AWAITING_NAME", () => {
 // ---------------------------------------------------------------------------
 
 describe("handleInbound — state=AWAITING_COMPANY", () => {
-	it("empresa válida → AWAITING_TASKS + tasksIntro", () => {
+	it("empresa válida → AWAITING_TASKS + tasksList + tasksConfirm", () => {
 		const result = handleInbound({
 			participant: makeParticipant({ state: "AWAITING_COMPANY", name: "João" }),
 			message: textMsg("Profills"),
@@ -628,8 +628,9 @@ describe("handleInbound — state=AWAITING_COMPANY", () => {
 
 		expect(result.participantPatch?.state).toBe("AWAITING_TASKS");
 		expect(result.participantPatch?.company).toBe("Profills");
-		expect(result.outbounds).toHaveLength(1);
+		expect(result.outbounds).toHaveLength(2);
 		expect(result.outbounds[0]?.kind).toBe("interactive");
+		expect(result.outbounds[1]?.kind).toBe("interactive");
 	});
 
 	it("empresa com espaços é trimada antes de salvar", () => {
