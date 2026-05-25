@@ -119,8 +119,6 @@ const CONSENT_BUTTONS = [
 // Os handles e o URL do post vêm de whatsapp.config (DB), passados via param.
 // ---------------------------------------------------------------------------
 
-export const TASKS_DONE_BUTTON_ID = "tasks_done";
-
 export type InstagramProfile = { handle: string; url: string };
 
 // ---------------------------------------------------------------------------
@@ -185,34 +183,75 @@ export function codeGenerated({
 	);
 }
 
-export function tasksList({
-	name,
-	profiles,
-	officialPostUrl,
-}: {
-	name: string;
-	profiles: ReadonlyArray<InstagramProfile>;
-	officialPostUrl: string;
-}): InteractiveCtaMessage {
-	const profileLines = profiles.map((p) => `• ${p.handle}`).join("\n");
-	const bodyText =
-		`Falta pouco, *${name}*!\n\n` +
-		"Faltam 3 passos para liberar seu código.\n\n" +
-		"*Passo 1.* Siga no Instagram:\n" +
-		`${profileLines}\n\n` +
-		"*Passo 2.* Curta o post oficial do evento.\n\n" +
-		"*Passo 3.* Comente no mesmo post marcando 2 amigos que tenham indústria, comércio, produção ou negócio próprio.";
+// ---------------------------------------------------------------------------
+// Fluxo guiado de tarefas (Opção B): intro + 3 perfis sequenciais + post.
+// Cada step usa CTA URL (abre Instagram) seguido de reply button de confirmação.
+// IDs distintos por step alimentam taskProgress incrementalmente.
+// ---------------------------------------------------------------------------
 
-	return interactiveCta(bodyText, {
-		displayText: "Abrir post oficial",
-		url: officialPostUrl,
+export const TASK_STEP_BUTTON_IDS = {
+	follow_1: "task_done_1",
+	follow_2: "task_done_2",
+	follow_3: "task_done_3",
+	post: "task_done_post",
+} as const;
+
+export type TaskStepKey = keyof typeof TASK_STEP_BUTTON_IDS;
+
+const TASK_TOTAL = 4;
+
+export function tasksIntro({ name }: { name: string }): TextMessage {
+	return text(
+		`Falta pouco, *${name}*.\n\n` +
+			"Para liberar seu código, são 4 ações rápidas no Instagram: seguir 3 perfis e interagir com o post oficial do evento.\n\n" +
+			"Vamos começar."
+	);
+}
+
+export function taskStep({
+	index,
+	intro,
+	profileUrl,
+}: {
+	index: 1 | 2 | 3;
+	intro: string;
+	profileUrl: string;
+}): InteractiveCtaMessage {
+	return interactiveCta(`*${index}/${TASK_TOTAL}*\n\n${intro}`, {
+		displayText: "Abrir Instagram",
+		url: profileUrl,
 	});
 }
 
-export function tasksConfirm(): InteractiveButtonMessage {
-	return interactive("Quando terminar tudo, confirme abaixo.", [
-		{ id: TASKS_DONE_BUTTON_ID, title: "Já concluí" },
+export function taskPost({
+	postUrl,
+}: {
+	postUrl: string;
+}): InteractiveCtaMessage {
+	const bodyText =
+		`*${TASK_TOTAL}/${TASK_TOTAL}*\n\n` +
+		"Última etapa. No post oficial do evento:\n" +
+		"• Curta o post\n" +
+		"• Comente marcando *2 amigos* que tenham indústria, comércio, produção ou negócio próprio";
+	return interactiveCta(bodyText, {
+		displayText: "Abrir post oficial",
+		url: postUrl,
+	});
+}
+
+export function taskStepConfirm({
+	step,
+}: {
+	step: TaskStepKey;
+}): InteractiveButtonMessage {
+	const title = step === "post" ? "✓ Pronto" : "✓ Segui";
+	return interactive("Quando concluir, toque abaixo.", [
+		{ id: TASK_STEP_BUTTON_IDS[step], title },
 	]);
+}
+
+export function taskNudge(): TextMessage {
+	return text("Toque no botão abaixo quando concluir esta etapa.");
 }
 
 export function alreadyParticipated({
