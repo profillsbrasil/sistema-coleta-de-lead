@@ -14,6 +14,12 @@ const BASE_CONFIG: StateMachineConfig = {
 	vendorPhone: "5511999990000",
 	eventStartBR: "26/05",
 	eventEndBR: "29/05",
+	instagramProfiles: [
+		{ handle: "@p1", url: "https://instagram.com/p1" },
+		{ handle: "@p2", url: "https://instagram.com/p2" },
+		{ handle: "@p3", url: "https://instagram.com/p3" },
+	],
+	officialPostUrl: "https://instagram.com/profillsdobrasil",
 };
 
 const CONFIG_WITH_IMAGE: StateMachineConfig = {

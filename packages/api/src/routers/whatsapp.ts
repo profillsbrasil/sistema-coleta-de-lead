@@ -4,6 +4,11 @@ import { and, desc, eq, like, or, type SQL, sql } from "drizzle-orm";
 import z from "zod";
 
 import { adminProcedure, router } from "../index";
+import {
+	getWhatsappConfig,
+	updateWhatsappConfig,
+} from "../whatsapp/config-repository";
+import { whatsappConfigSchema } from "../whatsapp/config-schema";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -167,4 +172,15 @@ export const whatsappRouter = router({
 
 		return { csv, filename: `sorteio_${today}.csv` };
 	}),
+
+	getConfig: adminProcedure.query(async () => {
+		return getWhatsappConfig();
+	}),
+
+	updateConfig: adminProcedure
+		.input(whatsappConfigSchema)
+		.mutation(async ({ ctx, input }) => {
+			await updateWhatsappConfig(input, ctx.user.id);
+			return { ok: true };
+		}),
 });

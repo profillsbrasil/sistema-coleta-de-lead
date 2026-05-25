@@ -1,4 +1,6 @@
 import {
+	check,
+	date,
 	index,
 	integer,
 	jsonb,
@@ -7,6 +9,7 @@ import {
 	timestamp,
 	uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const whatsappSchema = pgSchema("whatsapp");
 
@@ -89,3 +92,27 @@ export const rateLimit = whatsappSchema.table("rate_limit", {
 	count: integer("count").notNull(),
 	resetAt: timestamp("reset_at", { withTimezone: true }).notNull(),
 });
+
+export const config = whatsappSchema.table(
+	"config",
+	{
+		id: integer("id").primaryKey(),
+		vendorPhone: text("vendor_phone").notNull(),
+		eventName: text("event_name").notNull(),
+		eventStart: date("event_start", { mode: "string" }).notNull(),
+		eventEnd: date("event_end", { mode: "string" }).notNull(),
+		raffleDate: date("raffle_date", { mode: "string" }).notNull(),
+		welcomeImageUrl: text("welcome_image_url"),
+		logoUrl: text("logo_url"),
+		instagramProfiles: jsonb("instagram_profiles")
+			.$type<Array<{ handle: string; url: string }>>()
+			.notNull(),
+		officialPostUrl: text("official_post_url").notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.notNull()
+			.defaultNow()
+			.$onUpdate(() => new Date()),
+		updatedByUserId: uuid("updated_by_user_id"),
+	},
+	(table) => [check("config_singleton", sql`${table.id} = 1`)]
+);

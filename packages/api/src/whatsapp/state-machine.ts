@@ -86,6 +86,8 @@ export interface StateMachineConfig {
 	termsVersion: string;
 	vendorPhone: string;
 	welcomeImageUrl?: string;
+	instagramProfiles: ReadonlyArray<{ handle: string; url: string }>;
+	officialPostUrl: string;
 }
 
 export interface HandleResult {
@@ -416,7 +418,13 @@ function handleAwaitingCompany(args: {
 			retryCount: 0,
 		},
 		outbounds: [
-			toInteractiveAction(tasksList({ name: participant.name ?? "" })),
+			toInteractiveAction(
+				tasksList({
+					name: participant.name ?? "",
+					profiles: config.instagramProfiles,
+					officialPostUrl: config.officialPostUrl,
+				})
+			),
 			toInteractiveAction(tasksConfirm()),
 		],
 	};
@@ -507,7 +515,7 @@ function handleAwaitingTasks(args: {
 	message: InboundMessage;
 	config: StateMachineConfig;
 }): HandleResult {
-	const { participant, message } = args;
+	const { participant, message, config } = args;
 
 	if (isButtonReply(message, "tasks_done")) {
 		return {
@@ -529,7 +537,13 @@ function handleAwaitingTasks(args: {
 	return {
 		participantPatch: null,
 		outbounds: [
-			toInteractiveAction(tasksList({ name: participant.name ?? "" })),
+			toInteractiveAction(
+				tasksList({
+					name: participant.name ?? "",
+					profiles: config.instagramProfiles,
+					officialPostUrl: config.officialPostUrl,
+				})
+			),
 			toInteractiveAction(tasksConfirm()),
 		],
 	};

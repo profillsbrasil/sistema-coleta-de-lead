@@ -1,4 +1,5 @@
 import { generateRaffleCode } from "@dashboard-leads-profills/api/whatsapp/code-generator";
+import { getWhatsappConfig } from "@dashboard-leads-profills/api/whatsapp/config-repository";
 import { codeGenerated } from "@dashboard-leads-profills/api/whatsapp/messages";
 import { checkWhatsappRateLimit } from "@dashboard-leads-profills/api/whatsapp/rate-limit";
 import {
@@ -33,6 +34,12 @@ import { and, eq, isNull } from "drizzle-orm";
 function formatBR(isoDate: string): string {
 	const [, m, d] = isoDate.split("-");
 	return `${d}/${m}`;
+}
+
+/** "YYYY-MM-DD" → "DD/MM/YYYY" (data completa, p.ex. raffle date). */
+function formatBRDate(isoDate: string): string {
+	const [y, m, d] = isoDate.split("-");
+	return `${d}/${m}/${y}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -178,17 +185,20 @@ async function processMessage(
 
 		let participant: Participant | null = participantRows[0] ?? null;
 
-		// 4. Build config
+		// 4. Build config — campos textuais/visuais vêm da tabela whatsapp.config,
+		// editável via admin. Secrets continuam em ENV.
+		const dbConfig = await getWhatsappConfig();
 		const config: StateMachineConfig = {
-			eventName:
-				webEnv.NEXT_PUBLIC_EVENT_NAME ?? "Sorteio Profills Fispal 2026",
-			raffleDate: webEnv.NEXT_PUBLIC_RAFFLE_DATE,
+			eventName: dbConfig.eventName,
+			raffleDate: formatBRDate(dbConfig.raffleDate),
 			termsVersion: env.TERMS_VERSION,
-			welcomeImageUrl: webEnv.NEXT_PUBLIC_WHATSAPP_WELCOME_IMAGE_URL,
-			logoUrl: webEnv.NEXT_PUBLIC_WHATSAPP_LOGO_URL,
-			vendorPhone: env.WHATSAPP_REDIRECT_VENDOR_PHONE,
-			eventStartBR: formatBR(env.WHATSAPP_REDIRECT_EVENT_START),
-			eventEndBR: formatBR(env.WHATSAPP_REDIRECT_EVENT_END),
+			welcomeImageUrl: dbConfig.welcomeImageUrl ?? undefined,
+			logoUrl: dbConfig.logoUrl ?? undefined,
+			vendorPhone: dbConfig.vendorPhone,
+			eventStartBR: formatBR(dbConfig.eventStart),
+			eventEndBR: formatBR(dbConfig.eventEnd),
+			instagramProfiles: dbConfig.instagramProfiles,
+			officialPostUrl: dbConfig.officialPostUrl,
 		};
 
 		// 5. Run state machine

@@ -116,21 +116,12 @@ const CONSENT_BUTTONS = [
 
 // ---------------------------------------------------------------------------
 // Pré-requisitos no Instagram (3 perfis + curtida + comentário).
-// URL do post oficial é placeholder — substituir quando o post for publicado.
+// Os handles e o URL do post vêm de whatsapp.config (DB), passados via param.
 // ---------------------------------------------------------------------------
 
-export const INSTAGRAM_PROFILES = [
-	{
-		handle: "@profillsdobrasil",
-		url: "https://instagram.com/profillsdobrasil",
-	},
-	{ handle: "@acarvalhovendas", url: "https://instagram.com/acarvalhovendas" },
-	{ handle: "@rafael_prachedes", url: "https://instagram.com/rafael_prachedes" },
-] as const;
-
-export const OFFICIAL_POST_URL = "https://instagram.com/profillsdobrasil";
-
 export const TASKS_DONE_BUTTON_ID = "tasks_done";
+
+export type InstagramProfile = { handle: string; url: string };
 
 // ---------------------------------------------------------------------------
 // Exports
@@ -187,20 +178,27 @@ export function codeGenerated({
 	);
 }
 
-export function tasksList({ name }: { name: string }): InteractiveCtaMessage {
+export function tasksList({
+	name,
+	profiles,
+	officialPostUrl,
+}: {
+	name: string;
+	profiles: ReadonlyArray<InstagramProfile>;
+	officialPostUrl: string;
+}): InteractiveCtaMessage {
+	const profileLines = profiles.map((p) => `• ${p.handle}`).join("\n");
 	const bodyText =
 		`Falta pouco, *${name}*!\n\n` +
 		"Faltam 3 passos para liberar seu código.\n\n" +
 		"*Passo 1.* Siga no Instagram:\n" +
-		`• ${INSTAGRAM_PROFILES[0].handle}\n` +
-		`• ${INSTAGRAM_PROFILES[1].handle}\n` +
-		`• ${INSTAGRAM_PROFILES[2].handle}\n\n` +
+		`${profileLines}\n\n` +
 		"*Passo 2.* Curta o post oficial do evento.\n\n" +
 		"*Passo 3.* Comente no mesmo post marcando 2 amigos que tenham indústria, comércio, produção ou negócio próprio.";
 
 	return interactiveCta(bodyText, {
 		displayText: "Abrir post oficial",
-		url: OFFICIAL_POST_URL,
+		url: officialPostUrl,
 	});
 }
 
