@@ -2,7 +2,14 @@ import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const PUBLIC_EXACT = new Set(["/", "/login", "/offline", "/sw.js"]);
+const PUBLIC_EXACT = new Set([
+	"/",
+	"/login",
+	"/offline",
+	"/sw.js",
+	"/privacy",
+	"/termos",
+]);
 const PUBLIC_PREFIXES = ["/api/auth"];
 
 export default function middleware(req: NextRequest) {
