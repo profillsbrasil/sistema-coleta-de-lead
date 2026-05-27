@@ -96,7 +96,7 @@ function AuthenticatedAppShellContent({
 				{/* Mobile: content + bottom nav */}
 				<div className="flex flex-1 flex-col md:hidden">
 					<div className="flex-1 p-4 pb-24">{children}</div>
-					<BottomNav />
+					<BottomNav isAdmin={isAdmin && isOnline} />
 				</div>
 				<FAB />
 			</div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@dashboard-leads-profills/ui/lib/utils";
-import { Plus, Trophy, User } from "lucide-react";
+import { Plus, ShieldCheck, Trophy, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useKeyboardVisible } from "@/components/fab";
@@ -43,7 +43,11 @@ function NavSlot({ active, href, icon: Icon, label, indicator }: NavSlotProps) {
 	);
 }
 
-export default function BottomNav() {
+interface BottomNavProps {
+	isAdmin?: boolean;
+}
+
+export default function BottomNav({ isAdmin = false }: BottomNavProps) {
 	const pathname = usePathname();
 	const keyboardVisible = useKeyboardVisible();
 	const { isOnline, pendingCount } = useSyncStatus();
@@ -57,6 +61,7 @@ export default function BottomNav() {
 		pathname === "/voce" ||
 		pathname.startsWith("/voce/") ||
 		pathname.startsWith("/account");
+	const isAdminActive = pathname.startsWith("/admin");
 
 	return (
 		<nav
@@ -70,6 +75,15 @@ export default function BottomNav() {
 					icon={Trophy}
 					label="Ranking"
 				/>
+
+				{isAdmin && (
+					<NavSlot
+						active={isAdminActive}
+						href={"/admin" as unknown as "/"}
+						icon={ShieldCheck}
+						label="Admin"
+					/>
+				)}
 
 				<Link
 					aria-label="Adicionar novo lead"
